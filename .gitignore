@@ -1,6 +1,7 @@
 CERT/*
 src/Downloads/*
 src/logs/*
+src/config.env
 src/__pycache__
 
 src/web/*
