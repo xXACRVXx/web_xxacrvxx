@@ -203,6 +203,21 @@ def logout():
     return redirect(url_for("index"))
 
 
+@app.route("/favicon.ico")
+def favicon():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_os = CONFIG.MY_OS
+        if the_os == "Windows":
+            the_path = f"{CONFIG.SYSTEM_PATH}\static"
+        else:
+            the_path = f"{CONFIG.SYSTEM_PATH}/static"
+        return send_from_directory(the_path, "favicon.png", as_attachment=False)
+    except Exception as e:
+        log.error(f"[{ip_client}] [/icon ] [ERROR] {e}")
+        return redirect(url_for("index"))
+
+
 @app.route("/robots.txt")
 def robots_txt():
     ip_client = request.headers.get("X-Real-IP")

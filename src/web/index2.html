@@ -1,0 +1,36 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}WEB DE xXACRVXx{% endblock %}
+
+
+{% block content %}
+
+
+<div class="page-banner home-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      
+      <div class="col-lg-6 py-3 wow fadeInUp">
+        <h1 class="mb-4">Esta web esta en desarrollo</h1>
+        <p class="text-lg mb-5">
+          No deberias estar viendo esto ahora mismo, 
+          esta web apenas esta empezando a ser desarrollada, vuelve en un tiempo
+        </p>
+        <p class="text-lg mb-5">
+          Si quieres probar las funciones disponibles hasta el momento
+          puedes iniciar sesion y acceder a ellas
+        </p>
+      </div>
+
+      <div class="col-lg-6 py-3 wow zoomIn text-center">
+        <div class="img-place">
+          <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="xd">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  {% endblock %}

@@ -4,8 +4,8 @@ src/logs/*
 src/config.env
 src/__pycache__
 
-src/web/*
-src/static*
+src/web/_dev
+src/static/_dev
 
 src/Modules/__pycache__
 src/Modules/PRUEBAS.py

@@ -1,0 +1,78 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}INDEX{% endblock %}
+
+
+{% block content %}
+
+<div style="height:400px" class="page-banner home-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      
+      <div class="col-lg-6 py-2 wow fadeInUp">
+        <h1 class="mb-4">Descargas</h1>
+        <p class="text-lg mb-5">
+          Aqui podras ver, descargar y compartir tus archivos con amigos
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<main>
+  <div class="page-section features">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-12 col-lg-25 py-10">
+          <div class="col-lg-11 py-3">
+            <h1 class="mb-4">Archivos
+              <a href="{{url_for('upload')}}" class="btn btn-outline border text-secondary">Subir archivos</a>
+            </h1>
+            <div>
+              <h4>
+                Espacio libre: {{space}}
+              </h4>
+              
+            </div>
+          <div class="d-flex flex-row">
+            <div>
+              
+              <ul class="footer-menu">
+                {% for archive in files %}
+                <li class="border">
+                  <div>
+                  <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline border text-secondary">Borrar</a>
+                  <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline border text-secondary">Descargar</a>
+                  <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border text-secondary ">Compartir</a>
+                  <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-outline border text-primary">{{archive[0]}} [{{archive[2]}}]</a>
+                </div>
+                </li>
+                {% endfor %}
+              </ul>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+
+
+<script>//<![CDATA[
+  function getlink(e) {
+  var aux = document.createElement("input");
+  aux.setAttribute("value", window.location.href + '?token=' + e);
+  document.body.appendChild(aux);
+  aux.select();
+  document.execCommand("copy");
+  document.body.removeChild(aux);
+  alert("URL copiada al portapapeles\n\n" + window.location.href + '?token=' + e);
+  }
+  //]]></script>
+
+  {% endblock %}

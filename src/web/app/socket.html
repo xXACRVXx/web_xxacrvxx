@@ -1,0 +1,72 @@
+<html>
+<head>
+  <script src="{{url_for('static', filename='js/socket6-1/socket.io.js')}}"></script>
+  <script type="text/javascript" charset="utf-8">
+    var socket = io();
+    socket.on('connect', function() {
+      console.log('Conectado al servidor');
+    });
+
+    function enviarOpcion() {
+      var opcion = document.getElementById("menu").value;
+      socket.emit('opcion', opcion);
+    }
+
+    function enviarBoton() {
+      var boton = document.getElementById("boton");
+      var estado = boton.checked ? "activado" : "desactivado";
+      socket.emit('boton', estado);
+    }
+
+    // Añade una variable para guardar el estado del botón normal
+    var estado_boton_normal = false;
+
+    // Cambia la función para enviar el estado del botón normal
+    function enviarBotonNormal() {
+      var boton_normal = document.getElementById("boton normal");
+      // Cambia el estado del botón cada vez que se toca
+      estado_boton_normal = !estado_boton_normal;
+      var estado = estado_boton_normal ? "activo" : "desactivado";
+      socket.emit('boton normal', estado);
+    }
+
+    // Añade un listener para recibir el mensaje del servidor
+    socket.on('mensaje', function(mensaje) {
+      // Muestra el mensaje en el elemento <p>
+      document.getElementById("mensaje").innerHTML = mensaje;
+    });
+
+    // Añade una función para enviar el texto al servidor
+    function enviarTexto() {
+      var texto = document.getElementById("texto").value;
+      socket.emit('texto', texto);
+    }
+
+    // Añade un listener para recibir la respuesta del servidor
+    socket.on('respuesta', function(respuesta) {
+      // Muestra la respuesta en el elemento <p>
+      document.getElementById("mensaje").innerHTML = respuesta;
+    });
+  </script>
+</head>
+<body>
+  <h1>Menú de opciones</h1>
+  <select id="menu" onchange="enviarOpcion()">
+    <option value="A">Opción A</option>
+    <option value="B">Opción B</option>
+    <option value="C">Opción C</option>
+    <option value="D">Opción D</option>
+  </select>
+  <br>
+  <input type="checkbox" id="boton" onchange="enviarBoton()">
+  <label for="boton">Botón</label>
+  <!-- Cambia el elemento <input> por un <button> -->
+  <button id="boton normal" onclick="enviarBotonNormal()">Botón normal</button>
+  <!-- Añade un elemento <p> con un id para mostrar el mensaje -->
+  <p id="mensaje"></p>
+  <!-- Añade un elemento <input> con un id para escribir el texto -->
+  <input id="texto" type="text">
+  <!-- Añade un elemento <button> con un id para enviar el texto -->
+  <button id="enviar" onclick="enviarTexto()">Enviar</button>
+</body>
+</html>

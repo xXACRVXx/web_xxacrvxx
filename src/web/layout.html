@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="google-site-verification" content="0EJz3NQhyR1UmBwAk9_EklAevx8mY5qbRL400HMTqNY" />
+  
+  <meta name="description" content="xXACRVXx es una web en desarrollo... pues este es mi sitio web XD el sitio web de xxacrvxx, la verdad no se que poner aqui">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <meta name="copyright" content="xXACRVXx">
+
+  <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
+	<meta property="og:site_name" content="the xXACRVXx web" /> <!-- website name -->
+	<meta property="og:site" content="xxacrvxx.ydns.eu" /> <!-- website link -->
+	<meta property="og:title" content="the xxacrvxx web"/> <!-- title shown in the actual shared post -->
+	<meta property="og:description" content="pues este es mi sitio web XD el sitio web de xxacrvxx, la verdad no se que poner aqui" /> <!-- description shown in the actual shared post -->
+	<meta property="og:image" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /> <!-- image link, make sure it's jpg -->
+	<meta property="og:url" content="xxacrvxx.ydns.eu" /> <!-- where do you want your post to link to -->
+	<meta property="og:type" content="article" />
+
+  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /><meta name="twitter:site" content="@xXACRVXx" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content="En desarrolo XD" /><meta name="twitter:description" content="esta web esta en desarrollo XD" />
+  <meta property="og:image" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /><meta property="og:image:alt" content="xXACRVXx XD web en desarrollo" /><meta property="og:site_name" content="xXACRVXx" /><meta property="og:type" content="object" /><meta property="og:title" content="xXACRVXx XD" /><meta property="og:url" content="https://xxacrvxx.ydns.eu/" /><meta property="og:description" content="xXACRVXx Web good XD" />
+  <!-- Website Title -->
+  <title>{% block title %}{% endblock %}</title>
+
+
+  <!-- Favicon  -->
+  <link rel="icon" href="{{url_for('static', filename='favicon.png')}}">
+
+
+  <link rel="stylesheet" href="{{url_for('static', filename='vendor/animate/animate.css')}}">
+
+  <link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.css')}}">
+
+  <link rel="stylesheet" href="{{url_for('static', filename='css/maicons.css')}}">
+
+  <link rel="stylesheet" href="{{url_for('static', filename='vendor/owl-carousel/css/owl.carousel.css')}}">
+
+  <link rel="stylesheet" href="{{url_for('static', filename='css/theme.css')}}">
+
+
+</head>
+
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-92CDQSSSX1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-92CDQSSSX1');
+</script>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1138276378418543"
+     crossorigin="anonymous"></script>
+
+<body>
+
+  <!-- Back to top button -->
+  <div class="back-to-top"></div>
+
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-light navbar-float">
+      <div class="container">
+        <a href="{{url_for('index')}}" class="navbar-brand">xX<span class="text-primary">ACRV</span>Xx</a>
+
+        <button class="navbar-toggler" style="border: 2px solid white;" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="navbar-collapse collapse" id="navbarContent">
+          <ul class="navbar-nav ml-lg-4 pt-3 pt-lg-0">
+            <li class="nav-item active">
+              <a href="{{url_for('index')}}" class="nav-link">Inicio</a>
+            </li>
+            <li class="nav-item">
+              <a href="{{url_for('detalles')}}" class="nav-link">Detalles</a>
+            </li>
+            <li class="nav-item">
+              <a href="{{url_for('servicios')}}" class="nav-link">Servicios</a>
+            </li>
+            <li class="nav-item">
+              <a href="{{url_for('nuevo')}}" class="nav-link">Nuevo</a>
+            </li>
+            <li class="nav-item">
+              <a href="{{url_for('contactar')}}" class="nav-link">Contactar</a>
+            </li>
+
+        </ul>
+          
+          <div class="ml-auto">
+            {% if user %}
+            <a href="{{url_for('login')}}" class="btn btn-outline rounded-pill">{{user}}</a>
+            <a href="{{url_for('logout')}}" class="btn btn-outline rounded-pill">Cerrar Sesion</a>
+            {% else %}
+            <a href="{{url_for('login')}}" class="btn btn-outline rounded-pill">Iniciar sesion</a>
+            <a href="{{url_for('regist')}}" class="btn btn-outline rounded-pill">Registrarse</a>
+            {% endif %}
+            {% block header %}{% endblock %}
+                
+              <button class="btn btn-outline-secondary rounded-pill" id="toggle-style">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sun" viewBox="0 0 16 16">
+                  <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
+                </svg>
+              </button>
+
+              <script>
+                // Crear un elemento style con el css deseado
+                var style = document.createElement("style");
+                style.innerHTML = "html, body, body :not(iframe):not(div[style^='position:absolute;top:0;left:-']) { background-color: #181a1b !important; border-color: #776e62 !important; color: #e8e6e3 !important; } html, body { opacity: 1 !important; transition: none !important; }";
+              
+                // Obtener el elemento button y el elemento head
+                var button = document.getElementById("toggle-style");
+                var head = document.getElementsByTagName("head")[0];
+              
+                // Crear una función para obtener el valor de una cookie
+                function getCookie(name) {
+                  // Dividir la cadena document.cookie por punto y coma y espacios
+                  var cookies = document.cookie.split("; ");
+                  // Recorrer las cookies y buscar la que tenga el nombre deseado
+                  for (var i = 0; i < cookies.length; i++) {
+                    // Dividir la cookie por el signo igual
+                    var parts = cookies[i].split("=");
+                    // Comprobar si el nombre coincide con el parámetro
+                    if (parts[0] == name) {
+                      // Devolver el valor de la cookie decodificado
+                      return decodeURIComponent(parts[1]);
+                    }
+                  }
+                  // Si no se encuentra la cookie, devolver una cadena vacía
+                  return "";
+                }
+              
+                // Añadir un evento click al botón para añadir o quitar el estilo del head
+                button.addEventListener("click", function() {
+                  // Comprobar si el estilo ya está en el head
+                  if (head.contains(style)) {
+                    // Quitar el estilo del head
+                    head.removeChild(style);
+                    // Crear una cookie con el nombre dark-mode y el valor false
+                    document.cookie = "dark-mode=false; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
+                  } else {
+                    // Añadir el estilo al head
+                    head.appendChild(style);
+                    // Crear una cookie con el nombre dark-mode y el valor true
+                    document.cookie = "dark-mode=true; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
+                  }
+                });
+              
+                // Comprobar si la cookie dark-mode tiene el valor true al cargar la página
+                if (getCookie("dark-mode") == "true") {
+                  // Añadir el estilo al head
+                  head.appendChild(style);
+                }
+              </script>
+            
+          </div>
+      
+        </div>
+      </div>
+    </nav>
+  </header>
+ 
+
+<!-- content login/regis -->
+ {% block content %}{% endblock %}
+<!-- end content -->
+
+
+  <footer class="page-footer">
+    <div class="container">
+      <div class="row justify-content-center mb-5">
+        <div class="col-lg-3 py-3">
+          <h3>xXAC<span class="text-primary">RVXx.</span></h3>
+          <p>Esta web esta en un estado temprano del desarrollo.</p>
+          <p>Correo: <a href="mailto:xxacrvxx@duck.com" >xxacrvxx@duck.com</a></p>
+          <p>Telegram: <a href="https://t.me/xxacrvxx" >@xXACRVXx</a></p>
+        </div>
+        <div class="col-lg-3 py-3">
+          <h5>Enlaces rapidos</h5>
+          <ul class="footer-menu">
+            <li><a href="#">Cómo funciona</a></li>
+            <li><a href="#">Seguridad</a></li>
+            <li><a href="#">API</a></li>
+            <li><a href="#">Reporte de Bugs</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3 py-3">
+          <h5>Quienes somos</h5>
+          <ul class="footer-menu">
+            <li><a href="#">Sobre nosotros</a></li>
+            <li><a href="#">Trabajos</a></li>
+            <li><a href="#">Nuestro equipo</a></li>
+            <li><a href="#">Noticias y Prensa</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3 py-3">
+          <h5>Subscribete</h5>
+          <form action="#">
+            <input type="text" class="form-control" placeholder="Ingrese su correo..">
+          </form>
+
+          <div class="sosmed-button mt-4">
+            <a href="https://github.com/xxacrvxx"><span class="mai-logo-github"></span></a>
+            <a href="https://t.me/xxacrvxx"><span class="mai-logo-telegram"></span></a>
+            <a href="https://twitter.com/xxacrvxx"><span class="mai-logo-twitter"></span></a>
+            <a href="#"><span class="mai-logo-linkedin"></span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-6 py-2">
+          <p id="copyright">&copy; 2022 <a href="{{url_for('index')}}">xXACRVXx</a>. Todos los derechos reservados</p>
+        </div>
+        <div class="col-sm-6 py-2 text-right">
+          <div class="d-inline-block px-3">
+            <a href="{{url_for('privacy')}}">Privacidad</a>
+          </div>
+          <div class="d-inline-block px-3">
+            <a href="{{url_for('contactar')}}">Contactar</a>
+          </div>
+        </div>
+      </div>
+    </div> <!-- .container -->
+  </footer> <!-- .page-footer -->
+
+
+  <script src="{{url_for('static', filename='js/jquery-3.5.1.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='js/bootstrap.bundle.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='vendor/wow/wow.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='vendor/owl-carousel/js/owl.carousel.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='vendor/waypoints/jquery.waypoints.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='vendor/animateNumber/jquery.animateNumber.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='js/google-maps.js')}}"></script>
+
+  <script src="{{url_for('static', filename='js/theme.js')}}"></script>
+  
+
+</body>
+</html>

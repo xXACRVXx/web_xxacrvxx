@@ -1,0 +1,34 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}xxacrvxx{% endblock %}
+
+
+{% block content %}
+
+
+    <div class="page-banner home-banner">
+      <div class="container h-100">
+        <div class="row align-items-center h-100">
+          <div class="col-lg-6 py-3 wow fadeInUp">
+            <h1 class="mb-4">Servicios disponibles por el momento</h1>
+            <p class="text-lg mb-5">
+              la web aun esta en un estado temprano del desarrollo pero ya cuenta con un sistema 
+              de descarga y subida de archivos que puedes probar a continuacion en los siguientes botones
+            </p>
+
+            <a href="{{url_for('upload')}}" class="btn btn-outline border text-secondary">Subir archivos</a>
+            <a href="{{url_for('download')}}" class="btn btn-outline border text-secondary">Descargar archivos</a>
+          </div>
+          <div class="col-lg-6 py-3 wow zoomIn">
+            <div class="img-place">
+              <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  {% endblock %}

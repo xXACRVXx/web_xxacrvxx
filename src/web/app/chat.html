@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>Chat Room</title>
+<script type="text/javascript" src="{{url_for('static', filename='js/socket6-1/socket.io.js')}}"></script>
+<script src="{{url_for('static', filename='js/jquery-3.5.1.min.js')}}"></script>
+</head>
+<body>
+<script type="text/javascript">
+$(document).ready(function() {
+
+    var socket = io.connect('https://xxacrvxx.ydns.eu');
+
+    socket.on('connect', function() {
+        socket.send('User has connected!');
+    });
+
+    socket.on('message', function(msg) {
+        $("#messages").append('<li>'+msg+'</li>');
+        console.log('Received message');
+    });
+
+    $('#sendbutton').on('click', function() {
+        socket.send($('#myMessage').val());
+        $('#myMessage').val('');
+    });
+
+});
+</script>
+<ul id="messages"></ul>
+<input type="text" id="myMessage">
+<button id="sendbutton">Send</button>
+</body>
+</html>

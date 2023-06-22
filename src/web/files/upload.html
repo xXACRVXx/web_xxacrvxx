@@ -1,0 +1,74 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}INDEX{% endblock %}
+
+
+{% block content %}
+
+
+<div style="height:700px" class="page-banner home-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      
+      <div class="col-lg-6 py-15">
+        <h1 class="mb-4">Subir archivos</h1>
+        <p class="text-lg mb-5">
+          Aqui podras ver, descargar y compartir tus archivos con amigos
+        </p>
+        <div>
+          <form method=post enctype=multipart/form-data>
+            Seleciona o arrastra un archivo para subir
+            <div>
+              <input type=file style="height:150px; width:330px" class="btn btn-outline border text-secondary text-center" name=file >
+            </div>
+            <div>
+              <input type=submit class="btn btn-outline border text-primary" value=Subir>
+              <a href="{{url_for('download')}}" class="btn btn-outline border text-secondary">descargar archivos</a>
+            </div>
+          </form>
+        </div>
+          <div>
+            <div class="col-lg-8 py-4">
+              <h4>
+                Espacio libre: {{space}}
+              </h4>
+            </div>
+          </div>
+          
+      </div>
+      <div class="col-lg-6 py-3 wow zoomIn text-center">
+        <div class="img-place">
+          <img src="{{url_for('static', filename='img/upload.png')}}" alt="">
+        </div>
+    </div> 
+  </div>
+</div>
+
+  <main>
+    <div class="page-section features">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+            <div class="d-flex flex-row">
+              <div>
+
+                {% if error %}
+
+                <h1 class="mb-4">error</h1>
+
+                {% endif %}
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+
+
+
+  {% endblock %}
