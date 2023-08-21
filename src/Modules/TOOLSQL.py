@@ -1,11 +1,11 @@
 import sqlite3, jwt, datetime, cryptocode, time
-import random, os, platform
+import random, os
 
 
 ######### LOGGER ###########
 import logging
 try:
-    import src.Modules.LOGGER
+    import LOGGER
 except:
     pass
 
@@ -25,20 +25,19 @@ DB_NAME = "database.db"
 
 SYSTEM_PATH = os.getcwd()
 
-MY_OS = platform.system()
+PATH = os.path.join(SYSTEM_PATH, DB_FOLDER)
 
-if MY_OS == "Windows":
-    if SYSTEM_PATH.__contains__(DB_FOLDER):
-        DB_PATH = f"{SYSTEM_PATH}\{DB_NAME}"
-    else:
-        os.makedirs(f"{SYSTEM_PATH}\{DB_FOLDER}", exist_ok=True)    
-        DB_PATH = f"{SYSTEM_PATH}\{DB_FOLDER}\{DB_NAME}"
+PARENT_DIR = os.path.dirname(SYSTEM_PATH)
+
+if os.path.exists(PATH) and os.path.isdir(PATH):
+    DB_PATH = os.path.join(PATH, DB_NAME)
 else:
-    if SYSTEM_PATH.__contains__(DB_FOLDER):
-        DB_PATH = f"{SYSTEM_PATH}/{DB_NAME}"
+    PARENT_PATH = os.path.join(PARENT_DIR, DB_FOLDER)
+    if os.path.exists(PARENT_PATH) and os.path.isdir(PARENT_PATH):
+        DB_PATH = os.path.join(PARENT_PATH, DB_NAME)
     else:
-        os.makedirs(f"{SYSTEM_PATH}/{DB_FOLDER}", exist_ok=True)     
-        DB_PATH = f"{SYSTEM_PATH}/{DB_FOLDER}/{DB_NAME}"
+        os.makedirs(PATH, exist_ok=True)
+        DB_PATH = os.path.join(PATH, DB_NAME)
 
 
 ######### connection and cursor #########

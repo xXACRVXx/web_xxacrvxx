@@ -18,7 +18,7 @@ class CustomFormatter(logging.Formatter):
         self.no_colors = no_colors
 
         self.FORMATS = {
-            logging.DEBUG: "%(levelname)s",
+            logging.DEBUG: colored("%(levelname)s", "green"),
             logging.INFO: colored("%(levelname)s", "blue"),
             logging.WARN: colored("%(levelname)s", "yellow"),
             logging.ERROR: colored("%(levelname)s", "red"),
