@@ -64,13 +64,14 @@ class CustomFormatter(logging.Formatter):
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR, exist_ok=True)
 
-file_name = datetime.utcnow().strftime("%Y_%m_%d") + ".log"
+file_name = "info.log"
 file_path = os.path.join(LOGS_DIR, file_name)
 
 stream_handler = logging.StreamHandler(stream=sys.stdout)
 stream_handler.setFormatter(CustomFormatter())
 
-rotating_handler = TimedRotatingFileHandler(file_path, when="midnight", backupCount=3)
+rotating_handler = TimedRotatingFileHandler(file_path, when="midnight", backupCount=10)
+rotating_handler.namer = lambda name: name.replace(".log", "") + ".log"
 rotating_handler.setFormatter(CustomFormatter(no_colors=True))
 
 logging.basicConfig(
@@ -79,7 +80,7 @@ logging.basicConfig(
 )
 
 if DEBUG:
-    for l in ["asyncio", "pyrogram", "werkzeug"]:
+    for l in ["asyncio", "werkzeug"]:
         logging.getLogger(l).setLevel(logging.WARNING)
 else:
     for l in ["socketio", "asyncio", "werkzeug"]: 
