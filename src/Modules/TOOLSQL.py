@@ -47,8 +47,9 @@ cur = con.cursor()
 ##########################################
 
 def CONNECTION_TEST():
+    global con
+    global cur
     "CONNECTION_TEST: This function is used to test the connection to the database"
-    
     try:
         con_test = sqlite3.connect(DB_PATH)
         cur_test = con_test.cursor()
@@ -68,9 +69,15 @@ def CONNECTION_TEST():
                 log.error(f'[CONNECTION_TEST] [ERROR 1] {ERROR}')
                 return ERROR
         else:
-            CREATE_TABLE()
-            log.error(f'[CONNECTION_TEST] [ERROR 2] {ERROR}')
-            return ERROR
+            try:
+                CREATE_TABLE()
+                con = sqlite3.connect(DB_PATH, check_same_thread=False)
+                cur = con.cursor()
+                log.info("CONNECTION_TEST: OK (sqlite3)")
+            except Exception as e:
+                ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
+                log.error(f'[CONNECTION_TEST] [ERROR 2] {ERROR}')
+                return ERROR
 
 def E_TOKEN(datos, secretkey):
     """
@@ -189,13 +196,15 @@ def CREATE_TABLE():
         log.info(f"[CREATE_TABLE:] [OK]")
         return f'TABLA DE DATOS CREADA'
     except Exception as e:
+        
         ERROR = f"ERROR AL CREAR LA TABLA:\n{e}"
         if ERROR.__contains__("Unknown database"):
             try:
                 cur.execute(f'CREATE DATABASE {DB_NAME}')
+                cur.execute(f'CREATE TABLE USERDB (ID INTEGER PRIMARY KEY AUTOINCREMENT, USER TEXT, EMAIL TEXT, PASSW TEXT, EMAIL_CONFIRM TEXT,RANDOM TEXT, DATOS TEXT, EXTRA TEXT, TIME TEXT)')
                 con.close()
-                CREATE_TABLE()
                 log.info(f"[CREATE_TABLE:] [OK]")
+                CONNECTION_TEST()
                 return f'TABLA DE DATOS CREADA'
             except Exception as e:
                 ERROR = f"ERROR AL CREAR LA TABLA:\n{e}" 
