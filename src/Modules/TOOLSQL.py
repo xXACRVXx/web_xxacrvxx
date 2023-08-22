@@ -44,6 +44,12 @@ else:
 con = sqlite3.connect(DB_PATH, check_same_thread=False)
 
 cur = con.cursor()
+
+def recon():
+    global con
+    global cur
+    con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    cur = con.cursor()
 ##########################################
 
 def CONNECTION_TEST():
@@ -74,6 +80,7 @@ def CONNECTION_TEST():
                 con = sqlite3.connect(DB_PATH, check_same_thread=False)
                 cur = con.cursor()
                 log.info("CONNECTION_TEST: OK (sqlite3)")
+                return f'\nCONECTADO CORRECTAMENTE A SQLite3\n'
             except Exception as e:
                 ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
                 log.error(f'[CONNECTION_TEST] [ERROR 2] {ERROR}')
@@ -190,6 +197,7 @@ def CREATE_TABLE():
     return: 'TABLA DE DATOS CREADA'
     """
     try:
+        recon()
         cur.execute(
             f'CREATE TABLE USERDB (ID INTEGER PRIMARY KEY AUTOINCREMENT, USER TEXT, EMAIL TEXT, PASSW TEXT, EMAIL_CONFIRM TEXT,RANDOM TEXT, DATOS TEXT, EXTRA TEXT, TIME TEXT)')
         con.close()
@@ -200,6 +208,7 @@ def CREATE_TABLE():
         ERROR = f"ERROR AL CREAR LA TABLA:\n{e}"
         if ERROR.__contains__("Unknown database"):
             try:
+                recon()
                 cur.execute(f'CREATE DATABASE {DB_NAME}')
                 cur.execute(f'CREATE TABLE USERDB (ID INTEGER PRIMARY KEY AUTOINCREMENT, USER TEXT, EMAIL TEXT, PASSW TEXT, EMAIL_CONFIRM TEXT,RANDOM TEXT, DATOS TEXT, EXTRA TEXT, TIME TEXT)')
                 con.close()
@@ -235,10 +244,8 @@ def INSERT_DB(USER='', EMAIL='', PASSW=''):
             comp2 = SEARCH_DB('EMAIL', EMAIL)
             if comp2 == None:
                 TIME = datetime.datetime.now()
-
-                cur.execute(
-                    f"INSERT INTO USERDB (USER, EMAIL, PASSW, TIME)  VALUES ('{USER}', '{EMAIL}', '{PASSW}', '{TIME}')")
-
+                recon()
+                cur.execute(f'INSERT INTO USERDB (USER, EMAIL, PASSW, TIME)  VALUES ("{USER}", "{EMAIL}", "{PASSW}", "{TIME}")')
                 con.commit()
                 con.close
                 log.info(f"[INSERT_DB:] [OK] (user: {USER}, email: {EMAIL}, passw: {PASSW})")
@@ -272,6 +279,7 @@ def ALL_USERS():
     """
     try:
         lista = []
+        recon()
         for row in cur.execute('SELECT * FROM USERDB'):
             ALL = row
             lista.append(ALL)
@@ -297,9 +305,10 @@ def SEARCH_DB(TYPE='USER', DATA_SEARCH=''):
     return: [1, 'user', 'email', 'passw', 'email_confirm', 'random', 'datos', 'extra', 'time']
     """
     try:
+        recon()
         TIPOS = ["ID", "USER", "EMAIL", "PASSW", "EMAIL_CONFIRM","RANDOM", "DATOS", "EXTRA"]
         if TYPE in TIPOS:
-            search_sql = f"SELECT * FROM USERDB WHERE {TYPE}='{DATA_SEARCH}'"
+            search_sql = f'SELECT * FROM USERDB WHERE {TYPE}="{DATA_SEARCH}"'
             cur.execute(search_sql)
             for rew in cur.fetchall():
                 log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -390,7 +399,8 @@ def DELETE(US_EM):
     try:
         if US_EM.__contains__('@'):
             if SEARCH_DB('EMAIL', US_EM) != None:
-                cur.execute(f"DELETE FROM USERDB WHERE EMAIL='{US_EM}'")
+                recon()
+                cur.execute(f'DELETE FROM USERDB WHERE EMAIL="{US_EM}"')
                 con.commit()
                 con.close()
                 log.info(f'[DELETE:] [OK] (Email: {US_EM})')
@@ -400,7 +410,8 @@ def DELETE(US_EM):
                 return 'EL CORREO NO EXISTE '
         else:
             if SEARCH_DB('USER', US_EM) != None:
-                cur.execute(f"DELETE FROM USERDB WHERE USER='{US_EM}'")
+                recon()
+                cur.execute(f'DELETE FROM USERDB WHERE USER="{US_EM}"')
                 con.commit()
                 con.close()
                 log.info(f'[DELETE:] [OK] (user: {US_EM})')
@@ -432,7 +443,8 @@ def EDITAR(TYPE='USER', USER='', NEWD=''):
         if not SEARCH_DB('USER', USER) == None:
             TIPOS = ["ID", "USER", "EMAIL", "PASSW", "EMAIL_CONFIRM","RANDOM", "DATOS", "EXTRA", "TIME"]
             if TYPE in TIPOS:
-                cur.execute(f"UPDATE USERDB SET {TYPE}='{NEWD}' WHERE USER='{USER}'")               
+                recon()
+                cur.execute(f'UPDATE USERDB SET {TYPE}="{NEWD}" WHERE USER="{USER}"')               
                 con.commit()               
                 con.close()
                 log.info(f'[EDITAR:] [OK] (type: {TYPE}, user: {USER}, data: {NEWD})')
@@ -455,7 +467,8 @@ def C_EMAIL_VAL(USER=""):
         numero = random.randint(100000, 999999)
 
         if not SEARCH_DB('USER', USER) == None:
-            cur.execute(f"UPDATE USERDB SET RANDOM='{str(numero)}' WHERE USER='{USER}'")
+            recon()
+            cur.execute(f'UPDATE USERDB SET RANDOM="{str(numero)}" WHERE USER="{USER}"')
             con.commit()
             con.close()
             return numero
@@ -465,16 +478,24 @@ def C_EMAIL_VAL(USER=""):
 
         return ERROR
 
-def EMAIL_VAL(USER="", COD=""):
+def EMAIL_VAL(EMAIL="", COD=""):
     
     try:
-        DTU = SEARCH_DB('USER', USER)
+        DTU = SEARCH_DB('EMAIL', EMAIL)
         if not DTU == None:
             DCOD = DTU[5]
             # print(DPASSW)
             if COD == DCOD:
+                recon()
+                cur.execute(f'UPDATE USERDB SET EMAIL_CONFIRM="True" WHERE EMAIL="{EMAIL}"')
+                con.commit()
+                con.close()
                 return True
             else:
+                recon()
+                cur.execute(f'UPDATE USERDB SET EMAIL_CONFIRM="False" WHERE EMAIL="{EMAIL}"')
+                con.commit()
+                con.close()
                 return False
 
     except Exception as e:
@@ -561,6 +582,8 @@ if __name__ == '__main__':
             valor1 = input('ESCRIBA PARA USUARIO: ')
             valor2 = input('ESCRIBA PARA CODIGO: ')
             respuesta = EMAIL_VAL(valor1, valor2)
+            
+            print(respuesta)
             
         if entrada == 'help':
             

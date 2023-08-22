@@ -2,6 +2,7 @@ from os import system
 import os, signal, traceback
 import requests, json
 from werkzeug.utils import secure_filename
+from Modules.SENDMAIL import SEND_MAIL
 from Modules.TOOLSQL import (
     ENCRIPT,
     DESENCRIPT,
@@ -12,6 +13,8 @@ from Modules.TOOLSQL import (
     DELETE,
     EDITAR,
     CONNECTION_TEST,
+    C_EMAIL_VAL,
+    EMAIL_VAL
 )
 from flask import (
     Flask,
@@ -159,9 +162,9 @@ def regist():
         usuario = request.form.get("username")
         correo = request.form.get("email")
         passw = request.form.get("passw")
-        if not usuario.__contains__("'"):
+        if not usuario.__contains__('"'):
             if not usuario.__contains__("@"):
-                if not correo.__contains__("'"):
+                if not correo.__contains__('"'):
                     EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
                     respuesta = INSERT_DB(usuario, correo, EPASSW)
                     if respuesta == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
@@ -201,6 +204,44 @@ def logout():
     session.pop("user", None)
     session.pop("token", None)
     return redirect(url_for("index"))
+
+
+@app.route("/email")
+def EmailSend():
+    ip_client = request.headers.get("X-Real-IP")
+    log.info(f"[{ip_client}] [/EmailSend ] correo de confirmacion")
+    return render_template("auth/EmailSend.html")
+
+
+@app.route("/EmailConfirm", methods=["POST", "GET"])
+def EmailConfirm():
+    ip_client = request.headers.get("X-Real-IP")
+    if request.method == "POST":
+        correo = request.form.get("email")
+        code = request.form.get("code")
+        respuesta = EMAIL_VAL(correo, code)
+        print(correo, code, respuesta)
+        if respuesta == True:
+            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
+            return redirect(url_for("index"))
+        if respuesta == False:
+            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
+            return redirect(url_for("EmailSend"))
+    else:
+        if request.args.get("email"):
+            correo = request.args.get("email")
+            user = SEARCH_DB("EMAIL", correo)
+            code = C_EMAIL_VAL(user[1])
+            print(correo, code, user[1])
+            ASUNTO ="Confirmacion de Cuenta"
+            MENSAGE =f"Use este codigo para confirmar su cuenta: {str(code)} \n\nSi no solicitaste esta operacion, por favor ignora este mensaje. \nSi no eres tu y no solicitaste esta operacion, por favor ignora este mensaje.\n\ por favor haga click en el siguiente enlace: https://xxacrvxx.ydns.eu/EmailConfirm?email={correo} e ingrece el codigo"
+            mail = f'Subject: {ASUNTO}\nDear ContactName, \n\n' + MENSAGE
+            SEND_MAIL(correo, mail)
+            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
+            return render_template("auth/EmailConfirm.html", correo=correo)
+        else:
+            return redirect(url_for("EmailSend"))
+
 
 
 @app.route("/favicon.ico")
