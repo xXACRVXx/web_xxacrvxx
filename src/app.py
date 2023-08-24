@@ -53,7 +53,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-
+VERSION = "v0.2.0b"
 log.info(f"SERVIDOR INICIADO EN: {CONFIG.MY_OS}")
 CONNECTION_TEST()
 
@@ -63,92 +63,84 @@ CONNECTION_TEST()
 
 @app.route("/")
 def index():
-    if request.method == "GET":
-        ip_client = request.headers.get("X-Real-IP")
+    ip_client = request.headers.get("X-Real-IP")
+    try:
         try:
+            uid= session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+            
+        if sessions == False:
+            log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
+            return render_template("index2.html") 
+        else:
             try:
-                uid= session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
-            if sessions == True:
-                try:
-                    verific = jwt.decode(
-                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-                    )
-                    log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
-                    return render_template("app/index.html", user=uss)
-                except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/ ] Token expirado")
-                    return redirect(url_for("login"))
-                except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/ ] Token invalido")
-                    return redirect(url_for("login"))
-            else:
-                log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
-                return render_template("index2.html")
-        except Exception as e:
-            log.debug(f"[{ip_client}] [/ ] ERROR: {e} [{traceback.format_exc()}]")
-            return render_template("index2.html")
+                verific = jwt.decode(token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
+                log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
+                return render_template("app/index.html", user=uss)
+            except jwt.ExpiredSignatureError:
+                log.debug(f"[{ip_client}] [/ ] Token expirado")
+                return redirect(url_for("login"))
+            except jwt.InvalidTokenError:
+                log.debug(f"[{ip_client}] [/ ] Token invalido")
+                return redirect(url_for("login"))
+                
+    except Exception as e:
+        log.error(f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
+        return render_template("index2.html")
 
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
-        correo = request.form.get("email")
-        passw = request.form.get("passw")
-        key = app.config.get("SECRET_KEY")
-        if not correo.__contains__("'"):
-            if VALIDAR(correo, passw, key) == True:
-                if not correo.__contains__("@"):
-                    userXD = SEARCH_DB("USER", correo)
-                    datos_send_token = {
-                        "exp": datetime.datetime.utcnow()
-                        + datetime.timedelta(days=30, minutes=13, seconds=0),
-                        "iat": datetime.datetime.utcnow(),
-                        "EMAIL": userXD[2],
-                    }
-                    eltoken = jwt.encode(
-                        datos_send_token,
-                        app.config.get("SECRET_KEY"),
-                        algorithm="HS256",
-                    )
-                    session["user"] = userXD[0]
-                    session["token"] = eltoken
-                    log.info(f"[{ip_client}] [/login ] Usuario [{userXD[1]}] logueado correctamente")
-                    return redirect(url_for("index"))
+        try:
+            email = request.form.get("email")
+            passw = request.form.get("passw")
+            key = app.config.get("SECRET_KEY")
+            if email.__contains__('"'):
+                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+            if VALIDAR(email, passw, key) == True:
+                if email.__contains__("@"):
+                    TheUser = SEARCH_DB("EMAIL", email)
                 else:
-                    mailXD = SEARCH_DB("EMAIL", correo)
-                    datos_send_token = {
+                    TheUser = SEARCH_DB("USER", email)          
+                    
+                data_token = {
                         "exp": datetime.datetime.utcnow()
                         + datetime.timedelta(days=30, minutes=13, seconds=0),
                         "iat": datetime.datetime.utcnow(),
-                        "EMAIL": ENCRIPT(mailXD[2], app.config("SECRET_KEY")),
-                    }
-                    eltoken = jwt.encode(
-                        datos_send_token,
+                        "EMAIL": TheUser[2]}
+                thetoken = jwt.encode(
+                        data_token,
                         app.config.get("SECRET_KEY"),
-                        algorithm="HS256",
-                    )
-                    session["user"] = mailXD[0]
-                    session["token"] = eltoken
-                    log.info(f"[{ip_client}] [/login ] Usuario [{mailXD[1]}] logueado correctamente")
-                    return redirect(url_for("index"))
+                        algorithm="HS256")
+                
+                session["user"] = TheUser[0]
+                session["token"] = thetoken
+                        
+                if TheUser[4] != "True":
+                    return redirect(url_for("EmailSend", email=TheUser[2]))
+                        
+                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
+                return redirect(url_for("index"))
             else:
                 ERROR = "USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk "
                 log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                return render_template("auth/log-in_layout.html", prueba=ERROR)
-
-        else:
-            ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-            log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-            return render_template("auth/log-in_layout.html", prueba2=ERROR)
+                return render_template("auth/log-in_layout.html", ERROR=ERROR)
+   
+        except Exception as e:
+            ERROR = "Ups algo salio mal, intentalo de nuevo"
+            log.error(f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
+            return render_template("auth/log-in_layout.html", ERROR2=ERROR)
 
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
@@ -159,38 +151,40 @@ def login():
 def regist():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
-        usuario = request.form.get("username")
-        correo = request.form.get("email")
-        passw = request.form.get("passw")
-        if not usuario.__contains__('"'):
-            if not usuario.__contains__("@"):
-                if not correo.__contains__('"'):
-                    EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
-                    respuesta = INSERT_DB(usuario, correo, EPASSW)
-                    if respuesta == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
-                        log.info(f"[{ip_client}] [/regist ] Usuario {usuario} creado correctamente")
-                        return redirect(url_for("login"))
-                    else:
-                        log.debug(
-                            f"[{ip_client}] [/regist ] Usuario {usuario} NO CREADO {respuesta}"
-                        )
-                        return render_template(
-                            "auth/sign-up_layout.html", prueba=respuesta
-                        )
-                else:
-                    ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-                    log.debug(
-                        f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]"
-                    )
-                    return render_template("auth/sign-up_layout.html", prueba2=ERROR)
-            else:
+        try:
+            username = request.form.get("username")
+            email = request.form.get("email")
+            passw = request.form.get("passw")
+            if username.__contains__('"'):
+                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+            
+            elif username.__contains__("@"):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER @"
                 log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
-                return render_template("auth/sign-up_layout.html", prueba2=ERROR)
-        else:
-            ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-            log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-            return render_template("auth/sign-up_layout.html", prueba2=ERROR)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                
+            elif email.__contains__('"'):
+                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+            
+            else:      
+                EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
+                response = INSERT_DB(username, email, EPASSW)
+                
+                if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
+                    log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
+                    return redirect(url_for("EmailSend", email=email))
+                else:
+                    log.debug(f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
+                    return render_template("auth/sign-up_layout.html", ERROR=response)
+                
+        except Exception as e:
+            ERROR = f"Ups algo salio mal, intentalo de nuevo"
+            log.error(f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
+            return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
         return render_template("auth/sign-up_layout.html")
@@ -206,41 +200,128 @@ def logout():
     return redirect(url_for("index"))
 
 
-@app.route("/email")
+@app.route("/confirm")
 def EmailSend():
     ip_client = request.headers.get("X-Real-IP")
-    log.info(f"[{ip_client}] [/EmailSend ] correo de confirmacion")
-    return render_template("auth/EmailSend.html")
+    if request.args.get("email"):
+        email = request.args.get("email")
+        try:
+            user = SEARCH_DB("EMAIL", email)
+            if user == None:
+                Error = f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela'
+                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
+                return render_template("auth/EmailSend.html",Error=Error)
+            code = C_EMAIL_VAL(user[1])
+                
+            datos_send_token = {
+                    "user": user[1],
+                    "email": email,
+                    "code": code}
+                
+            token = jwt.encode(
+                    datos_send_token,
+                    app.config.get("SECRET_KEY"),
+                    algorithm="HS256")
+                
+            subject = f"Confirmación de cuenta [{code}]"
+            message = f"""<html>
+                <head>
+                </head>
+                <body>
+                <div class="container"> <!-- añadido un contenedor para el contenido -->
+                <h1>Confirmación de cuenta</h1>
+                <h2>
+                Hola <strong>{user[1]}</strong>, Gracias por registrate en nuestra web. 
+                Para completar el proceso, por favor usa este código para confirmar tu cuenta:
+                </h2>
+                <h1><strong>{code}</strong></h1>
+                <h2>O haz clic en el siguiente link:</h2>
+                <h1><a href="https://xxacrvxx.ydns.eu/EmailConfirm?token={token}">Confirmar mi cuenta</a></h1>
+                </div> <!-- fin del contenedor -->
+                <h2>
+                Esta confirmacion sera valida por 30 minutos, si no has solicitado esto, ignora este correo.
+                <p>Saludos,
+                El equipo de xXACRVXx</p>
+                </h2>
+                </body>
+                </html>"""
+                
+            SEND_MAIL(email, subject, message)
+            log.info(f"[{ip_client}] [/EmailSend ] Usuario [{user[1]}] envio correo a [{email}] para confirmar su cuenta")
+            return redirect(url_for("EmailConfirm", email=email))
+        except Exception as e:
+            log.error(f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
+            Error2 =f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde"
+            return render_template("auth/EmailSend.html", Error2=Error2)
+    else:
+        return render_template("auth/EmailSend.html")
 
 
 @app.route("/EmailConfirm", methods=["POST", "GET"])
 def EmailConfirm():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
-        correo = request.form.get("email")
-        code = request.form.get("code")
-        respuesta = EMAIL_VAL(correo, code)
-        print(correo, code, respuesta)
-        if respuesta == True:
-            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
-            return redirect(url_for("index"))
-        if respuesta == False:
-            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
-            return redirect(url_for("EmailSend"))
+        try:
+            email = request.form.get("email")
+            code = request.form.get("code")
+            response = EMAIL_VAL(email, code, True)
+            if response == True:
+                log.info(f"[{ip_client}] [/EmailConfirm ] Correo [{email}] a activado su cuenta")
+                return redirect(url_for("index"))
+            if response == False:
+                ERROR = f"EL CODIGO DE ACTIVACION ES INCORRECTO, SI NO A RESIVIDO UN CORREO PUEDE VOLVER A INTENTARLO"
+                log.debug(f"[{ip_client}] [/EmailConfirm ] Correo [{email}] utilizo un codigo incorrecto")
+                return render_template("auth/EmailConfirm.html", Error=ERROR)
+        except Exception as e:
+            log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0005]: {e} [{traceback.format_exc()}]")
+            Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+            return render_template("auth/EmailConfirm.html", Error2=Error2)
     else:
-        if request.args.get("email"):
-            correo = request.args.get("email")
-            user = SEARCH_DB("EMAIL", correo)
-            code = C_EMAIL_VAL(user[1])
-            print(correo, code, user[1])
-            ASUNTO ="Confirmacion de Cuenta"
-            MENSAGE =f"Use este codigo para confirmar su cuenta: {str(code)} \n\nSi no solicitaste esta operacion, por favor ignora este mensaje. \nSi no eres tu y no solicitaste esta operacion, por favor ignora este mensaje.\n\ por favor haga click en el siguiente enlace: https://xxacrvxx.ydns.eu/EmailConfirm?email={correo} e ingrece el codigo"
-            mail = f'Subject: {ASUNTO}\nDear ContactName, \n\n' + MENSAGE
-            SEND_MAIL(correo, mail)
-            log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{correo}] activando su cuenta")
-            return render_template("auth/EmailConfirm.html", correo=correo)
-        else:
-            return redirect(url_for("EmailSend"))
+        try:
+            if request.args.get("email"):
+                email = request.args.get("email")
+                log.debug(f"[{ip_client}] [/EmailConfirm ] Usuario [{email}] solicito confirmacion de cuenta")
+                return render_template("auth/EmailConfirm.html", correo=email)
+                
+            if request.args.get("token"):
+                try:
+                    token = request.args.get("token")
+                    verific = jwt.decode(
+                    token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
+                    
+                    user = verific["user"]
+                    email = verific["email"]
+                    code = verific["code"]
+                    user_data = SEARCH_DB("USER", user)
+                    if user_data == None:
+                        log.warning(f"[{ip_client}] [/EmailConfirm ] WARNING[0001] user [{user}], email [{email}] intento falsear el token")
+                        return redirect(url_for("EmailSend"))
+                    
+                    response = EMAIL_VAL(email,code, True)
+                    if response == True:            
+                        log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] cuenta activada")
+                        return redirect(url_for("index"))
+                    else:
+                        log.debug(f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] codigo incorrecto")
+                        return redirect(url_for("EmailSend"))
+                    
+                except jwt.ExpiredSignatureError:
+                    log.debug(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token expirado")
+                    return redirect(url_for("EmailSend"))
+                except jwt.InvalidTokenError:
+                    log.error(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token invalido")
+                    return redirect(url_for("EmailSend"))
+                except Exception as e:
+                    log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0006]: {e} [{traceback.format_exc()}]")
+                    Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+                    return render_template("auth/EmailConfirm.html", Error2=Error2)
+            else:
+                return redirect(url_for("EmailSend"))
+        except Exception as e:
+            log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
+            Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+            return render_template("auth/EmailConfirm.html", Error2=Error2)
+            
 
 
 
@@ -255,7 +336,7 @@ def favicon():
             the_path = f"{CONFIG.SYSTEM_PATH}/static"
         return send_from_directory(the_path, "favicon.png", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/icon ] [ERROR] {e}")
+        log.error(f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -271,7 +352,7 @@ def robots_txt():
         log.debug(f"[{ip_client}] [/robots.txt ] [OK]")
         return send_from_directory(the_path, "robots.txt", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/robots.txt ] [ERROR] {e}")
+        log.error(f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -287,7 +368,7 @@ def sitemap_xml():
         log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
         return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/sitemap.xml ] [ERROR] {e}")
+        log.error(f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -815,6 +896,7 @@ def destroyer_bot():
                 log.info(f"[/api/v2/destroyer ] [method POST] DestroyerBot {ip_client} con User-Agent {user_agent}, {data}")
                 return jsonify(response_data)
             else:
+                user_agent = request.headers.get("User-Agent")
                 log.warning(f"[/api/v2/destroyer ] [method POST] Acceso no autorizado desde {ip_client} con User-Agent {user_agent}")
                 return jsonify({"error": "Forbidden"}), 403
         else:
