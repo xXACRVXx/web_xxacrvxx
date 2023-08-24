@@ -20,17 +20,17 @@
                    <p>¿No tienes una contraseña? entonces por favor <a class="white" href="{{url_for('regist')}}">Registrarse</a></p>
 						  
 						  <div>
-						    {% if prueba %}
-						      <p><b>{{prueba}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+						    {% if ERROR %}
+						      <p><b>{{ERROR}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
 						      
 						    {% endif %}
 						  </div>
 						  
 						  <div>
 
-						    {% if prueba2 %}
+						    {% if ERROR2 %}
 
-						     <p><b>{{prueba2}}</b></p>
+						     <p><b>{{ERROR2}}</b></p>
 						      
 						    {% endif %}
 						  </div>

@@ -3,7 +3,7 @@
 
 
     <!-- Website Title -->
-{% block title %}REGISTRARSE{% endblock %}   
+{% block title %}ConfirmMail{% endblock %}   
 
 {% block header %}   
    <a class="btn-outline-sm" href="{{url_for('login')}}">INICIAR SESION</a>
@@ -16,28 +16,30 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1>REGISTRARSE</h1>
-                   <p>Complete el siguiente formulario para registrarse en xXACRVXx. ¿Ya te registraste? entonces solo <a class="white" href="{{url_for('login')}}">Iniciar Sesion</a></p> 
+                    <h1>Enviar Correo</h1>
+                   <p>Escriba la direccion de correo para confirmar su cuenta</a></p> 
                         
-                   		<div>
-						    {% if prueba %}
-						      <p><b>{{prueba}} SI YA TIENE UNA CUENTA INICIE SESION <a class=white href="{{url_for('login')}}">AQUI</a></b></p>
-						      
-						    {% endif %}
-						</div>
 						  
-						<div>
+                   <div>
+                    {% if Error %}
+                      <p><b>{{Error}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+                      
+                    {% endif %}
+                  </div>
 
-						    {% if prueba2 %}
+                  <div>
 
-						     <p><b>{{prueba2}}</b></p>
-						      
-						    {% endif %}
-						</div>
+                    {% if Error2 %}
+
+                     <p><b>{{Error2}}</b></p>
+                      
+                    {% endif %}
+                  </div>
+                
                     
                    <!-- Sign Up Form -->
                     <div class="form-container">
-                        <form action="EmailConfirm" method="get"  id="sing"  data-focus="false">
+                        <form action="confirm" method="get"  id="sing"  data-focus="false">
                             <div class="form-group">
                                 <input type="email" class="form-control-input" name="email" required>
                                 <label class="label-control" for="semail">Email</label>

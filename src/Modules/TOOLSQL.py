@@ -478,25 +478,30 @@ def C_EMAIL_VAL(USER=""):
 
         return ERROR
 
-def EMAIL_VAL(EMAIL="", COD=""):
+def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
     
     try:
         DTU = SEARCH_DB('EMAIL', EMAIL)
         if not DTU == None:
             DCOD = DTU[5]
-            # print(DPASSW)
-            if COD == DCOD:
+            if VERIFIC==True and DTU[4]=="True":
+                return True
+                
+            elif str(COD) == str(DCOD):
                 recon()
                 cur.execute(f'UPDATE USERDB SET EMAIL_CONFIRM="True" WHERE EMAIL="{EMAIL}"')
                 con.commit()
                 con.close()
                 return True
+
             else:
                 recon()
                 cur.execute(f'UPDATE USERDB SET EMAIL_CONFIRM="False" WHERE EMAIL="{EMAIL}"')
                 con.commit()
                 con.close()
                 return False
+        else:
+            return False
 
     except Exception as e:
         ERROR = f'ERROR AL EDITAR\n{e}'

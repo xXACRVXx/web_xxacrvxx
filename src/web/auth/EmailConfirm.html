@@ -2,7 +2,7 @@
 
 {% extends 'auth/layout_auth.html' %}
 
-{% block title %}INICIAR SESION{% endblock %}
+{% block title %}EmailConfirm{% endblock %}
 
 
 {% block header %}           
@@ -16,21 +16,21 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1>INICIAR SESION</h1>
-                   <p>¿No tienes una contraseña? entonces por favor <a class="white" href="{{url_for('regist')}}">Registrarse</a></p>
+                    <h1>Confirmar direccion de correo</h1>
+                   <p>¿No tiene un codigo para confimar su correo? de click en <a class="white" href="{{url_for('EmailSend')}}">Enviar correo</a></p>
 						  
 						  <div>
-						    {% if prueba %}
-						      <p><b>{{prueba}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+						    {% if Error %}
+						      <p><b>{{Error}} <a class=white href="{{url_for('EmailSend')}}">AQUI</a></b></p>
 						      
 						    {% endif %}
 						  </div>
 						  
 						  <div>
 
-						    {% if prueba2 %}
+						    {% if Error2 %}
 
-						     <p><b>{{prueba2}}</b></p>
+						     <p><b>{{Error2}}</b></p>
 						      
 						    {% endif %}
 						  </div>
@@ -44,13 +44,13 @@
                          
                             <div class="form-group">
                                 <input type="text" class="form-control-input" name="code" required>
-                                <label class="label-control" for="lemail">USERNAME/CORREO</label>
+                                <label class="label-control" for="lemail">Codigo de confirmacion</label>
                                 <div class="help-block with-errors"></div>
                             </div>
 
                             <input type="hidden" id="postId" name="email" value= "{{correo}}" />
                             <div class="form-group">
-                                <button type="submit" class="form-control-submit-button">INICAR SESION</button>
+                                <button type="submit" class="form-control-submit-button">Confirmar codigo</button>
                             </div>
                             <div class="form-message">
                                 <div id="lmsgSubmit" class="h3 text-center hidden"></div>

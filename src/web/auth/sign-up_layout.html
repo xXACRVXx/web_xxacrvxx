@@ -20,17 +20,17 @@
                    <p>Complete el siguiente formulario para registrarse en xXACRVXx. ¿Ya te registraste? entonces solo <a class="white" href="{{url_for('login')}}">Iniciar Sesion</a></p> 
                         
                    		<div>
-						    {% if prueba %}
-						      <p><b>{{prueba}} SI YA TIENE UNA CUENTA INICIE SESION <a class=white href="{{url_for('login')}}">AQUI</a></b></p>
+						    {% if ERROR %}
+						      <p><b>{{ERROR}} SI YA TIENE UNA CUENTA INICIE SESION <a class=white href="{{url_for('login')}}">AQUI</a></b></p>
 						      
 						    {% endif %}
 						</div>
 						  
 						<div>
 
-						    {% if prueba2 %}
+						    {% if ERROR2 %}
 
-						     <p><b>{{prueba2}}</b></p>
+						     <p><b>{{ERROR2}}</b></p>
 						      
 						    {% endif %}
 						</div>
