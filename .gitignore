@@ -9,7 +9,6 @@ src/static/_dev
 
 src/Modules/__pycache__
 src/Modules/PRUEBAS.py
-src/Modules/SENDMAIL.py
 
 src/Databases/__pycache__
 src/Databases/toolmysql.py
