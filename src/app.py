@@ -309,7 +309,7 @@ def EmailConfirm():
                     log.debug(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token expirado")
                     return redirect(url_for("EmailSend"))
                 except jwt.InvalidTokenError:
-                    log.error(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token invalido")
+                    log.debug(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token invalido")
                     return redirect(url_for("EmailSend"))
                 except Exception as e:
                     log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0006]: {e} [{traceback.format_exc()}]")
