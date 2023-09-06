@@ -53,8 +53,8 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.2.0b"
-log.info(f"SERVIDOR INICIADO EN: {CONFIG.MY_OS}")
+VERSION = "v0.2.3b"
+log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
 
@@ -212,6 +212,10 @@ def EmailSend():
                 log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
                 return render_template("auth/EmailSend.html",Error=Error)
             code = C_EMAIL_VAL(user[1])
+            if code == True:
+                Error = f'El correo "{email}" ya fue confirmado anteriormente'
+                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
+                return render_template("auth/EmailSend.html",Error=Error)
                 
             datos_send_token = {
                     "user": user[1],

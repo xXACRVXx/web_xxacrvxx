@@ -461,12 +461,17 @@ def EDITAR(TYPE='USER', USER='', NEWD=''):
         log.error(f'[EDITAR:] [ERROR] (ERROR={ERROR})')
         return ERROR
 
-def C_EMAIL_VAL(USER=""):
+def C_EMAIL_VAL(USER="", VERIFIC=False):
 
     try:
         numero = random.randint(100000, 999999)
+        
+        DTU = SEARCH_DB('USER', USER)
+        
+        if VERIFIC==True and DTU[4]=="True":
+                return True
 
-        if not SEARCH_DB('USER', USER) == None:
+        elif not DTU == None:
             recon()
             cur.execute(f'UPDATE USERDB SET RANDOM="{str(numero)}" WHERE USER="{USER}"')
             con.commit()
@@ -476,7 +481,7 @@ def C_EMAIL_VAL(USER=""):
     except Exception as e:
         ERROR = f'ERROR AL EDITAR\n{e}'
 
-        return ERROR
+        return False
 
 def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
     

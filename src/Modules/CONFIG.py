@@ -1,9 +1,12 @@
-import os
+import os, traceback
 import platform
 import psutil
+import logging
 from dotenv import load_dotenv
 
 load_dotenv("config.env") # carga las variables de entorno desde el archivo .env
+
+log = logging.getLogger("CONFIG")
 
 SECRECT = os.getenv("SECRET_KEY")
 
@@ -11,14 +14,11 @@ SECRECT = os.getenv("SECRET_KEY")
 
 MY_OS = platform.system()
 SYSTEM_PATH = os.getcwd()
-if MY_OS == "Windows":
-    DOWLOAD_PATH = "\Downloads"
-else:
-    DOWLOAD_PATH = "/Downloads"
+
+DOWLOAD_PATH = "Downloads"
 
 
-RUTE = f"{SYSTEM_PATH}{DOWLOAD_PATH}"
-
+RUTE = os.path.join(SYSTEM_PATH,DOWLOAD_PATH)
 
 
 
@@ -34,18 +34,10 @@ else:
 
 
 
-def SPACE_FILE(uss,archive):  
-    if MY_OS == "Windows":
-        the_file=os.path.getsize((rf'{RUTE}\{uss}\{archive}'))
-        f_space = the_file / 1024**2
-        if f_space >= 1024:
-            the_space_file = round(f_space / 1024, 2)
-            return f"{the_space_file}GB"
-        else:
-            the_space_file = round(f_space, 2)
-            return f"{the_space_file}MB"
-    else:
-        the_file=os.path.getsize((rf'{RUTE}/{uss}/{archive}'))
+def SPACE_FILE(uss,archive):
+    try:
+        rute_archive = os.path.join(RUTE,str(uss),str(archive))
+        the_file=os.path.getsize((rf'{rute_archive}'))
         f_space = the_file / 1024**2
         if the_file / 1024**1 <= 1024:
             the_space_file = round(the_file / 1024**1, 2)
@@ -56,6 +48,10 @@ def SPACE_FILE(uss,archive):
         else:
             the_space_file = round(f_space, 2)
             return f"{the_space_file}MB"
+    except Exception as e:
+        log.error(f"[SPACE_FILE] [ERROR] {e} [{traceback.format_exc()}]")
+        return "ERROR"
+        
 
 
 

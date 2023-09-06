@@ -64,7 +64,7 @@ class CustomFormatter(logging.Formatter):
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR, exist_ok=True)
 
-file_name = "info.log"
+file_name = "logger.log"
 file_path = os.path.join(LOGS_DIR, file_name)
 
 stream_handler = logging.StreamHandler(stream=sys.stdout)
