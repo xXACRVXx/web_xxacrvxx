@@ -19,3 +19,11 @@ client/*
 run.sh
 
 
+src/static/test/chat1.css
+src/static/test/chat2.css
+src/static/test/chat2.js
+src/static/test/chat3.css
+src/static/test/chat3.js
+src/web/chat/chat1.html
+src/web/chat/chat2.html
+src/web/chat/chat3.html
