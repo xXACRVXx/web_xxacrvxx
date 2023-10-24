@@ -9,6 +9,7 @@ src/static/_dev
 
 src/Modules/__pycache__
 src/Modules/PRUEBAS.py
+src/Modules/logs/*
 
 src/Databases/__pycache__
 src/Databases/toolmysql.py
@@ -24,3 +25,4 @@ src/static/test/*
 src/web/chat/chat1.html
 src/web/chat/chat2.html
 src/web/chat/chat3.html
+

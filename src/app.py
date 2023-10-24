@@ -35,7 +35,7 @@ from flask import (
 )
 from flask_socketio import SocketIO, emit, send
 
-# from flask_cors import CORS, cross_origin
+from flask_cors import CORS, cross_origin
 import sqlite3
 from Modules import CONFIG
 import jwt
@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.2.5b"
+VERSION = "v0.3.3b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -614,6 +614,7 @@ def download():
             return redirect(url_for("login"))
 
 
+
 @app.route("/upload", methods=["POST", "GET"])
 def upload():
     ip_client = request.headers.get("X-Real-IP")
@@ -655,7 +656,7 @@ def upload():
                     file.save(file_path)
                     log.info(
                         f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
-                    return redirect(url_for("download"))
+                    return jsonify({"nombre": filename})
                 except jwt.ExpiredSignatureError:
                     log.debug(
                         f"[{ip_client}] [/upload ] Usuario [{uss}]  expirón token")
