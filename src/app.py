@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.3.7b"
+VERSION = "v0.4.8b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -84,7 +84,7 @@ def index():
 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
-            return render_template("index2.html")
+            return render_template("index.html", version=VERSION)
         else:
             try:
                 verific = jwt.decode(jwt=str(token), key=str(app.config.get(
@@ -101,7 +101,7 @@ def index():
     except Exception as e:
         log.error(
             f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
-        return render_template("index2.html", version=VERSION)
+        return render_template("index.html", version=VERSION)
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -116,7 +116,7 @@ def login():
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html", ERROR2=ERROR, version=VERSION)
+                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
@@ -146,17 +146,17 @@ def login():
                 ERROR = "USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk "
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                return render_template("auth/log-in_layout.html", ERROR=ERROR, version=VERSION)
+                return render_template("auth/log-in_layout.html", ERROR=ERROR)
 
         except Exception as e:
             ERROR = "Ups algo salio mal, intentalo de nuevo"
             log.error(
                 f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/log-in_layout.html", ERROR2=ERROR, version=VERSION)
+            return render_template("auth/log-in_layout.html", ERROR2=ERROR)
 
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
-        return render_template("auth/log-in_layout.html", version=VERSION)
+        return render_template("auth/log-in_layout.html")
 
 
 @app.route("/regist", methods=["POST", "GET"])
@@ -171,19 +171,19 @@ def regist():
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif username.__contains__("@"):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER @"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif email.__contains__('"'):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             else:
                 EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
@@ -196,16 +196,16 @@ def regist():
                 else:
                     log.debug(
                         f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
-                    return render_template("auth/sign-up_layout.html", ERROR=response, version=VERSION)
+                    return render_template("auth/sign-up_layout.html", ERROR=response)
 
         except Exception as e:
             ERROR = f"Ups algo salio mal, intentalo de nuevo"
             log.error(
                 f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
+            return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
-        return render_template("auth/sign-up_layout.html", version=VERSION)
+        return render_template("auth/sign-up_layout.html")
 
 
 @app.route("/logout", methods=["POST", "GET"])
@@ -229,13 +229,13 @@ def EmailSend():
                 Error = f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela'
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
-                return render_template("auth/EmailSend.html", Error=Error, version=VERSION)
+                return render_template("auth/EmailSend.html", Error=Error)
             code = C_EMAIL_VAL(user[1])
             if code == True:
                 Error = f'El correo "{email}" ya fue confirmado anteriormente'
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
-                return render_template("auth/EmailSend.html", Error=Error, version=VERSION)
+                return render_template("auth/EmailSend.html", Error=Error)
 
             datos_send_token = {
                 "user": user[1],
@@ -788,20 +788,20 @@ def nuevo():
 
 @app.route("/contact")
 def contactar():
-    return "en proceso"
-    # return render_template('contact.html')
+    #return "en proceso"
+    return render_template('contact.html')
 
 
 @app.route("/conditions")
 def ter_y_co():
     return "en proceso"
-    # return render_template("auth/terms-conditions.html")
+    #return render_template("auth/terms-conditions.html")
 
 
 @app.route("/privacy")
 def privacy():
-    return "en proceso"
-    # return render_template('/auth/privacy-policy.html')
+    #return "en proceso"
+    return render_template('privacy.html')
 
 
 @app.route("/poweroff", methods=["POST", "GET"])
