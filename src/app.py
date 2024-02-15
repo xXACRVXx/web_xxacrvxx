@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.4.8b"
+VERSION = "v0.4.9b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -125,7 +125,7 @@ def login():
 
                 data_token = {
                     "exp": datetime.datetime.utcnow()
-                    + datetime.timedelta(days=30, minutes=13, seconds=0),
+                    + datetime.timedelta(days=60, minutes=0, seconds=0),
                     "iat": datetime.datetime.utcnow(),
                     "EMAIL": TheUser[2]}
                 thetoken = jwt.encode(
