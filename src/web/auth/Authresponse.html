@@ -1,0 +1,41 @@
+
+
+{% extends 'auth/layout_auth.html' %}
+
+{% block title %}EmailConfirm{% endblock %}
+
+
+{% block header %}           
+     <a class="btn-outline-sm" href="{{url_for('regist')}}">REGISTRARSE</a>
+{% endblock %}
+
+
+{% block content %}
+    <!-- Header -->
+    <header id="header" class="ex-2-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1>Codigo de confirmacion</h1>
+                    <p>¿Quiere extraer el token de forma manual?? de click en <a class="white" href="{{url_for('callback', code=code)}}">Token</a></p>
+						
+				   
+                    <!-- Sign Up Form -->
+                    <div class="form-container">
+                        <form action="{{url_for('authorize')}}" method="post" id="log" data-focus="false">
+                         
+                            <div class="form-group">
+                                <spam><h2>{{code}}</h2></spam>
+                            </div>
+
+                            
+                        </form>
+                    </div> <!-- end of form container -->
+                    <!-- end of sign up form -->
+
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </header> <!-- end of ex-header -->
+    <!-- end of header -->
+{% endblock %}

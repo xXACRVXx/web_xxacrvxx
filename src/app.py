@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.3.3b"
+VERSION = "v0.3.7b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -90,7 +90,7 @@ def index():
                 verific = jwt.decode(jwt=str(token), key=str(app.config.get(
                     "SECRET_KEY")), algorithms=["HS256"])
                 log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
-                return render_template("app/index.html", user=uss)
+                return render_template("app/index.html", user=uss, version=VERSION)
             except jwt.ExpiredSignatureError:
                 log.debug(f"[{ip_client}] [/ ] Token expirado")
                 return redirect(url_for("login"))
@@ -101,7 +101,7 @@ def index():
     except Exception as e:
         log.error(
             f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
-        return render_template("index2.html")
+        return render_template("index2.html", version=VERSION)
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -116,7 +116,7 @@ def login():
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+                return render_template("auth/log-in_layout.html", ERROR2=ERROR, version=VERSION)
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
@@ -146,17 +146,17 @@ def login():
                 ERROR = "USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk "
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                return render_template("auth/log-in_layout.html", ERROR=ERROR)
+                return render_template("auth/log-in_layout.html", ERROR=ERROR, version=VERSION)
 
         except Exception as e:
             ERROR = "Ups algo salio mal, intentalo de nuevo"
             log.error(
                 f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+            return render_template("auth/log-in_layout.html", ERROR2=ERROR, version=VERSION)
 
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
-        return render_template("auth/log-in_layout.html")
+        return render_template("auth/log-in_layout.html", version=VERSION)
 
 
 @app.route("/regist", methods=["POST", "GET"])
@@ -171,19 +171,19 @@ def regist():
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
 
             elif username.__contains__("@"):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER @"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
 
             elif email.__contains__('"'):
                 ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
 
             else:
                 EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
@@ -196,16 +196,16 @@ def regist():
                 else:
                     log.debug(
                         f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
-                    return render_template("auth/sign-up_layout.html", ERROR=response)
+                    return render_template("auth/sign-up_layout.html", ERROR=response, version=VERSION)
 
         except Exception as e:
             ERROR = f"Ups algo salio mal, intentalo de nuevo"
             log.error(
                 f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+            return render_template("auth/sign-up_layout.html", ERROR2=ERROR, version=VERSION)
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
-        return render_template("auth/sign-up_layout.html")
+        return render_template("auth/sign-up_layout.html", version=VERSION)
 
 
 @app.route("/logout", methods=["POST", "GET"])
@@ -229,13 +229,13 @@ def EmailSend():
                 Error = f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela'
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
-                return render_template("auth/EmailSend.html", Error=Error)
+                return render_template("auth/EmailSend.html", Error=Error, version=VERSION)
             code = C_EMAIL_VAL(user[1])
             if code == True:
                 Error = f'El correo "{email}" ya fue confirmado anteriormente'
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
-                return render_template("auth/EmailSend.html", Error=Error)
+                return render_template("auth/EmailSend.html", Error=Error, version=VERSION)
 
             datos_send_token = {
                 "user": user[1],
@@ -593,6 +593,7 @@ def download():
                         url=dir,
                         files=sorted_file,
                         space=CONFIG.Free_Space,
+                        version=VERSION
                     )
 
                 except jwt.ExpiredSignatureError:
@@ -697,7 +698,7 @@ def upload():
                     log.debug(
                         f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
                     return render_template(
-                        "files/upload.html", user=uss, space=CONFIG.Free_Space
+                        "files/upload.html", user=uss, space=CONFIG.Free_Space, version=VERSION
                     )
 
                 except jwt.ExpiredSignatureError:
@@ -770,7 +771,7 @@ def detalles():
 
 @app.route("/layout")
 def layout():
-    return render_template("layout.html")
+    return render_template("layout.html", version=VERSION)
 
 
 @app.route("/services")
@@ -1003,6 +1004,59 @@ def destroyer_bot():
         log.error(
             f"[/api/v2/destroyer ] Error al procesar la petición: {e} [{traceback.format_exc()}]")
         return jsonify({"error": "Internal server error"}), 500
+
+################## Test Auth #####################
+
+# Definir los usuarios
+users = {
+    'juan': '1234'
+}
+
+
+# Definir la ruta de auth
+@app.route('/auth')
+def auth_form():
+    username = request.args.get('username')
+    return render_template("auth/AuthApi.html", username=username)
+
+# Definir la ruta de autorización
+@app.route('/auth/authorize', methods=["POST", "GET"])
+def authorize():
+    # Obtener el nombre de usuario y la contraseña del usuario
+    username = request.form.get('username')
+    password = request.form.get('password')
+    key = app.config.get("SECRET_KEY")
+
+    # Verificar las credenciales del usuario
+    if username.__contains__('"'):
+                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+    if VALIDAR(username, password, key) == True:
+        if username.__contains__("@"):
+            TheUser = SEARCH_DB("EMAIL", username)
+        else:
+            TheUser = SEARCH_DB("USER", username)
+        # Generar un código de autorización
+        code = '123456'
+
+        # Redirigir al usuario a la aplicación
+        return render_template("auth/Authresponse.html", code=code)
+    else:
+        # Devolver un error
+        return f'Error de autorización,{username,password} '
+
+# Definir la ruta de devolución de llamada
+@app.route('/auth/callback')
+def callback():
+    # Obtener el código de autorización del usuario
+    code = request.args.get('code')
+
+    # Generar un token de acceso
+    token = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRhIjoidGhhdCJ9.Kl1fX8W7-0_6q_XDXO2QKL-6_j-3Z-4_p6-_0yh0E-8'
+
+    # Devolver el token de acceso
+    return token
+
 
 
 #################### SoketIO #####################

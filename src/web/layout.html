@@ -117,7 +117,7 @@
                 var button = document.getElementById("toggle-style");
                 var head = document.getElementsByTagName("head")[0];
               
-                // Crear una función para obtener el valor de una cookie
+                // Función para obtener el valor de una cookie
                 function getCookie(name) {
                   // Dividir la cadena document.cookie por punto y coma y espacios
                   var cookies = document.cookie.split("; ");
@@ -131,23 +131,47 @@
                       return decodeURIComponent(parts[1]);
                     }
                   }
-                  // Si no se encuentra la cookie, devolver una cadena vacía
-                  return "";
+                  // Si no se encuentra la cookie, devolver false
+                  return false;
                 }
+              
+                // Función para verificar si la cookie existe y crearla si no existe
+                function checkCookie() {
+                  // Obtener el valor de la cookie
+                  var cookieValue = getCookie("dark-mode");
+
+                  // Si la cookie no existe, crearla con el valor del tema del sistema
+                  if (!cookieValue) {
+                    const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+                    document.cookie = `dark-mode=${prefersDarkMode ? "true" : "false"}; path=/`;
+                  }
+
+                  var cookieValue = getCookie("dark-mode");
+
+                  if (cookieValue === "true") {
+                    head.appendChild(style);
+                  } else {
+                    head.removeChild(style);
+                  }
+                }
+              
+                // Añadir un evento load al elemento body
+                window.addEventListener("load", checkCookie);
               
                 // Añadir un evento click al botón para añadir o quitar el estilo del head
                 button.addEventListener("click", function() {
-                  // Comprobar si el estilo ya está en el head
-                  if (head.contains(style)) {
-                    // Quitar el estilo del head
-                    head.removeChild(style);
-                    // Crear una cookie con el nombre dark-mode y el valor false
-                    document.cookie = "dark-mode=false; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
-                  } else {
-                    // Añadir el estilo al head
+                  // Obtener el valor actual de la cookie
+                  var cookieValue = getCookie("dark-mode");
+                  
+                  // Invertir el valor de la cookie
+                  var newCookieValue = cookieValue === "true" ? "false" : "true";
+                  document.cookie = `dark-mode=${newCookieValue}; path=/`;
+                  
+                  // Aplicar el estilo correspondiente al nuevo valor de la cookie
+                  if (newCookieValue === "true") {
                     head.appendChild(style);
-                    // Crear una cookie con el nombre dark-mode y el valor true
-                    document.cookie = "dark-mode=true; expires=Thu, 18 Dec 2023 12:00:00 UTC; path=/";
+                  } else {
+                    head.removeChild(style);
                   }
                 });
               
@@ -156,12 +180,13 @@
                   // Añadir el estilo al head
                   head.appendChild(style);
                 }
-              </script>            
+              </script>    
+    
           </div>
         </div>
       </div>
     </nav>
-    {% with messages = get_flashed_messages() %}
+  {% with messages = get_flashed_messages() %}
     {% if messages %}
        {% for message in messages %}
           <div class="alert alert-warning alert-dismissable">
@@ -171,7 +196,7 @@
           
        {% endfor %}
     {% endif %}
- {% endwith %}
+  {% endwith %}
   
 
   </header>
