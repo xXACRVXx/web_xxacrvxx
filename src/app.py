@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.4.9b"
+VERSION = "v0.5.2b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -765,8 +765,8 @@ def delete():
 
 @app.route("/details")
 def detalles():
-    return "en proceso"
-    # return render_template('blog.html')
+    #return "en proceso"
+    return render_template('details.html', version=VERSION)
 
 
 @app.route("/layout")
@@ -776,20 +776,20 @@ def layout():
 
 @app.route("/services")
 def servicios():
-    return "en proceso"
-    # return render_template('services.html')
+    #return "en proceso"
+    return render_template('services.html', version=VERSION)
 
 
 @app.route("/news")
 def nuevo():
-    return "en proceso"
-    # return render_template('blog.html')
+    #return "en proceso"
+    return render_template('news.html', version=VERSION)
 
 
 @app.route("/contact")
 def contactar():
     #return "en proceso"
-    return render_template('contact.html')
+    return render_template('contact.html', version=VERSION)
 
 
 @app.route("/conditions")
@@ -801,7 +801,7 @@ def ter_y_co():
 @app.route("/privacy")
 def privacy():
     #return "en proceso"
-    return render_template('privacy.html')
+    return render_template('privacy.html', version=VERSION)
 
 
 @app.route("/poweroff", methods=["POST", "GET"])

@@ -245,7 +245,6 @@
             <a href="https://t.me/xxacrvxx"><span class="mai-logo-telegram"></span></a>
             <a href="https://twitter.com/xxacrvxx"><span class="mai-logo-twitter"></span></a>
             <a href="#"><span class="mai-logo-linkedin"></span></a>
-            <a href="#"><span class="mai-logo-mastodon"></span></a>
           </div>
         </div>
       </div>
@@ -283,6 +282,32 @@
   <script src="{{url_for('static', filename='js/google-maps.js')}}"></script>
 
   <script src="{{url_for('static', filename='js/theme.js')}}"></script>
+
+<script>
+function actualizarEnlaceActivo() {
+  // Obtiene la URL actual
+  const urlActual = window.location.pathname;
+
+  // Elimina la clase "active" de todos los elementos de navegación al principio
+  const elementosNav = document.querySelectorAll('.navbar-nav > .nav-item');
+  elementosNav.forEach(elementoNav => elementoNav.classList.remove('active'));
+
+  // Encuentra el elemento nav que coincide con la URL actual
+  const elementoNavActivo = document.querySelector('.navbar-nav > .nav-item > a[href="' + urlActual + '"]');
+
+  // Si se encuentra un elemento coincidente, añade la clase "active"
+  if (elementoNavActivo) {
+    elementoNavActivo.parentNode.classList.add('active');
+  }
+}
+
+// Actualiza el enlace activo al cargar la página
+actualizarEnlaceActivo();
+
+// Actualiza el enlace activo cuando cambia la URL
+window.addEventListener('popstate', actualizarEnlaceActivo);
+
+</script>
   
 
 </body>

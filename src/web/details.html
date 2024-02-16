@@ -1,0 +1,42 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Detalles{% endblock %}
+
+
+{% block content %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
+                <li class="breadcrumb-item active">Detalles</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Detalles</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-6 py-3">
+            <h2 class="title-section">Esto sigue en desarrollo</h2>
+            <div class="divider"></div>
+            <p>De momento aqui no hay nada XD</p>
+  
+
+          </div>
+        </div>
+      </div> <!-- .container -->
+    </div> <!-- .page-section -->
+  </main>
+
+  {% endblock %}
