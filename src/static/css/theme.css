@@ -1397,7 +1397,7 @@ a.text-dark:hover, a.text-dark:focus {
   margin-bottom: 16px;
   height: 320px;
   background-color: #F6F5FC;
-  color: #645F88;
+  color: #6558C8;
   border-radius: 30px;
 }
 
@@ -1409,7 +1409,11 @@ a.text-dark:hover, a.text-dark:focus {
 }
 
 .page-banner.home-banner h1 {
-  color: #2D2B3A;
+  color: #715BFF;
+}
+
+.page-banner.home-bannerXD h1 {
+  color: #2D2B3A
 }
 
 .page-banner.home-banner .img-place {
