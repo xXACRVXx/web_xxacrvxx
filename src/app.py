@@ -60,7 +60,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.5.7b"
+VERSION = "v0.5.8b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -175,13 +175,13 @@ def regist():
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif username.__contains__("@"):
-                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER @"
+                ERROR = "EL USUARIO NO PUEDE CONTENER @"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif email.__contains__('"'):
-                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                ERROR = "EL CORREO NO PUEDE CONTENER COMILLAS"
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
