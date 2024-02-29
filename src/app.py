@@ -60,7 +60,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.5.6b"
+VERSION = "v0.5.7b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 

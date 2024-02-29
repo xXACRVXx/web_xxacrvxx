@@ -70,7 +70,7 @@ file_path = os.path.join(LOGS_DIR, file_name)
 stream_handler = logging.StreamHandler(stream=sys.stdout)
 stream_handler.setFormatter(CustomFormatter())
 
-rotating_handler = TimedRotatingFileHandler(file_path, when="midnight", backupCount=10)
+rotating_handler = TimedRotatingFileHandler(file_path, when="midnight", backupCount=30)
 rotating_handler.namer = lambda name: name.replace(".log", "") + ".log"
 rotating_handler.setFormatter(CustomFormatter(no_colors=True))
 
