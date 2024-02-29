@@ -1,3 +1,4 @@
+from math import e
 from os import system
 import os
 import signal
@@ -59,7 +60,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.5.4b"
+VERSION = "v0.5.5b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -471,8 +472,9 @@ def download():
             else:
                 log.debug(f"[{ip_client}] [/download ] Usuario no logueado")
                 return redirect(url_for("login"))
-        except:
-            log.debug(f"[{ip_client}] [/download ] Usuario no logueado")
+        except Exception as e:
+            log.error(
+                f"[{ip_client}] [/download ] ERROR[0011]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
     elif request.args.get("token"):
@@ -611,7 +613,7 @@ def download():
 
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/download ] error {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/download ] ERROR[0012]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -676,7 +678,7 @@ def upload():
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/upload] error {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/upload] ERROR[0013]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
     else:
         try:
@@ -719,89 +721,224 @@ def upload():
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/upload ] ERROR[0014]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
 @app.route("/delete")
 def delete():
     ip_client = request.headers.get("X-Real-IP")
-    if request.args.get("del_file"):
-        try:
-            the_token = request.args.get("del_file")
-            verific = jwt.decode(
-                the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-            )
-            archive = verific["archive"]
-            user_token = DESENCRIPT(
-                str(verific["user"]), app.config.get("SECRET_KEY"))
-            suid = SEARCH_DB("ID", user_token)
-            uss = suid[1]
-            the_os = CONFIG.MY_OS
-            if the_os == "Windows":
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}\{user_token}\{archive}'
-            else:
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}/{archive}'
-            os.remove(the_path)
-            log.info(
-                f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
+    try:
+        if request.args.get("del_file"):
+            try:
+                the_token = request.args.get("del_file")
+                verific = jwt.decode(
+                    the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
+                )
+                archive = verific["archive"]
+                user_token = DESENCRIPT(
+                    str(verific["user"]), app.config.get("SECRET_KEY"))
+                suid = SEARCH_DB("ID", user_token)
+                uss = suid[1]
+                the_os = CONFIG.MY_OS
+                if the_os == "Windows":
+                    the_path = f'{app.config.get("UPLOAD_FOLDER")}\{user_token}\{archive}'
+                else:
+                    the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}/{archive}'
+                os.remove(the_path)
+                log.info(
+                    f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
+                return redirect(url_for("download"))
+            except jwt.ExpiredSignatureError:
+                log.debug(
+                    f"[{ip_client}] [/delete ] Usuario [{uss}] expirón token")
+                return redirect(url_for("login"))
+            except jwt.InvalidTokenError:
+                log.debug(
+                    f"[{ip_client}] [/delete ] Usuario [{uss}] token invalido")
+                return redirect(url_for("login"))
+            except Exception as e:
+                log.error(
+                    f"[{ip_client}] [/delete ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                return redirect(url_for("login"))
+        else:
+            log.debug(f"[{ip_client}] [/delete ] [method GET]")
             return redirect(url_for("download"))
-        except jwt.ExpiredSignatureError:
-            log.debug(
-                f"[{ip_client}] [/delete ] Usuario [{uss}] expirón token")
-            return redirect(url_for("login"))
-        except jwt.InvalidTokenError:
-            log.debug(
-                f"[{ip_client}] [/delete ] Usuario [{uss}] token invalido")
-            return redirect(url_for("login"))
-        except Exception as e:
+    except Exception as e:
             log.error(
-                f"[{ip_client}] [/delete ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/delete ] ERROR[0015]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
-    else:
-        log.debug(f"[{ip_client}] [/delete ] [method GET]")
-        return redirect(url_for("download"))
 
 
 @app.route("/details")
 def detalles():
-    #return "en proceso"
-    return render_template('details.html', version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template('details.html', user=uss, version=VERSION)
+        else:
+            return render_template('details.html', version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/details ] ERROR[0016]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/layout")
 def layout():
-    return render_template("layout.html", version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("layout.html", user=uss, version=VERSION)
+        else:
+            return render_template("layout.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[0017]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+    
 
 
 @app.route("/services")
 def servicios():
-    #return "en proceso"
-    return render_template('services.html', version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("services.html", user=uss, version=VERSION)
+        else:
+            return render_template("services.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/services ] ERROR[0018]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+        
 
 
 @app.route("/news")
 def nuevo():
-    #return "en proceso"
-    return render_template('news.html', version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("news.html", user=uss, version=VERSION)
+        else:
+            return render_template("news.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/news ] ERROR[0019]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/contact")
 def contactar():
-    #return "en proceso"
-    return render_template('contact.html', version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("contact.html", user=uss, version=VERSION)
+        else:
+            return render_template("contact.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/conditions")
 def ter_y_co():
-    return "en proceso"
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("conditions.html", user=uss, version=VERSION)
+        else:
+            return render_template("conditions.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/conditions ] ERROR[0021]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
     #return render_template("auth/terms-conditions.html")
 
 
 @app.route("/privacy")
 def privacy():
-    #return "en proceso"
-    return render_template('privacy.html', version=VERSION)
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("privacy.html", user=uss, version=VERSION)
+        else:
+            return render_template("privacy.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/privacy ] ERROR[0022]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/poweroff", methods=["POST", "GET"])

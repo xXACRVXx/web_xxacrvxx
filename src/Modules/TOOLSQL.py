@@ -309,7 +309,6 @@ def ALL_USERS():
         log.error(f"[ALL_USERS:] [ERROR] [{ERROR}]")
         return ERROR
 
-
 def SEARCH_DB(TYPE='USER', DATA_SEARCH=''):
     """
     SEARCH_DB(TYPE='USER', DATA_SEARCH='')
@@ -330,11 +329,14 @@ def SEARCH_DB(TYPE='USER', DATA_SEARCH=''):
         if TYPE in TIPOS:
             search_sql = f'SELECT * FROM USERDB WHERE {TYPE}="{DATA_SEARCH}"'
             cur.execute(search_sql)
+            resp = None
             for rew in cur.fetchall():
                 log.debug(
                     f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-                return rew
-            con.close
+                resp = rew
+            con.close()
+            return resp
+            
 
         elif TYPE == 'TIME':
             lista = []
@@ -546,6 +548,21 @@ def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
 
         return ERROR
 
+def COMMANDSQL(text):
+    try:
+        lista = []
+        recon()
+        for row in cur.execute(text):
+            ALL = row
+            lista.append(ALL)
+        con.close
+        log.debug(f"[COMMANDSQL:] [{text}] [OK]")
+        return lista
+    except Exception as e:
+        ERROR = f"ERROR AL EJECUTAR:\n{e}"
+        log.error(f"[COMMANDSQL:] [ERROR] [{ERROR}]")
+        return ERROR
+
 
 if __name__ == '__main__':
 
@@ -562,7 +579,12 @@ if __name__ == '__main__':
         if entrada.startswith('crearTabla'):
             respuesta = CREATE_TABLE()
             print(respuesta)
-
+        
+        if entrada == "sql":
+            texto = input("Comando: ")
+            resp = COMMANDSQL(texto)
+            print(resp)
+        
         if entrada == 'insert':
             valor1 = input('usuario: ')
             valor2 = input('correo: ')
@@ -574,7 +596,6 @@ if __name__ == '__main__':
 
         if entrada == 'ls':
             respuesta = ALL_USERS()
-            res2 = datetime.datetime.now()
             print(respuesta)
 
         if entrada == 'buscar':
