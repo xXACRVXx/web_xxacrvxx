@@ -22,14 +22,15 @@ RUTE = os.path.join(SYSTEM_PATH,DOWLOAD_PATH)
 
 
 
-disk_usage = psutil.disk_usage(SYSTEM_PATH)
-disk_space = disk_usage.free / 1024**2
-if disk_space >= 1024:
-    the_space = round(disk_space / 1024, 2)
-    Free_Space = f"{the_space}GB"
-else:
-    the_space = round(disk_space, 2)
-    Free_Space = f"{the_space}MB"
+def Free_Space():
+    disk_usage = psutil.disk_usage(SYSTEM_PATH)
+    disk_space = disk_usage.free / 1024**2
+    if disk_space >= 1024:
+        the_space = round(disk_space / 1024, 2)
+        return f"{the_space}GB"
+    else:
+        the_space = round(disk_space, 2)
+        return f"{the_space}MB"
 
 
 
@@ -61,4 +62,4 @@ def SPACE_FILE(uss,archive):
 if __name__ == "__main__":
     print(f"SISTEMA OPERATIVO: {MY_OS}")
     print(f"RUTA DEL PATH DEL SERVIDOR: {RUTE}")
-    print(f"ESPACIO DISPONIBLE  {Free_Space}")
+    print(f"ESPACIO DISPONIBLE  {Free_Space()}")

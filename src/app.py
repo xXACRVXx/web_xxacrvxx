@@ -60,7 +60,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.5.8b"
+VERSION = "v0.6.0b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -594,7 +594,7 @@ def download():
                         user=uss,
                         url=dir,
                         files=sorted_file,
-                        space=CONFIG.Free_Space,
+                        space=CONFIG.Free_Space(),
                         version=VERSION
                     )
 
@@ -700,7 +700,7 @@ def upload():
                     log.debug(
                         f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
                     return render_template(
-                        "files/upload.html", user=uss, space=CONFIG.Free_Space, version=VERSION
+                        "files/upload.html", user=uss, space=CONFIG.Free_Space(), version=VERSION
                     )
 
                 except jwt.ExpiredSignatureError:
