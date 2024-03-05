@@ -37,7 +37,6 @@ from flask import (
 from flask_socketio import SocketIO, emit, send
 
 from flask_cors import CORS, cross_origin
-import sqlite3
 from Modules import CONFIG
 import jwt
 import datetime
@@ -60,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.6.0b"
+VERSION = "v0.6.1b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -380,11 +379,7 @@ def testchat3():
 def favicon():
     ip_client = request.headers.get("X-Real-IP")
     try:
-        the_os = CONFIG.MY_OS
-        if the_os == "Windows":
-            the_path = f"{CONFIG.SYSTEM_PATH}\static"
-        else:
-            the_path = f"{CONFIG.SYSTEM_PATH}/static"
+        the_path = os.path.join(CONFIG.SYSTEM_PATH, "static")
         return send_from_directory(the_path, "favicon.png", as_attachment=False)
     except Exception as e:
         log.error(
@@ -396,11 +391,7 @@ def favicon():
 def robots_txt():
     ip_client = request.headers.get("X-Real-IP")
     try:
-        the_os = CONFIG.MY_OS
-        if the_os == "Windows":
-            the_path = f"{CONFIG.SYSTEM_PATH}\static\extra"
-        else:
-            the_path = f"{CONFIG.SYSTEM_PATH}/static/extra"
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
         log.debug(f"[{ip_client}] [/robots.txt ] [OK]")
         return send_from_directory(the_path, "robots.txt", as_attachment=False)
     except Exception as e:
@@ -413,11 +404,7 @@ def robots_txt():
 def sitemap_xml():
     ip_client = request.headers.get("X-Real-IP")
     try:
-        the_os = CONFIG.MY_OS
-        if the_os == "Windows":
-            the_path = f"{CONFIG.SYSTEM_PATH}\static\extra"
-        else:
-            the_path = f"{CONFIG.SYSTEM_PATH}/static/extra"
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
         log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
         return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
     except Exception as e:
@@ -447,11 +434,7 @@ def download():
                         token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
                     )
                     archive = request.args.get("file")
-                    the_os = CONFIG.MY_OS
-                    if the_os == "Windows":
-                        the_path = f'{app.config.get("UPLOAD_FOLDER")}\{uid}'
-                    else:
-                        the_path = f'{app.config.get("UPLOAD_FOLDER")}/{uid}'
+                    the_path = os.path.join(app.config.get("UPLOAD_FOLDER"),uid)
                     log.info(
                         f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
                     )
@@ -489,11 +472,7 @@ def download():
                 str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
-            the_os = CONFIG.MY_OS
-            if the_os == "Windows":
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}\{user_token}'
-            else:
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}'
+            the_path = os.path.join(app.config.get("UPLOAD_FOLDER",user_token))
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
             )
@@ -522,11 +501,7 @@ def download():
                 str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
-            the_os = CONFIG.MY_OS
-            if the_os == "Windows":
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}\{user_token}'
-            else:
-                the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}'
+            the_path = os.path.join(app.config.get("UPLOAD_FOLDER",user_token))
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
             )
@@ -560,15 +535,9 @@ def download():
                     verific = jwt.decode(
                         token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
                     )
-                    the_os = CONFIG.MY_OS
-                    if the_os == "Windows":
-                        dir = f'{app.config.get("UPLOAD_FOLDER")}\{uid}'
-                        if os.path.isdir(dir) == False:
-                            os.mkdir(dir)
-                    else:
-                        dir = f'{app.config.get("UPLOAD_FOLDER")}/{uid}'
-                        if os.path.isdir(dir) == False:
-                            os.mkdir(dir)
+                    dir = os.path.join(app.config.get("UPLOAD_FOLDER"),str(uid))
+                    if os.path.isdir(dir) == False:
+                        os.mkdir(dir)            
                     archives = os.listdir(dir)
                     file = []
                     S_KEY = app.config.get("SECRET_KEY")
@@ -643,17 +612,10 @@ def upload():
                     else:
                         return redirect(url_for("upload"))
                     filename = secure_filename(file.filename)
-                    the_os = CONFIG.MY_OS
-                    if the_os == "Windows":
-                        DIR = f'{app.config.get("UPLOAD_FOLDER")}\{uid}'
-                        if os.path.isdir(DIR) == False:
-                            os.mkdir(DIR)
-                        the_path = f"{DIR}\{filename}"
-                    else:
-                        DIR = f'{app.config.get("UPLOAD_FOLDER")}/{uid}'
-                        if os.path.isdir(DIR) == False:
-                            os.mkdir(DIR)
-                        the_path = f'{app.config.get("UPLOAD_FOLDER")}/{uid}/{filename}'
+                    DIR = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid))
+                    if os.path.isdir(DIR) == False:
+                        os.mkdir(DIR)
+                    the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid), filename)
 
                     file_path = the_path
                     file.save(file_path)
@@ -740,11 +702,7 @@ def delete():
                     str(verific["user"]), app.config.get("SECRET_KEY"))
                 suid = SEARCH_DB("ID", user_token)
                 uss = suid[1]
-                the_os = CONFIG.MY_OS
-                if the_os == "Windows":
-                    the_path = f'{app.config.get("UPLOAD_FOLDER")}\{user_token}\{archive}'
-                else:
-                    the_path = f'{app.config.get("UPLOAD_FOLDER")}/{user_token}/{archive}'
+                the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token, archive)
                 os.remove(the_path)
                 log.info(
                     f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
