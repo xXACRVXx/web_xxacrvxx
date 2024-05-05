@@ -59,7 +59,7 @@ app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
 
-VERSION = "v0.6.1b"
+VERSION = "v0.6.3b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -434,7 +434,7 @@ def download():
                         token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
                     )
                     archive = request.args.get("file")
-                    the_path = os.path.join(app.config.get("UPLOAD_FOLDER"),uid)
+                    the_path = os.path.join(app.config.get("UPLOAD_FOLDER"),str(uid))
                     log.info(
                         f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
                     )
@@ -472,7 +472,7 @@ def download():
                 str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
-            the_path = os.path.join(app.config.get("UPLOAD_FOLDER",user_token))
+            the_path = os.path.join(app.config.get("UPLOAD_FOLDER") ,str(user_token))
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
             )
@@ -501,7 +501,7 @@ def download():
                 str(verific["user"]), app.config.get("SECRET_KEY"))
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
-            the_path = os.path.join(app.config.get("UPLOAD_FOLDER",user_token))
+            the_path = os.path.join(app.config.get("UPLOAD_FOLDER") , str(user_token))
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
             )
@@ -543,7 +543,7 @@ def download():
                     S_KEY = app.config.get("SECRET_KEY")
                     USER_ENCRIPT = ENCRIPT(str(uid), S_KEY)
                     for archive in archives:
-                        file_size = CONFIG.SPACE_FILE(uid, archive)
+                        file_size = CONFIG.SPACE_FILE(str(uid), archive)
                         datos_send_token = {
                             "user": USER_ENCRIPT,
                             "archive": archive,
