@@ -51,16 +51,18 @@
             <div class="subhead">Contactanos</div>
             <h2 class="title-section">Escríbanos</h2>
             <div class="divider"></div>
-            
-            <form action="#">
+            {% if response %}
+            <div class="subhead">{{response}}</div>
+            {% endif %}
+            <form action="contact" method="post">
               <div class="py-2">
-                <input type="text" class="form-control" placeholder="Nombre completo">
+                <input type="text" class="form-control" name="username" placeholder="Nombre completo">
               </div>
               <div class="py-2">
-                <input type="text" class="form-control" placeholder="Correo electrónico">
+                <input type="text" class="form-control" name="email" placeholder="Correo electrónico">
               </div>
               <div class="py-2">
-                <textarea rows="6" class="form-control" placeholder="Escriba el mensaje"></textarea>
+                <textarea rows="6" class="form-control" name="message" placeholder="Escriba el mensaje"></textarea>
               </div>
               <button type="submit" class="btn btn-primary rounded-pill mt-4">Enviar Mensage</button>
             </form>

@@ -58,8 +58,9 @@ app.secret_key = CONFIG.SECRECT
 app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
 log = logging.getLogger("WEB")
 load_dotenv("config.env")
+EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.6.3b"
+VERSION = "v0.7.1b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -826,28 +827,82 @@ def nuevo():
         return redirect(url_for("index"))
 
 
-@app.route("/contact")
+@app.route("/contact", methods=["POST", "GET"])
 def contactar():
     ip_client = request.headers.get("X-Real-IP")
-    try:
+    if request.method == "POST":
         try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-        if sessions == True:
-            return render_template("contact.html", user=uss, version=VERSION)
-        else:
-            return render_template("contact.html", version=VERSION)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
+            try:
+                uid = session["user"]
+                suid = SEARCH_DB("ID", uid)
+                uss = suid[1]
+                token = session["token"]
+                sessions = True
+            except:
+                uss = None
+                token = None
+                sessions = False
+            
+            nowtime = datetime.datetime.now()
+            email_user = request.form.get("email")
+            username = request.form.get("username")
+            message_user = request.form.get("message")
+            email_to_send = EMAIL_WEBMASTER
+
+            
+
+            subject = f"WebContact de {str(username)}"
+            message = f"""<html>
+                <head>
+                </head>
+                <body>
+                <div class="container">
+                <h1>Enviado por <strong>{str(username)}</strong></h1>
+                <h2>
+                El dia {nowtime.strftime('%m/%d/%Y - %I:%M%p')}. 
+                El correo del usuario es:
+                </h2>
+                <h1><strong>{email_user}</strong></h1>
+                </div>
+                <h1>Mensaje del usuario</h1>
+                <h2>
+                {message_user}
+                </h2>
+                </body>
+                </html>"""
+
+            SEND_MAIL(email_to_send, subject, message)
+
+            resp = "Mensaje enviado, espere nuestra respuesta en su correo"
+
+            if sessions == True:
+                return render_template("contact.html", user=uss, response=resp, version=VERSION)
+            else:
+                return render_template("contact.html", response=resp, version=VERSION)
+        except Exception as e:
+            log.error(
+                f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
+            return redirect(url_for("index"))
+    else:
+        try:
+            try:
+                uid = session["user"]
+                suid = SEARCH_DB("ID", uid)
+                uss = suid[1]
+                token = session["token"]
+                sessions = True
+            except:
+                uss = None
+                token = None
+                sessions = False
+            if sessions == True:
+                return render_template("contact.html", user=uss, version=VERSION)
+            else:
+                return render_template("contact.html", version=VERSION)
+        except Exception as e:
+            log.error(
+                f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
+            return redirect(url_for("index"))
 
 
 @app.route("/conditions")
