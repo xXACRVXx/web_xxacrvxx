@@ -26,6 +26,7 @@
         </form>
         <br>
         <div id="notificacion" class="alert"></div>
+        <div id="barraDeCarga" class="border text-primary" style="width: 0%; height: 20px; background-color: #4938b6 !important;"></div>
       </div>
       <div>
         <div class="col-lg-8 py-4">
@@ -65,7 +66,7 @@
   </div>
 </main>
 
-<script>
+<!--script>
   // Obtener los elementos del formulario
 var formulario = document.getElementById("formulario");
 var archivo = document.getElementById("archivo");
@@ -101,6 +102,69 @@ boton.addEventListener("click", function() {
     notificacion.className = "alert alert-danger";
   });
 });
+</script-->
+
+<script>
+  // Obtener los elementos del formulario
+  var formulario = document.getElementById("formulario");
+  var archivo = document.getElementById("archivo");
+  var boton = document.getElementById("boton");
+  var notificacion = document.getElementById("notificacion");
+  var barraDeCarga = document.getElementById("barraDeCarga");
+
+  // Agregar un evento al botón para enviar el archivo con fetch
+  boton.addEventListener("click", function() {
+    // Crear un objeto FormData
+    var formData = new FormData();
+
+    // Agregar el archivo al campo "archivo" del formulario
+    formData.append("file", archivo.files[0]);
+
+    // Preparar la solicitud con fetch
+    var request = new Request("/upload", {
+      method: "post",
+      body: formData
+    });
+
+    // Escuchar el evento de progreso de la carga
+    fetch(request).then(response => {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('La respuesta de la red no fue ok.');
+    })
+    .then(data => {
+      // Mostrar un mensaje de éxito con el nombre del archivo y la clase "alert-success"
+      notificacion.innerHTML = "El archivo " + data.nombre + " se ha enviado correctamente." + "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>";
+      notificacion.className = "alert alert-success";
+      // Limpiar el campo del archivo
+      archivo.value = ""; // Limpiar el campo de archivo después de la carga
+    })
+    .catch(error => {
+      // Mostrar un mensaje de error con el código y el mensaje del error y la clase "alert-danger"
+      notificacion.innerHTML = "Ha ocurrido un error al enviar el archivo: " + error.message;
+      notificacion.className = "alert alert-danger";
+    });
+
+    // Escuchar el evento de progreso de la carga
+    fetch(request).then(response => response.json())
+    .then(data => {
+      // Actualizar la barra de carga aquí
+      barraDeCarga.style.width = '100%'; // Ajustar esto según la lógica de progreso real
+    });
+
+    // Monitorear el progreso de la carga
+    var xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = function(event) {
+      if (event.lengthComputable) {
+        var porcentajeCompletado = (event.loaded / event.total) * 100;
+        barraDeCarga.style.width = porcentajeCompletado + '%';
+      }
+    };
+    xhr.open('POST', '/upload', true);
+    xhr.send(formData);
+  });
 </script>
+
 
 {% endblock %}

@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.7.1b"
+VERSION = "v0.8.1b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -849,25 +849,19 @@ def contactar():
             message_user = request.form.get("message")
             email_to_send = EMAIL_WEBMASTER
 
-            
-
-            subject = f"WebContact de {str(username)}"
+            subject = f"MSGWeb de {str(username)}"
             message = f"""<html>
-                <head>
-                </head>
+                <head></head>
                 <body>
                 <div class="container">
-                <h1>Enviado por <strong>{str(username)}</strong></h1>
-                <h2>
-                El dia {nowtime.strftime('%m/%d/%Y - %I:%M%p')}. 
-                El correo del usuario es:
-                </h2>
+                <h1>Enviado por: <strong>{str(username)}</strong></h1>
+                <h2>El dia {nowtime.strftime('%m/%d/%Y - %I:%M%p')}.</h2>
+                </div>
+                <div class="container">
+                <h1>Email del usuario:</h1>
                 <h1><strong>{email_user}</strong></h1>
                 </div>
-                <h1>Mensaje del usuario</h1>
-                <h2>
-                {message_user}
-                </h2>
+                <h1>Mensaje del usuario</h1><h2>{message_user}</h2>
                 </body>
                 </html>"""
 
@@ -901,7 +895,7 @@ def contactar():
                 return render_template("contact.html", version=VERSION)
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/contact ] ERROR[0021]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("index"))
 
 
@@ -925,7 +919,7 @@ def ter_y_co():
             return render_template("conditions.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/conditions ] ERROR[0021]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/conditions ] ERROR[0022]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
     #return render_template("auth/terms-conditions.html")
 
@@ -950,7 +944,7 @@ def privacy():
             return render_template("privacy.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/privacy ] ERROR[0022]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/privacy ] ERROR[0023]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
