@@ -169,10 +169,10 @@ def regist():
             email = request.form.get("email")
             passw = request.form.get("passw")
             if username.__contains__('"'):
-                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html")
 
             elif username.__contains__("@"):
                 flash("EL USUARIO NO PUEDE CONTENER @", "error")
@@ -202,10 +202,10 @@ def regist():
                     return render_template("auth/sign-up_layout.html")
 
         except Exception as e:
-            ERROR = f"Ups algo salio mal, intentalo de nuevo"
+            flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(
                 f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+            return render_template("auth/sign-up_layout.html")
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
         return render_template("auth/sign-up_layout.html")
