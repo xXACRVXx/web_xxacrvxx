@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.8.1b"
+VERSION = "v0.9.1b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -126,7 +126,7 @@ def login():
 
                 data_token = {
                     "exp": datetime.datetime.utcnow()
-                    + datetime.timedelta(days=60, minutes=0, seconds=0),
+                    + datetime.timedelta(days=128, minutes=0, seconds=0),
                     "iat": datetime.datetime.utcnow(),
                     "EMAIL": TheUser[2]}
                 thetoken = jwt.encode(
