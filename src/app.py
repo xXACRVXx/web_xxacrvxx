@@ -175,10 +175,10 @@ def regist():
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif username.__contains__("@"):
-                ERROR = "EL USUARIO NO PUEDE CONTENER @"
+                flash("EL USUARIO NO PUEDE CONTENER @", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html")
 
             elif email.__contains__('"'):
                 flash("EL CORREO NO PUEDE CONTENER COMILLAS", "error")
