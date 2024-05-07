@@ -20,19 +20,21 @@
                    <p>¿No tienes una contraseña? entonces por favor <a class="white" href="{{url_for('regist')}}">Registrarse</a></p>
 						  
 						  <div>
-						    {% if ERROR %}
-						      <p><b>{{ERROR}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
-						      
-						    {% endif %}
-						  </div>
-						  
-						  <div>
+                            {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 
-						    {% if ERROR2 %}
-
-						     <p><b>{{ERROR2}}</b></p>
-						      
-						    {% endif %}
+						    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 						  </div>
 						
 				
@@ -40,6 +42,7 @@
 				   
                     <!-- Sign Up Form -->
                     <div class="form-container">
+
                         <form action="login" method="post" id="log" data-focus="false">
                          
                             <div class="form-group">

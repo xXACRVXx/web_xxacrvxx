@@ -114,10 +114,10 @@ def login():
             passw = request.form.get("passw")
             key = app.config.get("SECRET_KEY")
             if email.__contains__('"'):
-                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+                return render_template("auth/log-in_layout.html")
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
@@ -144,16 +144,16 @@ def login():
                     f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
                 return redirect(url_for("index"))
             else:
-                ERROR = "USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk "
+                flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
                 log.debug(
                     f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                return render_template("auth/log-in_layout.html", ERROR=ERROR)
+                return render_template("auth/log-in_layout.html")
 
         except Exception as e:
-            ERROR = "Ups algo salio mal, intentalo de nuevo"
+            flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(
                 f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
-            return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+            return render_template("auth/log-in_layout.html")
 
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
@@ -195,9 +195,10 @@ def regist():
                         f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
+                    flash(response, "warning")
                     log.debug(
                         f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
-                    return render_template("auth/sign-up_layout.html", ERROR=response)
+                    return render_template("auth/sign-up_layout.html")
 
         except Exception as e:
             ERROR = f"Ups algo salio mal, intentalo de nuevo"
@@ -996,6 +997,7 @@ def setcookie():
 
 @app.route("/dev", methods=["POST", "GET"])
 def dev():
+    flash("Test_ UwU XDDD", "danger")
     return render_template("index.html")
 
 

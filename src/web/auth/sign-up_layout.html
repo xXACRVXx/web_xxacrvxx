@@ -20,19 +20,21 @@
                    <p>Complete el siguiente formulario para registrarse en xXACRVXx. ¿Ya te registraste? entonces solo <a class="white" href="{{url_for('login')}}">Iniciar Sesion</a></p> 
                         
                    		<div>
-						    {% if ERROR %}
-						      <p><b>{{ERROR}} SI YA TIENE UNA CUENTA INICIE SESION <a class=white href="{{url_for('login')}}">AQUI</a></b></p>
-						      
-						    {% endif %}
-						</div>
-						  
-						<div>
+                            {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}} SI YA TIENE UNA CUENTA INICIE SESION <a class=white href="{{url_for('login')}}">AQUI</a></b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 
-						    {% if ERROR2 %}
-
-						     <p><b>{{ERROR2}}</b></p>
-						      
-						    {% endif %}
+						    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 						</div>
                     
                    <!-- Sign Up Form -->
