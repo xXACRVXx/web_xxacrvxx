@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.1b"
+VERSION = "v0.9.3b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -115,9 +115,9 @@ def login():
             key = app.config.get("SECRET_KEY")
             if email.__contains__('"'):
                 flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
-                log.debug(
-                    f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/log-in_layout.html")
+            
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
@@ -125,10 +125,9 @@ def login():
                     TheUser = SEARCH_DB("USER", email)
 
                 data_token = {
-                    "exp": datetime.datetime.utcnow()
+                    "exp": datetime.datetime.now(datetime.UTC)
                     + datetime.timedelta(days=128, minutes=0, seconds=0),
-                    "iat": datetime.datetime.utcnow(),
-                    "EMAIL": TheUser[2]}
+                    "iat": datetime.datetime.now(datetime.UTC)}
                 thetoken = jwt.encode(
                     data_token,
                     app.config.get("SECRET_KEY"),
@@ -139,9 +138,9 @@ def login():
 
                 if TheUser[4] != "True":
                     return redirect(url_for("EmailSend", email=TheUser[2]))
-
-                log.info(
-                    f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
+                
+                flash("Cuenta iniciada correctamente","success")
+                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
                 return redirect(url_for("index"))
             else:
                 flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
@@ -229,16 +228,16 @@ def EmailSend():
         try:
             user = SEARCH_DB("EMAIL", email)
             if user == None:
-                Error = f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela'
+                flash(f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela', 'warning')
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
-                return render_template("auth/EmailSend.html", Error=Error)
+                return render_template("auth/EmailSend.html")
             code = C_EMAIL_VAL(user[1])
             if code == True:
-                Error = f'El correo "{email}" ya fue confirmado anteriormente'
+                flash(f'El correo "{email}" ya fue confirmado anteriormente', 'warning')
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
-                return render_template("auth/EmailSend.html", Error=Error)
+                return render_template("auth/EmailSend.html")
 
             datos_send_token = {
                 "user": user[1],
@@ -280,8 +279,8 @@ def EmailSend():
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
-            Error2 = f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde"
-            return render_template("auth/EmailSend.html", Error2=Error2)
+            flash(f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde", 'error')
+            return render_template("auth/EmailSend.html")
     else:
         return render_template("auth/EmailSend.html")
 
@@ -299,15 +298,15 @@ def EmailConfirm():
                     f"[{ip_client}] [/EmailConfirm ] Correo [{email}] a activado su cuenta")
                 return redirect(url_for("index"))
             if response == False:
-                ERROR = f"EL CODIGO DE ACTIVACION ES INCORRECTO, SI NO A RESIVIDO UN CORREO PUEDE VOLVER A INTENTARLO"
+                flash(f"EL CODIGO DE ACTIVACION ES INCORRECTO, SI NO A RESIVIDO UN CORREO PUEDE VOLVER A INTENTARLO", 'warning')
                 log.debug(
                     f"[{ip_client}] [/EmailConfirm ] Correo [{email}] utilizo un codigo incorrecto")
-                return render_template("auth/EmailConfirm.html", Error=ERROR)
+                return render_template("auth/EmailConfirm.html")
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/EmailConfirm ] ERROR[0005]: {e} [{traceback.format_exc()}]")
-            Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
-            return render_template("auth/EmailConfirm.html", Error2=Error2)
+            flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
+            return render_template("auth/EmailConfirm.html")
     else:
         try:
             if request.args.get("email"):
@@ -352,15 +351,15 @@ def EmailConfirm():
                 except Exception as e:
                     log.error(
                         f"[{ip_client}] [/EmailConfirm ] ERROR[0006]: {e} [{traceback.format_exc()}]")
-                    Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
-                    return render_template("auth/EmailConfirm.html", Error2=Error2)
+                    flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
+                    return render_template("auth/EmailConfirm.html")
             else:
                 return redirect(url_for("EmailSend"))
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
-            Error2 = f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde"
-            return render_template("auth/EmailConfirm.html", Error2=Error2)
+            flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
+            return render_template("auth/EmailConfirm.html")
 
 
 @app.route("/tchat")
@@ -709,6 +708,7 @@ def delete():
                 os.remove(the_path)
                 log.info(
                     f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
+                flash(f"{archive} borrado correctamente","success")
                 return redirect(url_for("download"))
             except jwt.ExpiredSignatureError:
                 log.debug(
@@ -868,7 +868,6 @@ def contactar():
                 </html>"""
 
             SEND_MAIL(email_to_send, subject, message)
-
             resp = "Mensaje enviado, espere nuestra respuesta en su correo"
 
             if sessions == True:
@@ -923,7 +922,6 @@ def ter_y_co():
         log.error(
             f"[{ip_client}] [/conditions ] ERROR[0022]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
-    #return render_template("auth/terms-conditions.html")
 
 
 @app.route("/privacy")

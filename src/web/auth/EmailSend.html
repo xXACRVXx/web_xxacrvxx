@@ -20,21 +20,23 @@
                    <p>Escriba la direccion de correo para confirmar su cuenta</a></p> 
                         
 						  
-                   <div>
-                    {% if Error %}
-                      <p><b>{{Error}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
-                      
+                <div>
+                {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                    {% if messages %}
+                     {% for message in messages %}
+                      <p><b>{{message}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+                      {% endfor %}
                     {% endif %}
-                  </div>
+                  {% endwith %}
 
-                  <div>
-
-                    {% if Error2 %}
-
-                     <p><b>{{Error2}}</b></p>
-                      
+                  {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                    {% if messages %}
+                     {% for message in messages %}
+                      <p><b>{{message}}</b></p>
+                      {% endfor %}
                     {% endif %}
-                  </div>
+                {% endwith %}
+                </div>
                 
                     
                    <!-- Sign Up Form -->

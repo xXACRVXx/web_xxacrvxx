@@ -19,21 +19,23 @@
                     <h1>Confirmar direccion de correo</h1>
                    <p>¿No tiene un codigo para confimar su correo? de click en <a class="white" href="{{url_for('EmailSend')}}">Enviar correo</a></p>
 						  
-						  <div>
-						    {% if Error %}
-						      <p><b>{{Error}} <a class=white href="{{url_for('EmailSend')}}">AQUI</a></b></p>
-						      
-						    {% endif %}
-						  </div>
-						  
-						  <div>
-
-						    {% if Error2 %}
-
-						     <p><b>{{Error2}}</b></p>
-						      
-						    {% endif %}
-						  </div>
+						<div>
+                            {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}} <a class=white href="{{url_for('EmailSend')}}">AQUI</a></b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
+          
+                            {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
+						</div>
 						
 				
 						
