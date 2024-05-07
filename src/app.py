@@ -181,16 +181,17 @@ def regist():
                 return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
 
             elif email.__contains__('"'):
-                ERROR = "EL CORREO NO PUEDE CONTENER COMILLAS"
+                flash("EL CORREO NO PUEDE CONTENER COMILLAS", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html", ERROR2=ERROR)
+                return render_template("auth/sign-up_layout.html")
 
             else:
                 EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
                 response = INSERT_DB(username, email, EPASSW)
 
                 if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
+                    flash(response, "warning")
                     log.info(
                         f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
