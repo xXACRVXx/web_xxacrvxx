@@ -60,7 +60,8 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.6b"
+VERSION = "v0.9.7b"
+START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -362,7 +363,6 @@ def EmailConfirm():
             return render_template("auth/EmailConfirm.html")
 
 
-
 @app.route("/download")
 def download():
     ip_client = request.headers.get("X-Real-IP")
@@ -536,7 +536,6 @@ def download():
             return redirect(url_for("login"))
 
 
-
 @app.route("/upload", methods=["POST", "GET"])
 def upload():
     ip_client = request.headers.get("X-Real-IP")
@@ -703,7 +702,6 @@ def detalles():
         return redirect(url_for("index"))
    
 
-
 @app.route("/services")
 def servicios():
     ip_client = request.headers.get("X-Real-IP")
@@ -727,7 +725,6 @@ def servicios():
             f"[{ip_client}] [/services ] ERROR[0018]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
         
-
 
 @app.route("/news")
 def nuevo():
@@ -922,6 +919,33 @@ def sitemap_xml():
     except Exception as e:
         log.error(
             f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/healtcheck")
+def healtcheck():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        actual_time = time.time()
+        total_time = actual_time - START_SERVER_TIME
+        total_time_hour = int(total_time // 3600)
+        total_time_min = int((total_time % 3600) // 60)
+        total_time_sec = int(total_time % 60)
+        
+        html=f"""
+        <html>
+        <head> <title>Server Healtcheck</title></head>
+        <body>
+        <h1>Server Healtcheck</h1>
+        </body>
+        <p><strong>Server Time:</strong> {total_time_hour} hours {total_time_min} min {total_time_sec} sec active :)</p>
+        </html>
+        """ 
+        log.debug(f"[{ip_client}] [/healtcheck ] [OK]")
+        return html
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/healtcheck ] ERROR[0009]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
