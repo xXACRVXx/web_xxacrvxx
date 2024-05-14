@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.5b"
+VERSION = "v0.9.6b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -899,7 +899,7 @@ def robots_txt():
     
 
 @app.route("/humans.txt")
-def robots_txt():
+def humans_txt():
     ip_client = request.headers.get("X-Real-IP")
     try:
         the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
