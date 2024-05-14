@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.7b"
+VERSION = "v0.9.8b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -922,8 +922,8 @@ def sitemap_xml():
         return redirect(url_for("index"))
 
 
-@app.route("/healtcheck")
-def healtcheck():
+@app.route("/healthcheck")
+def healthcheck():
     ip_client = request.headers.get("X-Real-IP")
     try:
         actual_time = time.time()
@@ -934,18 +934,18 @@ def healtcheck():
         
         html=f"""
         <html>
-        <head> <title>Server Healtcheck</title></head>
+        <head> <title>Server Healthcheck</title></head>
         <body>
-        <h1>Server Healtcheck</h1>
+        <h1>Server Healthcheck</h1>
         </body>
         <p><strong>Server Time:</strong> {total_time_hour} hours {total_time_min} min {total_time_sec} sec active :)</p>
         </html>
         """ 
-        log.debug(f"[{ip_client}] [/healtcheck ] [OK]")
+        log.debug(f"[{ip_client}] [/healthcheck ] [OK]")
         return html
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/healtcheck ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/healthcheck ] ERROR[0009]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
