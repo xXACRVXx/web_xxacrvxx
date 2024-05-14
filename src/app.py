@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.3b"
+VERSION = "v0.9.5b"
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
 
@@ -361,58 +361,6 @@ def EmailConfirm():
             flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
             return render_template("auth/EmailConfirm.html")
 
-
-@app.route("/tchat")
-def testchat():
-    return render_template("chat/chat1.html")
-
-
-@app.route("/tchat2")
-def testchat2():
-    return render_template("chat/chat2.html")
-
-
-@app.route("/tchat3")
-def testchat3():
-    return render_template("chat/chat3.html")
-
-
-@app.route("/favicon.ico")
-def favicon():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        the_path = os.path.join(CONFIG.SYSTEM_PATH, "static")
-        return send_from_directory(the_path, "favicon.png", as_attachment=False)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
-
-
-@app.route("/robots.txt")
-def robots_txt():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
-        log.debug(f"[{ip_client}] [/robots.txt ] [OK]")
-        return send_from_directory(the_path, "robots.txt", as_attachment=False)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
-
-
-@app.route("/sitemap.xml")
-def sitemap_xml():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
-        log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
-        return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
 
 
 @app.route("/download")
@@ -753,31 +701,7 @@ def detalles():
         log.error(
             f"[{ip_client}] [/details ] ERROR[0016]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
-
-
-@app.route("/layout")
-def layout():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-        if sessions == True:
-            return render_template("layout.html", user=uss, version=VERSION)
-        else:
-            return render_template("layout.html", version=VERSION)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/layout ] ERROR[0017]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
-    
+   
 
 
 @app.route("/services")
@@ -948,6 +872,99 @@ def privacy():
         return redirect(url_for("index"))
 
 
+@app.route("/favicon.ico")
+def favicon():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_path = os.path.join(CONFIG.SYSTEM_PATH, "static")
+        return send_from_directory(the_path, "favicon.png", as_attachment=False)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/robots.txt")
+def robots_txt():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
+        log.debug(f"[{ip_client}] [/robots.txt ] [OK]")
+        return send_from_directory(the_path, "robots.txt", as_attachment=False)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+    
+
+@app.route("/humans.txt")
+def robots_txt():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
+        log.debug(f"[{ip_client}] [/humans.txt ] [OK]")
+        return send_from_directory(the_path, "humans.txt", as_attachment=False)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/humans.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
+        log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
+        return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/tchat")
+def testchat():
+    return render_template("chat/chat1.html")
+
+
+@app.route("/tchat2")
+def testchat2():
+    return render_template("chat/chat2.html")
+
+
+@app.route("/tchat3")
+def testchat3():
+    return render_template("chat/chat3.html")
+
+
+@app.route("/layout")
+def layout():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("layout.html", user=uss, version=VERSION)
+        else:
+            return render_template("layout.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[0017]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+
 @app.route("/poweroff", methods=["POST", "GET"])
 def poweroff():
     ip_client = request.headers.get("X-Real-IP")
@@ -966,7 +983,6 @@ def poweroff():
         <input type='submit' name='send'></form>"
         return form
 
-
 @app.route("/reboot", methods=["POST", "GET"])
 def reboot():
     ip_client = request.headers.get("X-Real-IP")
@@ -984,6 +1000,7 @@ def reboot():
         <input id='pass' type='password' name='pass'>\
         <input type='submit' name='send'></form>"
         return form
+
 
 
 @app.route("/setcookie", methods=["POST", "GET"])
