@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.8b"
+VERSION = "v0.9.9b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -407,7 +407,7 @@ def download():
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/download ] ERROR[0011]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/download ] ERROR[0008]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
     elif request.args.get("token"):
@@ -532,7 +532,7 @@ def download():
 
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/download ] ERROR[0012]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/download ] ERROR[0009]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -589,7 +589,7 @@ def upload():
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/upload] ERROR[0013]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/upload] ERROR[0010]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
     else:
         try:
@@ -632,7 +632,7 @@ def upload():
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/upload ] ERROR[0014]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/upload ] ERROR[0011]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -674,7 +674,7 @@ def delete():
             return redirect(url_for("download"))
     except Exception as e:
             log.error(
-                f"[{ip_client}] [/delete ] ERROR[0015]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/delete ] ERROR[0012]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -698,7 +698,7 @@ def detalles():
             return render_template('details.html', version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/details ] ERROR[0016]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/details ] ERROR[0013]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
    
 
@@ -722,7 +722,7 @@ def servicios():
             return render_template("services.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/services ] ERROR[0018]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/services ] ERROR[0014]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
         
 
@@ -746,7 +746,7 @@ def nuevo():
             return render_template("news.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/news ] ERROR[0019]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/news ] ERROR[0015]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -797,7 +797,7 @@ def contactar():
                 return render_template("contact.html", response=resp, version=VERSION)
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/contact ] ERROR[0020]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/contact ] ERROR[0016]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("index"))
     else:
         try:
@@ -817,7 +817,7 @@ def contactar():
                 return render_template("contact.html", version=VERSION)
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/contact ] ERROR[0021]: {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/contact ] ERROR[0017]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("index"))
 
 
@@ -841,7 +841,7 @@ def ter_y_co():
             return render_template("conditions.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/conditions ] ERROR[0022]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/conditions ] ERROR[0018]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -865,7 +865,7 @@ def privacy():
             return render_template("privacy.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/privacy ] ERROR[0023]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/privacy ] ERROR[0019]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -877,7 +877,7 @@ def favicon():
         return send_from_directory(the_path, "favicon.png", as_attachment=False)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/icon ] ERROR[0008]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/icon ] ERROR[0020]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -890,7 +890,7 @@ def robots_txt():
         return send_from_directory(the_path, "robots.txt", as_attachment=False)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/robots.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/robots.txt ] ERROR[0021]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
     
@@ -904,7 +904,7 @@ def humans_txt():
         return send_from_directory(the_path, "humans.txt", as_attachment=False)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/humans.txt ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/humans.txt ] ERROR[0022]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -918,7 +918,7 @@ def sitemap_xml():
         return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/sitemap.xml ] ERROR[0010]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/sitemap.xml ] ERROR[0023]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -945,7 +945,7 @@ def healthcheck():
         return html
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/healthcheck ] ERROR[0009]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/healthcheck ] ERROR[0024]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
@@ -984,7 +984,7 @@ def layout():
             return render_template("layout.html", version=VERSION)
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/layout ] ERROR[0017]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
