@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.9b"
+VERSION = "v0.9.10b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -947,6 +947,39 @@ def healthcheck():
         log.error(
             f"[{ip_client}] [/healthcheck ] ERROR[0024]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
+
+
+@app.route("/admin/logger")
+def getlogger():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            # implementar revicion if
+            log.info(f"[{ip_client}] [/logger ] [{uss} a revisado los logs]")
+            the_path = os.path.join(CONFIG.SYSTEM_PATH,"logs")
+            return send_from_directory(the_path, "logger.log", as_attachment=False)      
+        else:
+            return redirect(url_for("index"))
+            
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[-0]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+
+
+
 
 
 @app.route("/tchat")
