@@ -15,6 +15,14 @@
    </url>
 
    <url>
+      <loc>https://www.xxacrvxx.ydns.eu/news</loc>
+   </url>
+
+   <url>
+      <loc>https://www.xxacrvxx.ydns.eu/blog</loc>
+   </url>
+
+   <url>
       <loc>https://xxacrvxx.ydns.eu/</loc>
    </url>
 
@@ -24,6 +32,18 @@
 
    <url>
       <loc>https://xxacrvxx.ydns.eu/regist</loc>
+   </url>
+
+   <url>
+      <loc>https://xxacrvxx.ydns.eu/news</loc>
+   </url>
+
+   <url>
+      <loc>https://xxacrvxx.ydns.eu/blog</loc>
+   </url>
+
+   <url>
+      <loc>https://xxacrvxx.ydns.eu/blog/*</loc>
    </url>
 
 </urlset>

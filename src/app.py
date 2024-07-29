@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.13.19b"
+VERSION = "v0.13.21b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -1192,9 +1192,9 @@ def blogview(name):
         recent = posts[-3:] 
         the_posts = SEARCH_BL("TITLE", name)
         if sessions == True:
-            return render_template("_dev/extra/test/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
         else:
-            return render_template("_dev/extra/test/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
      
     except Exception as e:
         log.error(
