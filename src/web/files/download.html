@@ -42,19 +42,66 @@
               
               <ul class="footer-menu">
                 {% for archive in files %}
-                <li class="border">
-                  <div>
-                  <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline border text-secondary">Borrar</a>
-                  <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline border text-secondary">Descargar</a>
-                  <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border text-secondary ">Compartir</a>
-                  <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-outline border text-primary">{{archive[0]}} [{{archive[2]}}]</a>
-                </div>
+                <li  class="center border">
+                
+                  <div class="center">           
+                    <p class="center"><a href="{{url_for('download')}}?file={{archive[0]}}" class="btn center text-primary">{{archive[0]}} [{{archive[2]}}]</a></p>
+                    <div class="center">
+                      <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline border text-secondary">Borrar</a>
+                      <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline border text-secondary">Descargar</a>
+                      <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border text-secondary ">Compartir</a>
+                    </div>
+                  </div>
+
+                  
                 </li>
                 {% endfor %}
               </ul>
 
             </div>
           </div>
+
+
+          <div class="col-12 mt-5">
+            <nav aria-label="Page Navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('download', page=page-1) }}" tabindex="-1">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                        </li>
+                    {% endif %}
+        
+                    {% if page > 1 %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page-1) }}">{{ page-1 }}</a></li>
+                    {% endif %}
+        
+                    <li class="page-item active" aria-current="page">
+                        <a class="page-link" href="#">{{ page }} <span class="sr-only">(current)</span></a>
+                    </li>
+        
+                    {% if page < total_pages %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page+1) }}">{{ page+1 }}</a></li>
+                    {% endif %}
+        
+                    {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('download', page=page+1) }}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-disabled="true">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        
+        
+
         </div>
       </div>
     </div>

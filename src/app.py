@@ -1,4 +1,3 @@
-from math import e
 from os import system
 import os
 import signal
@@ -60,7 +59,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.9.11b"
+VERSION = "v0.12.35b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -506,14 +505,23 @@ def download():
                         )
                         file.append([archive, the_token, file_size])
                     sorted_file = sorted(file, key=lambda x: x[0])
-                    log.debug(
-                        f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
+                    
+                    page = request.args.get('page', 1, type=int)
+                    per_page = 15
+                    total_posts = len(sorted_file)
+                    total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
+                    start = (page - 1) * per_page
+                    end = start + per_page
+                    paginated_posts = sorted_file[start:end]
+                    log.debug(f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
                     return render_template(
                         "files/download.html",
                         user=uss,
                         url=dir,
-                        files=sorted_file,
+                        files=paginated_posts,
                         space=CONFIG.Free_Space(),
+                        page=page,
+                        total_pages=total_pages,
                         version=VERSION
                     )
 
@@ -948,6 +956,10 @@ def healthcheck():
             f"[{ip_client}] [/healthcheck ] ERROR[0024]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
+@app.route("/status")
+def status_server():
+    return redirect(url_for("healthcheck"))
+    
 
 @app.route("/admin/logger")
 def getlogger():
@@ -1064,14 +1076,67 @@ def reboot():
 def setcookie():
     resp = make_response()
     resp.set_cookie("userID", "XD")
-
     return resp
+
+@app.route("/getcookie", methods=["POST", "GET"])
+def getcookie():
+    name = request.cookies.get("userID")
+    return name
 
 
 @app.route("/dev", methods=["POST", "GET"])
 def dev():
-    flash("Test_ UwU XDDD", "danger")
-    return render_template("index.html")
+    return render_template("_dev/extra/index.html")
+
+
+@app.route("/dev2", methods=["POST", "GET"])
+def dev2():
+    return render_template("_dev/extra/blog.html")
+
+
+@app.route("/dev3", methods=["POST", "GET"])
+def dev3():
+    return render_template("_dev/extra/blog-single.html")
+
+
+from Modules.TOOLSQLBLOG import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
+
+
+
+@app.route("/tblog", methods=["POST", "GET"])
+def tblog():
+    posts = ALL_BL()
+    page = request.args.get('page', 1, type=int)
+    per_page = 3
+    total_posts = len(posts)
+    total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_posts = posts[start:end]
+
+    return render_template("_dev/extra/test/inicio.html", posts=paginated_posts, page=page, total_pages=total_pages)
+
+
+@app.route("/tblogc", methods=["POST", "GET"])
+def tblogc():
+    if request.method == "POST":
+        C_BY = request.form.get("c_id")
+        TITLE = request.form.get("titulo")
+        CONTENT = request.form.get("texto")
+        INSERT_BL(TITLE, CONTENT, C_BY)
+        return redirect("/tblog")
+    else:
+        return render_template("_dev/extra/test/agregar.html")
+    
+#return render_template("_dev/extra/blog-single.html")
+
+
+
+@app.route("/tblogd", methods=["POST", "GET"])
+def tblogd():
+    return "a"
+    
+#return render_template("_dev/extra/blog-single.html")
 
 
 @app.route("/doxear", methods=["POST", "GET"])
@@ -1245,6 +1310,7 @@ def authorize():
     username = request.form.get('username')
     password = request.form.get('password')
     key = app.config.get("SECRET_KEY")
+    log.info(f"[dcfgfrgdgdfg ] [method POST] {username} {password}")
 
     # Verificar las credenciales del usuario
     if username.__contains__('"'):
