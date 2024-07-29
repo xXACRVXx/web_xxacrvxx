@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.12.45b"
+VERSION = "v0.13.15b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -84,15 +84,18 @@ def index():
             token = None
             sessions = False
 
+        posts = ALL_BL()
+        posts.sort(key=lambda x: x[0], reverse=True)
+        recent = posts[-4:] 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
-            return render_template("index.html", version=VERSION)
+            return render_template("index.html", recent=recent, version=VERSION)
         else:
             try:
                 verific = jwt.decode(jwt=str(token), key=str(app.config.get(
                     "SECRET_KEY")), algorithms=["HS256"])
                 log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
-                return render_template("app/index.html", user=uss, version=VERSION)
+                return render_template("app/index.html", recent=recent, user=uss, version=VERSION)
             except jwt.ExpiredSignatureError:
                 log.debug(f"[{ip_client}] [/ ] Token expirado")
                 return redirect(url_for("login"))
@@ -1072,7 +1075,6 @@ def reboot():
         return form
 
 
-
 @app.route("/setcookie", methods=["POST", "GET"])
 def setcookie():
     resp = make_response()
@@ -1170,13 +1172,35 @@ def blogpost():
         return redirect(url_for("index"))
 
 
-
         
-@app.route("/tblogd", methods=["POST", "GET"])
-def tblogd():
-    return "a"
-    
-#return render_template("_dev/extra/blog-single.html")
+@app.route("/blog/<name>", methods=["POST", "GET"])
+def blogview(name):
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False          
+        posts = ALL_BL()
+        posts.sort(key=lambda x: x[0], reverse=True)
+        recent = posts[-3:] 
+        the_posts = SEARCH_BL("TITLE", name)
+        if sessions == True:
+            return render_template("_dev/extra/test/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
+        else:
+            return render_template("_dev/extra/test/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
+     
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
 
 
 @app.route("/doxear", methods=["POST", "GET"])

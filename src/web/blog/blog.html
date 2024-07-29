@@ -12,7 +12,7 @@
           <div class="col-md-6">
             <nav aria-label="Breadcrumb">
               <ul class="breadcrumb justify-content-center py-0 bg-transparent">
-                <li class="breadcrumb-item"><a href="index.html">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('index')}}">Inicio</a></li>
                 <li class="breadcrumb-item active">Blog</li>
               </ul>
             </nav>
@@ -40,11 +40,11 @@
                 </div>
               </div>
               <div class="body">
-                <div class="post-title"><a href="blog-single.html">{{ post[1] }}</a></div>
+                <div class="post-title"><a href="{{ url_for('blogview', name=post[1]) }}">{{ post[1] }}</a></div>
                 <div class="post-excerpt">{{ post[6] }}</div>
               </div>
               <div class="footer">
-                <a href="blog-single.html?{{ post[0] }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
+                <a href="{{ url_for('blogview', name=post[1]) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
               </div>
             </div>
           </div>
