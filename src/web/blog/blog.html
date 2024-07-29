@@ -1,0 +1,94 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Blog{% endblock %}
+
+
+{% block content %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="index.html">Inicio</a></li>
+                <li class="breadcrumb-item active">Blog</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Blog</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section">
+      <div class="container">
+        <div class="row">
+        {% for post in posts %}
+          <div class="col-md-6 col-lg-4 py-3">
+            <div class="card-blog">
+              <div class="header">
+                <div class="avatar">
+                  <!--img src="../assets/img/person/person_1.jpg" alt=""-->
+                </div>
+                <div class="entry-footer">
+                  <div class="post-author">{{ post[3] }}</div>
+                  <a href="#" class="post-date">{{ post[7][:10]}}</a>
+                </div>
+              </div>
+              <div class="body">
+                <div class="post-title"><a href="blog-single.html">{{ post[1] }}</a></div>
+                <div class="post-excerpt">{{ post[6] }}</div>
+              </div>
+              <div class="footer">
+                <a href="blog-single.html?{{ post[0] }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+        <div class="col-12 mt-5">
+          <nav aria-label="Page Navigation">
+              <ul class="pagination justify-content-center">
+                  {% if page > 1 %}
+                      <li class="page-item">
+                          <a class="page-link" href="{{ url_for('blog', page=page-1) }}" tabindex="-1">Previous</a>
+                      </li>
+                  {% else %}
+                      <li class="page-item disabled">
+                          <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                      </li>
+                  {% endif %}
+      
+                  {% if page > 1 %}
+                      <li class="page-item"><a class="page-link" href="{{ url_for('blog', page=page-1) }}">{{ page-1 }}</a></li>
+                  {% endif %}
+      
+                  <li class="page-item active" aria-current="page">
+                      <a class="page-link" href="#">{{ page }} <span class="sr-only">(current)</span></a>
+                  </li>
+      
+                  {% if page < total_pages %}
+                      <li class="page-item"><a class="page-link" href="{{ url_for('blog', page=page+1) }}">{{ page+1 }}</a></li>
+                  {% endif %}
+      
+                  {% if page < total_pages %}
+                      <li class="page-item">
+                          <a class="page-link" href="{{ url_for('blog', page=page+1) }}">Next</a>
+                      </li>
+                  {% else %}
+                      <li class="page-item disabled">
+                          <a class="page-link" href="#" aria-disabled="true">Next</a>
+                      </li>
+                  {% endif %}
+              </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% endblock %}

@@ -19,6 +19,7 @@ from Modules.TOOLSQL import (
     C_EMAIL_VAL,
     EMAIL_VAL
 )
+from Modules.TOOLSQLBLOG import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
 from flask import (
     Flask,
     request,
@@ -59,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.12.42b"
+VERSION = "v0.12.44b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -1099,9 +1100,6 @@ def dev3():
     return render_template("_dev/extra/blog-single.html")
 
 
-from Modules.TOOLSQLBLOG import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
-
-
 
 @app.route("/blog", methods=["POST", "GET"])
 def blog():
@@ -1127,9 +1125,9 @@ def blog():
         end = start + per_page
         paginated_posts = posts[start:end]
         if sessions == True:
-            return render_template("_dev/extra/test/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
         else:
-            return render_template("_dev/extra/test/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)
            
     except Exception as e:
         log.error(
@@ -1138,7 +1136,7 @@ def blog():
     
 
 
-@app.route("/tblogc", methods=["POST", "GET"])
+@app.route("/blogpost", methods=["POST", "GET"])
 def blogpost():
     ip_client = request.headers.get("X-Real-IP")
     try:
@@ -1161,9 +1159,9 @@ def blogpost():
                 DESCRIP = request.form.get("descrip")
                 #log.info(f"{C_BY, TITLE, CONTENT, TAGS, DESCRIP}")
                 INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
-                return redirect("/tblog")
+                return redirect(url_for("blog"))
             else:
-                return render_template("_dev/extra/test/blogpost.html", user=uss, version=VERSION)
+                return render_template("blog/blogpost.html", user=uss, version=VERSION)
         else:
             return redirect(url_for("login"))
     except Exception as e:
