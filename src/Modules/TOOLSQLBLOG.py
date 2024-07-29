@@ -134,28 +134,28 @@ def CREATE_TABLE():
             return ERROR
 
 
-def INSERT_BL(TITLE='', CONTENT='', C_BY=''):
+def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
     try:
         comp1 = SEARCH_BL('TITLE', TITLE)
         if comp1 == None:
             TIME = datetime.datetime.now()
             recon()
             cur.execute(
-                f'INSERT INTO BLOGDB (TITLE, CONTENT, C_BY, TIME)  VALUES ("{TITLE}", "{CONTENT}", "{C_BY}", "{TIME}")')
+                f'INSERT INTO BLOGDB (TITLE, CONTENT, C_BY, TAGS, EXTRA, TIME)  VALUES ("{TITLE}", "{CONTENT}", "{C_BY}", "{TAGS}", "{DESCRIP}", "{TIME}")')
             con.commit()
             con.close
             log.info(
-                f"[INSERT_DB:] [OK] (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY})")
+                f"[INSERT_DB:] [OK] (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY}, TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
             return f'ENTRADA {TITLE} CREADA CORRECTAMENTE'
 
         else:
             log.debug(
-                f"[INSERT_DB:] [ERROR] TITLE EXIST (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY})")
+                f"[INSERT_DB:] [ERROR] TITLE EXIST (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY},  TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
             return f'EL TITULO {TITLE} YA EXISTE'
     except Exception as e:
         ERROR = f"ERROR AL INCERTAR EN LA TABLA:\n{e}"
         log.error(
-            f"[INSERT_DB:] [ERROR] [{ERROR}] (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY})")
+            f"[INSERT_DB:] [ERROR] [{ERROR}] (Title: {TITLE}, Content: {CONTENT}, Create_by: {C_BY}, TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
         return ERROR
 
 

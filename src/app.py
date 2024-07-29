@@ -59,7 +59,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.12.35b"
+VERSION = "v0.12.38b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -1103,35 +1103,76 @@ from Modules.TOOLSQLBLOG import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
 
 
 
-@app.route("/tblog", methods=["POST", "GET"])
-def tblog():
-    posts = ALL_BL()
-    page = request.args.get('page', 1, type=int)
-    per_page = 3
-    total_posts = len(posts)
-    total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
-    start = (page - 1) * per_page
-    end = start + per_page
-    paginated_posts = posts[start:end]
-
-    return render_template("_dev/extra/test/inicio.html", posts=paginated_posts, page=page, total_pages=total_pages)
+@app.route("/blog", methods=["POST", "GET"])
+def blog():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+            
+        posts = ALL_BL()
+        page = request.args.get('page', 1, type=int)
+        per_page = 10
+        total_posts = len(posts)
+        total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_posts = posts[start:end]
+        if sessions == True:
+            return render_template("_dev/extra/test/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
+        else:
+            return render_template("_dev/extra/test/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)
+           
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+    
 
 
 @app.route("/tblogc", methods=["POST", "GET"])
-def tblogc():
-    if request.method == "POST":
-        C_BY = request.form.get("c_id")
-        TITLE = request.form.get("titulo")
-        CONTENT = request.form.get("texto")
-        INSERT_BL(TITLE, CONTENT, C_BY)
-        return redirect("/tblog")
-    else:
-        return render_template("_dev/extra/test/agregar.html")
-    
-#return render_template("_dev/extra/blog-single.html")
+def blogpost():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            if request.method == "POST":
+                C_BY = uss
+                TITLE = request.form.get("title")
+                CONTENT = request.form.get("content")
+                TAGS = request.form.get("tags")
+                DESCRIP = request.form.get("descrip")
+                #log.info(f"{C_BY, TITLE, CONTENT, TAGS, DESCRIP}")
+                INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
+                return redirect("/tblog")
+            else:
+                return render_template("_dev/extra/test/blogpost.html", user=uss, version=VERSION)
+        else:
+            return redirect(url_for("login"))
+    except Exception as e:
+        log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 
+        
 @app.route("/tblogd", methods=["POST", "GET"])
 def tblogd():
     return "a"
