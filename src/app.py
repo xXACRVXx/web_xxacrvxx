@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.12.44b"
+VERSION = "v0.12.45b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -1117,8 +1117,9 @@ def blog():
             sessions = False
             
         posts = ALL_BL()
+        posts.sort(key=lambda x: x[0], reverse=True)
         page = request.args.get('page', 1, type=int)
-        per_page = 10
+        per_page = 20
         total_posts = len(posts)
         total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
         start = (page - 1) * per_page
@@ -1128,7 +1129,7 @@ def blog():
             return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
         else:
             return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)
-           
+        
     except Exception as e:
         log.error(
             f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
