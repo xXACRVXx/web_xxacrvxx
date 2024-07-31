@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.13.24b"
+VERSION = "v0.14.11b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -85,8 +85,8 @@ def index():
             sessions = False
 
         posts = ALL_BL()
-        posts.sort(key=lambda x: x[0], reverse=True)
-        recent = posts[-4:] 
+        recent = posts[-4:]
+        recent.sort(key=lambda x: x[0], reverse=True) 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
             return render_template("index.html", recent=recent, version=VERSION)
@@ -690,6 +690,108 @@ def delete():
             return redirect(url_for("login"))
 
 
+@app.route("/blog/")
+@app.route("/blog")
+def blog():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+            
+        posts = ALL_BL()
+        page = request.args.get('page', 1, type=int)
+        per_page = 9
+        total_posts = len(posts)
+        total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
+        start = (page - 1) * per_page
+        end = start + per_page
+        paginated_posts = posts[start:end]
+        paginated_posts.sort(key=lambda x: x[0], reverse=True)
+        if sessions == True:
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
+        else:
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)       
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/blogpost", methods=["POST", "GET"])
+def blogpost():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            if request.method == "POST":
+                C_BY = uss
+                TITLE = request.form.get("title").replace('"', "''")
+                CONTENT = request.form.get("content").replace('"', "''")
+                TAGS = request.form.get("tags").replace('"', "''")
+                DESCRIP = request.form.get("descrip").replace('"', "''")
+                #log.info(f"{C_BY, TITLE, CONTENT, TAGS, DESCRIP}")
+                INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
+                return redirect(url_for("blog"))
+            else:
+                return render_template("blog/blogpost.html", user=uss, version=VERSION)
+        else:
+            return redirect(url_for("login"))
+    except Exception as e:
+        log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/blog/<name>", methods=["POST", "GET"])
+def blogview(name):
+    ip_client = request.headers.get("X-Real-IP")
+    try:      
+
+        name=name.replace('"', "''")
+        log.info(f"Name: {name}")
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False          
+        posts = ALL_BL()
+        recent = posts[-3:]
+        recent.sort(key=lambda x: x[0], reverse=True)
+        the_posts = SEARCH_BL("TITLE", name)
+        if the_posts == None:
+            return redirect(url_for("blog"))
+        if sessions == True:
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
+        else:
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
+     
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
 @app.route("/details")
 def detalles():
     ip_client = request.headers.get("X-Real-IP")
@@ -848,9 +950,9 @@ def ter_y_co():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("conditions.html", user=uss, version=VERSION)
+            return render_template("privacy.html", user=uss, version=VERSION)
         else:
-            return render_template("conditions.html", version=VERSION)
+            return render_template("privacy.html", version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/conditions ] ERROR[0018]: {e} [{traceback.format_exc()}]")
@@ -1102,104 +1204,18 @@ def dev3():
     return render_template("_dev/extra/blog-single.html")
 
 
+@app.route("/dev4", methods=["POST", "GET"])
+def dev4():
+    return render_template("_dev/auth/terms-conditions.html")
 
-@app.route("/blog", methods=["POST", "GET"])
-def blog():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-            
-        posts = ALL_BL()
-        posts.sort(key=lambda x: x[0], reverse=True)
-        page = request.args.get('page', 1, type=int)
-        per_page = 20
-        total_posts = len(posts)
-        total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
-        start = (page - 1) * per_page
-        end = start + per_page
-        paginated_posts = posts[start:end]
-        if sessions == True:
-            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
-        else:
-            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)
-        
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
     
 
 
-@app.route("/blogpost", methods=["POST", "GET"])
-def blogpost():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-        if sessions == True:
-            if request.method == "POST":
-                C_BY = uss
-                TITLE = request.form.get("title")
-                CONTENT = request.form.get("content")
-                TAGS = request.form.get("tags")
-                DESCRIP = request.form.get("descrip")
-                #log.info(f"{C_BY, TITLE, CONTENT, TAGS, DESCRIP}")
-                INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
-                return redirect(url_for("blog"))
-            else:
-                return render_template("blog/blogpost.html", user=uss, version=VERSION)
-        else:
-            return redirect(url_for("login"))
-    except Exception as e:
-        log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
+
 
 
         
-@app.route("/blog/<name>", methods=["POST", "GET"])
-def blogview(name):
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False          
-        posts = ALL_BL()
-        posts.sort(key=lambda x: x[0], reverse=True)
-        recent = posts[-3:] 
-        the_posts = SEARCH_BL("TITLE", name)
-        if sessions == True:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
-        else:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
-     
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
+
 
 
 
