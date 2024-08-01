@@ -6,32 +6,6 @@
 
 {% block content %}
 
-
-<div class="page-banner home-banner">
-  <div class="container h-100">
-    <div class="row align-items-center h-100">
-      
-      <div class="col-lg-6 py-3 wow fadeInUp">
-        <h1 class="mb-4">Esta web esta en desarrollo</h1>
-        <p class="text-lg mb-5">
-          No deberias estar viendo esto ahora mismo, 
-          esta web apenas esta empezando a ser desarrollada, vuelve en un tiempo
-        </p>
-        <p class="text-lg mb-5">
-          Si quieres probar las funciones disponibles hasta el momento
-          puedes iniciar sesion y acceder a ellas
-        </p>
-      </div>
-
-      <div class="col-lg-6 py-3 wow zoomIn text-center">
-        <div class="img-place">
-          <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="xd">
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="page-section border-top">
   <div class="container">
     <div class="text-center wow fadeInUp">
@@ -45,16 +19,16 @@
         <div class="card-blog">
           <div class="header">
             <div class="entry-footer">
-              <div class="post-author">{{ post[3] }}</div>
-              <a href="#" class="post-date">{{ post[7][:10]}}</a>
+              <div class="post-author">{{ post['C_BY'] }}</div>
+              <a href="#" class="post-date">{{ post['TIME'][:10]}}</a>
             </div>
           </div>
           <div class="body">
-            <div class="post-title"><a href="{{ url_for('blogview', name=post[1]) }}">{{ post[1] }}</a></div>
-            <div class="post-excerpt">{{ post[6] }}</div>
+            <div class="post-title"><a href="{{ url_for('blogview', name=post['TITLE']) }}">{{ post['TITLE'] }}</a></div>
+            <div class="post-excerpt">{{ post['EXTRA'] }}</div>
           </div>
           <div class="footer">
-            <a href="{{ url_for('blogview', name=post[1]) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
+            <a href="{{ url_for('blogview', name=post['TITLE']) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
           </div>
         </div>
       </div>
@@ -85,5 +59,30 @@
     </div>
   </div> <!-- .container -->
 </div> <!-- .page-section -->
+
+<div class="home-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      
+      <div class="col-lg-6 py-3 wow fadeInUp">
+        <h1 class="mb-4">Esta web esta en desarrollo</h1>
+        <p class="text-lg mb-5">
+          No deberias estar viendo esto ahora mismo, 
+          esta web apenas esta empezando a ser desarrollada, vuelve en un tiempo
+        </p>
+        <p class="text-lg mb-5">
+          Si quieres probar las funciones disponibles hasta el momento
+          puedes iniciar sesion y acceder a ellas
+        </p>
+      </div>
+
+      <div class="col-lg-6 py-3 wow zoomIn text-center">
+        <div class="img-place">
+          <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="xd">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   {% endblock %}

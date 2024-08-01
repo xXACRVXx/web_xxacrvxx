@@ -110,7 +110,7 @@
 
 
 
-<script>//<![CDATA[
+<!--script>//<![CDATA[
   function getlink(e) {
   var aux = document.createElement("input");
   aux.setAttribute("value", window.location.href + '?token=' + e);
@@ -120,6 +120,27 @@
   document.body.removeChild(aux);
   alert("URL copiada al portapapeles\n\n" + window.location.href + '?token=' + e);
   }
-  //]]></script>
+  //]]></script-->
+
+<script>//<![CDATA[
+  function getlink(e) {
+    var aux = document.createElement("input");
+    // Obtener la URL actual
+    var currentUrl = window.location.href;
+    // Crear un objeto URL
+    var url = new URL(currentUrl);
+    // Obtener solo la ruta base sin parámetros
+    var basePath = url.origin + url.pathname;
+    // Asignar el nuevo valor con el token
+    aux.setAttribute("value", basePath + '?token=' + e);
+    document.body.appendChild(aux);
+    aux.select();
+    document.execCommand("copy");
+    document.body.removeChild(aux);
+    alert("URL copiada al portapapeles\n\n" + basePath + '?token=' + e);
+  }//]]>
+</script>
+
+
 
   {% endblock %}

@@ -1,42 +1,48 @@
 {% extends 'layout.html' %}
 
-{% block title %}{{ the_post[1]}}{% endblock %}
+{% block title %}
+{% for post in the_post %}
+{{post['TITLE']}}
+{% endfor %}
+{% endblock %}
+
+
 
 
 {% block content %}
 
   <main>
+    {% for post in the_post %}
     <div class="page-section pt-5">
       <div class="container">
         <nav aria-label="Breadcrumb">
           <ul class="breadcrumb p-0 mb-0 bg-transparent">
             <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
             <li class="breadcrumb-item"><a href="{{ url_for('blog') }}">Blog</a></li>
-            <li class="breadcrumb-item active">{{the_post[1]}}</li>
+            <li class="breadcrumb-item active">{{post['TITLE']}}</li>
           </ul>
         </nav>
         
         <div class="row">
           <div class="col-lg-8">
             <div class="blog-single-wrap">
-              <h1 class="post-title">{{ the_post[1]}}</h1>
+              <h1 class="post-title">{{ post['TITLE']}}</h1>
               <div class="post-meta">
                 <div class="post-date">
                   <span class="icon">
                     <span class="mai-time-outline"></span>
-                  </span> <a href="#">{{ the_post[7][:10]}}</a>
+                  </span> <a href="#">{{ post['TIME'][:10]}}</a>
                 </div>
                 <div class="post-comment-count ml-2">
                   <span class="icon">
                     <span class="mai-person-outline"></span>
-                  </span> De <a href="#">{{ the_post[3] }}</a>
+                  </span> Por: <a href="#">{{ post['C_BY'] }}</a>
                 </div>
               </div>
               <div class="post-content">
-                <p>{{ the_post[2] }}</p>
+                <p>{{ post['CONTENT'] | safe }}</p>
               </div>
             </div>
-  
             <div class="comment-form-wrap pt-5">
               <h2 class="mb-5">Enviar comentario</h2>
               <form action="#" class="">
@@ -74,16 +80,16 @@
               <div class="widget-box">
                 <h4 class="widget-title">Post Recientes</h4>
                 <div class="divider"></div>
-                {% for post in recent %}
+                {% for rpost in recent %}
                 <div class="blog-item">
                     <a class="post-thumb" href="">
                       <img src="../assets/img/blog/blog-1.jpg" alt="">
                     </a>
                     <div class="content">
-                      <h6 class="post-title"><a href="{{ url_for('blogview', name=post[1]) }}">{{ post[1] }}</a></h6>
+                      <h6 class="post-title"><a href="{{ url_for('blogview', name=rpost['TITLE']) }}">{{ rpost['TITLE'] }}</a></h6>
                       <div class="meta">
-                        <a href="#"><span class="mai-calendar"></span> {{ post[7][:10]}}</a>
-                        <a href="#"><span class="mai-person"></span> {{ post[3] }}</a>
+                        <a href="#"><span class="mai-calendar"></span> {{ rpost['TIME'][:10]}}</a>
+                        <a href="#"><span class="mai-person"></span> {{ rpost['C_BY'] }}</a>
                       </div>
                     </div>
                 </div>
@@ -94,10 +100,12 @@
               <div class="widget-box">
                 <h4 class="widget-title">Tags</h4>
                 <div class="divider"></div>
-  
                 <div class="tag-clouds">
-                  <a href="#" class="tag-cloud-link">{{ the_post[4] }}</a>
+                  {% for tags in post["TAGS"]%}
+                  <a href="#" class="tag-cloud-link">{{ tags }}</a>
+                  {% endfor %}          
                 </div>
+                
               </div>
   
             </div>
@@ -105,6 +113,7 @@
         </div>
   
       </div>
+    {% endfor %}
     </div>
   </main>
 

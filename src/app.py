@@ -19,7 +19,7 @@ from Modules.TOOLSQL import (
     C_EMAIL_VAL,
     EMAIL_VAL
 )
-from Modules.TOOLSQLBLOG import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
+from Modules.BLOGDB import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
 from flask import (
     Flask,
     request,
@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.14.19b"
+VERSION = "v0.14.79b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -86,7 +86,7 @@ def index():
 
         posts = ALL_BL()
         recent = posts[-4:]
-        recent.sort(key=lambda x: x[0], reverse=True) 
+        recent.sort(key=lambda x: x['ID'], reverse=True) 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
             return render_template("index.html", recent=recent, version=VERSION)
@@ -714,7 +714,7 @@ def blog():
         start = (page - 1) * per_page
         end = start + per_page
         paginated_posts = posts[start:end]
-        paginated_posts.sort(key=lambda x: x[0], reverse=True)
+        paginated_posts.sort(key=lambda x: x['ID'], reverse=True)
         if sessions == True:
             return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
         else:
@@ -741,12 +741,11 @@ def blogpost():
             sessions = False
         if sessions == True:
             if request.method == "POST":
-                C_BY = uss
+                C_BY = uid
                 TITLE = request.form.get("title").replace('"', "''")
                 CONTENT = request.form.get("content").replace('"', "''")
-                TAGS = request.form.get("tags").replace('"', "''")
+                TAGS = request.form.get("tags").replace('"', "''").replace(" ", "")
                 DESCRIP = request.form.get("descrip").replace('"', "''")
-                #log.info(f"{C_BY, TITLE, CONTENT, TAGS, DESCRIP}")
                 INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
                 return redirect(url_for("blog"))
             else:
@@ -762,7 +761,6 @@ def blogpost():
 def blogview(name):
     ip_client = request.headers.get("X-Real-IP")
     try:      
-
         name=name.replace('"', "''")
         log.info(f"Name: {name}")
         try:
@@ -777,18 +775,17 @@ def blogview(name):
             sessions = False          
         posts = ALL_BL()
         recent = posts[-3:]
-        recent.sort(key=lambda x: x[0], reverse=True)
+        recent.sort(key=lambda x: x['ID'], reverse=True)
         the_posts = SEARCH_BL("TITLE", name)
-        if the_posts == None:
+        if the_posts == []:
             return redirect(url_for("blog"))
         if sessions == True:
             return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
         else:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)
-     
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)    
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 

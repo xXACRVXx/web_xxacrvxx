@@ -1,11 +1,18 @@
+from math import e
 import sqlite3
-import jwt
 import datetime
-import cryptocode
+import traceback
 import time
-import random
 import os
-
+import markdown
+try:
+    from Modules.TOOLSQL import SEARCH_DB
+except:
+    try:
+        from TOOLSQL import SEARCH_DB
+    except:
+        pass
+    
 
 ######### LOGGER ###########
 import logging
@@ -46,7 +53,7 @@ else:
 
 ######### connection and cursor #########
 con = sqlite3.connect(DB_PATH, check_same_thread=False)
-
+con.row_factory = sqlite3.Row
 cur = con.cursor()
 
 
@@ -54,6 +61,7 @@ def recon():
     global con
     global cur
     con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    con.row_factory = sqlite3.Row
     cur = con.cursor()
 ##########################################
 
@@ -137,7 +145,7 @@ def CREATE_TABLE():
 def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
     try:
         comp1 = SEARCH_BL('TITLE', TITLE)
-        if comp1 == None:
+        if comp1 == []:
             TIME = datetime.datetime.now()
             recon()
             cur.execute(
@@ -165,14 +173,19 @@ def ALL_BL():
         lista = []
         recon()
         for row in cur.execute('SELECT * FROM BLOGDB'):
-            ALL = row
-            lista.append(ALL)
+            row = dict(row)
+            row['CONTENT'] =  markdown.markdown(row['CONTENT'])
+            row['TAGS'] = row['TAGS'].split(',')
+            try:
+                row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
+            except:
+                row['C_BY'] = 'unknown'           
+            lista.append(row)
         con.close
-        log.debug(f"[ALL_BLOGS:] [OK]")
         return lista
     except Exception as e:
         ERROR = f"ERROR AL BUSCAR TODO EN LA TABLA:\n{e}"
-        log.error(f"[ALL_BLOGS:] [ERROR] [{ERROR}]")
+        log.error(f"[ALL_BLOGS:] [ERROR] [{ERROR}] [{traceback.format_exc()}]")
         return ERROR
 
 def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
@@ -182,11 +195,18 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
         if TYPE in TIPOS:
             search_sql = f'SELECT * FROM BLOGDB WHERE {TYPE}="{DATA_SEARCH}"'
             cur.execute(search_sql)
-            resp = None
-            for rew in cur.fetchall():
-                log.debug(
-                    f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-                resp = rew
+            resp = []
+            for row in cur.fetchall():
+                row = dict(row)
+                row['CONTENT'] =  markdown.markdown(row['CONTENT'])
+                row['TAGS'] = row['TAGS'].split(',')
+                try:
+                    row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
+                except:
+                    row['C_BY'] = 'unknown'     
+                resp.append(row)
+            log.debug(
+                f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             con.close()
             return resp
             
@@ -195,9 +215,15 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
             lista = []
             cur.execute('SELECT * FROM BLOGDB')
             for row in cur.fetchall():
-                ALL = row
-                if ALL[8].__contains__(DATA_SEARCH):
-                    lista.append(ALL)
+                if row['TIME'].__contains__(DATA_SEARCH):
+                    row = dict(row)
+                    row['CONTENT'] =  markdown.markdown(row['CONTENT'])
+                    row['TAGS'] = row['TAGS'].split(',')
+                    try:
+                        row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
+                    except:
+                        row['C_BY'] = 'unknown'
+                    lista.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             return lista
@@ -318,7 +344,8 @@ if __name__ == '__main__':
 
         if entrada == 'ls':
             respuesta = ALL_BL()
-            print(respuesta)
+            for resp in respuesta:
+                print(f'{resp}\n\n')
 
         if entrada == 'buscar':
             valor1 = input('TIPO DE BUSQUEDA: ')
