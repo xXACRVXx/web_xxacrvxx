@@ -25,7 +25,45 @@
 <main>
   <div class="page-section features">
     <div class="container">
-      <div class="row justify-content-center">
+      <h1 class="mb-4">Archivos
+        <a href="{{url_for('upload')}}" class="btn btn-outline border text-secondary">Subir archivos</a>
+      </h1>
+      <div>
+        <h4>
+          Espacio libre: {{space}}
+        </h4>
+        
+      </div>
+
+      <ul class="footer-menu features">
+      {% for archive in files %}
+      <li class="flex-row">
+       <div class="border center">
+          <div class="row align-items-center">
+            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">{{archive[0]}} [{{archive[2]}}]</a>
+          </div>
+          <div class="row align-items-end"> 
+            <div class="col">
+              <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline btn-block border text-secondary">Borrar</a>
+            </div>
+            <div class="col">
+              <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline btn-block border text-secondary">Descargar</a>
+            </div>
+            <div class="col">
+              <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border btn-block text-secondary ">Compartir</a>
+              
+            </div>
+          </div>
+        </div>
+      </li>
+      {%endfor%}
+      </ul>
+    </div>
+    
+    
+
+
+      <!--div class="row justify-content-center">
         <div class="col-md-13 col-lg-25 py-10">
           <div class="col-lg-11 py-3">
             <h1 class="mb-4">Archivos
@@ -103,7 +141,7 @@
         
 
         </div>
-      </div>
+      </div-->
     </div>
   </div>
 </main>

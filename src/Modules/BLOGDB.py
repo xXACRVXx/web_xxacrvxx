@@ -305,6 +305,7 @@ def COMMANDSQL(text):
         for row in cur.execute(text):
             ALL = row
             lista.append(ALL)
+        con.commit()
         con.close
         log.debug(f"[COMMANDSQL:] [{text}] [OK]")
         return lista
