@@ -21,7 +21,6 @@
   </div>
 </div>
 
-
 <main>
   <div class="page-section features">
     <div class="container">
@@ -31,8 +30,7 @@
       <div>
         <h4>
           Espacio libre: {{space}}
-        </h4>
-        
+        </h4>  
       </div>
 
       <ul class="footer-menu features">
@@ -40,17 +38,22 @@
       <li class="flex-row">
        <div class="border center">
           <div class="row align-items-center">
-            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">{{archive[0]}} [{{archive[2]}}]</a>
+            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">
+              <!--div class="embed-responsive embed-responsive-16by9">
+                <video class="embed-responsive-item"controls><source src="{{url_for('download')}}?token={{archive[1]}}" type="video/mp4"></video>
+              </div-->              
+              <img src="{{url_for('download')}}?token={{archive[1]}}" class="card-img-top" alt="...">
+              {{archive[0]}} [{{archive[2]}}]</a>
           </div>
           <div class="row align-items-end"> 
             <div class="col">
-              <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline btn-block border text-secondary">Borrar</a>
+              <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline btn-block border text-danger">Borrar</a>
             </div>
             <div class="col">
-              <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline btn-block border text-secondary">Descargar</a>
+              <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline btn-block border text-primary">Descargar</a>
             </div>
             <div class="col">
-              <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border btn-block text-secondary ">Compartir</a>
+              <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border btn-block text-success ">Compartir</a>
               
             </div>
           </div>
@@ -58,109 +61,49 @@
       </li>
       {%endfor%}
       </ul>
-    </div>
-    
-    
-
-
-      <!--div class="row justify-content-center">
-        <div class="col-md-13 col-lg-25 py-10">
-          <div class="col-lg-11 py-3">
-            <h1 class="mb-4">Archivos
-              <a href="{{url_for('upload')}}" class="btn btn-outline border text-secondary">Subir archivos</a>
-            </h1>
-            <div>
-              <h4>
-                Espacio libre: {{space}}
-              </h4>
-              
-            </div>
-          <div class="d-flex flex-row">
-            <div>
-              
-              <ul class="footer-menu">
-                {% for archive in files %}
-                <li  class="center border">
-                
-                  <div class="center">           
-                    <p class="center"><a href="{{url_for('download')}}?file={{archive[0]}}" class="btn center text-primary">{{archive[0]}} [{{archive[2]}}]</a></p>
-                    <div class="center">
-                      <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline border text-secondary">Borrar</a>
-                      <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline border text-secondary">Descargar</a>
-                      <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border text-secondary ">Compartir</a>
-                    </div>
-                  </div>
-
-                  
-                </li>
-                {% endfor %}
-              </ul>
-
-            </div>
-          </div>
-
-
-          <div class="col-12 mt-5">
-            <nav aria-label="Page Navigation">
-                <ul class="pagination justify-content-center">
-                    {% if page > 1 %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('download', page=page-1) }}" tabindex="-1">Previous</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                        </li>
-                    {% endif %}
-        
-                    {% if page > 1 %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page-1) }}">{{ page-1 }}</a></li>
-                    {% endif %}
-        
-                    <li class="page-item active" aria-current="page">
-                        <a class="page-link" href="#">{{ page }} <span class="sr-only">(current)</span></a>
+      <div class="col-12 mt-5">
+        <nav aria-label="Page Navigation">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('download', page=page-1) }}" tabindex="-1">Previous</a>
                     </li>
-        
-                    {% if page < total_pages %}
-                        <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page+1) }}">{{ page+1 }}</a></li>
-                    {% endif %}
-        
-                    {% if page < total_pages %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('download', page=page+1) }}">Next</a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-disabled="true">Next</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
-        
-        
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                    </li>
+                {% endif %}
 
-        </div>
-      </div-->
+                {% if page > 1 %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page-1) }}">{{ page-1 }}</a></li>
+                {% endif %}
+    
+                <li class="page-item active" aria-current="page">
+                    <a class="page-link" href="#">{{ page }} <span class="sr-only">(current)</span></a>
+                </li>
+    
+                {% if page < total_pages %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page+1) }}">{{ page+1 }}</a></li>
+                {% endif %}
+    
+                {% if page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('download', page=page+1) }}">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-disabled="true">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+      </div>
     </div>
   </div>
 </main>
 
-
-
-<!--script>//<![CDATA[
-  function getlink(e) {
-  var aux = document.createElement("input");
-  aux.setAttribute("value", window.location.href + '?token=' + e);
-  document.body.appendChild(aux);
-  aux.select();
-  document.execCommand("copy");
-  document.body.removeChild(aux);
-  alert("URL copiada al portapapeles\n\n" + window.location.href + '?token=' + e);
-  }
-  //]]></script-->
-
-<script>//<![CDATA[
+<script>
+  //<![CDATA[
   function getlink(e) {
     var aux = document.createElement("input");
     // Obtener la URL actual

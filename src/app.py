@@ -60,7 +60,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.15.29b"
+VERSION = "v0.17.9b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -419,28 +419,24 @@ def download():
             verific = jwt.decode(
                 the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
             )
-            print(verific)
             archive = verific["archive"]
-            user_token = DESENCRIPT(
-                str(verific["user"]), app.config.get("SECRET_KEY"))
-            suid = SEARCH_DB("ID", user_token)
-            uss = suid[1]
+            user_token = str(verific["user"])
             the_path = os.path.join(app.config.get("UPLOAD_FOLDER") ,str(user_token))
             log.info(
-                f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
+                f"[{ip_client}] [/download ] Usuario descargando archivo [{archive}]"
             )
             return send_from_directory(the_path, archive, as_attachment=False)
         except jwt.ExpiredSignatureError:
             log.debug(
-                f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
+                f"[{ip_client}] [/download ] Usuario  expirón token")
             return redirect(url_for("login"))
         except jwt.InvalidTokenError:
             log.debug(
-                f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
+                f"[{ip_client}] [/download ] Usuario  token invalido")
             return redirect(url_for("login"))
         except Exception as e:
             log.error(
-                f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                f"[{ip_client}] [/download ] Usuario  error {e} [{traceback.format_exc()}]")
             return redirect(url_for("download"))
 
     elif request.args.get("f_file"):
@@ -450,8 +446,7 @@ def download():
                 the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
             )
             archive = verific["archive"]
-            user_token = DESENCRIPT(
-                str(verific["user"]), app.config.get("SECRET_KEY"))
+            user_token = str(verific["user"])
             suid = SEARCH_DB("ID", user_token)
             uss = suid[1]
             the_path = os.path.join(app.config.get("UPLOAD_FOLDER") , str(user_token))
@@ -494,7 +489,7 @@ def download():
                     archives = os.listdir(dir)
                     file = []
                     S_KEY = app.config.get("SECRET_KEY")
-                    USER_ENCRIPT = ENCRIPT(str(uid), S_KEY)
+                    USER_ENCRIPT = str(uid)
                     for archive in archives:
                         file_size = CONFIG.SPACE_FILE(str(uid), archive)
                         datos_send_token = {
