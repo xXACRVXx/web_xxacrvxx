@@ -27,3 +27,4 @@ src/web/chat/chat2.html
 src/web/chat/chat3.html
 
 src/Databases/blogdb.db
+src/Modules/BLOGPG.py

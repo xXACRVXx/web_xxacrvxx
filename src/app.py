@@ -2,6 +2,7 @@ from os import system
 import os
 import signal
 import traceback
+from urllib import response
 import requests
 import json
 from werkzeug.utils import secure_filename
@@ -60,7 +61,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.17.9b"
+VERSION = "v0.18.18b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -422,9 +423,9 @@ def download():
             archive = verific["archive"]
             user_token = str(verific["user"])
             the_path = os.path.join(app.config.get("UPLOAD_FOLDER") ,str(user_token))
-            log.info(
-                f"[{ip_client}] [/download ] Usuario descargando archivo [{archive}]"
-            )
+            if os.path.isfile(os.path.join(the_path, archive)) == False:
+                return Response(404)
+            log.info(f"[{ip_client}] [/download ] Usuario descargando archivo [{archive}]")
             return send_from_directory(the_path, archive, as_attachment=False)
         except jwt.ExpiredSignatureError:
             log.debug(
@@ -737,10 +738,10 @@ def blogpost():
         if sessions == True:
             if request.method == "POST":
                 C_BY = uid
-                TITLE = request.form.get("title").replace('"', "''")
-                CONTENT = request.form.get("content").replace('"', "''")
-                TAGS = request.form.get("tags").replace('"', "''").replace(" ", "")
-                DESCRIP = request.form.get("descrip").replace('"', "''")
+                TITLE = request.form.get("title")
+                CONTENT = request.form.get("content")
+                TAGS = request.form.get("tags").replace(" ", "")
+                DESCRIP = request.form.get("descrip")
                 INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
                 return redirect(url_for("blog"))
             else:
@@ -756,7 +757,6 @@ def blogpost():
 def blogview(name):
     ip_client = request.headers.get("X-Real-IP")
     try:      
-        name=name.replace('"', "''")
         log.info(f"Name: {name}")
         try:
             uid = session["user"]
@@ -772,7 +772,7 @@ def blogview(name):
         recent = posts[-3:]
         recent.sort(key=lambda x: x['ID'], reverse=True)
         the_posts = SEARCH_BL("TITLE", name)
-        if the_posts == []:
+        if the_posts == None:
             return redirect(url_for("blog"))
         if sessions == True:
             return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)

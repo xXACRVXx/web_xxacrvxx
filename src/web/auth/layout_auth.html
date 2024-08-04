@@ -35,11 +35,8 @@
   <link href="{{url_for('static', filename='css/swiper.css') }}" rel="stylesheet">
 	<link href="{{url_for('static', filename='css/magnific-popup.css') }}" rel="stylesheet">
 	<link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet">
-	
 
 </head>
-
-
 
 <body data-spy="scroll" data-target=".fixed-top">
     
@@ -55,12 +52,10 @@
     
 
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top top-nav-collapse">
         <div class="container">
 
             <!-- Text Logo - Use this if you don't have a graphic logo -->
-            <!-- <a class="navbar-brand logo-text page-scroll" href="index.html">Tivo</a> -->
-
             <!-- Image Logo -->
             <a class="navbar-brand logo-text page-scroll" href="{{url_for('index')}}">xXACRVXx</a>
             
@@ -71,11 +66,8 @@
             </button>
             <!-- end of mobile menu toggle button -->
 
-            <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-                
-                       
+            <div class="collapse navbar-collapse" id="navbarsExampleDefault">                   
                 <ul class="navbar-nav ml-auto">
-                    
                     <!-- Dropdown Menu -->          
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle page-scroll" id="navbarDropdown" role="button" aria-haspopup="true" aria-expanded="false">MAS</a>
@@ -86,7 +78,7 @@
                             <div class="dropdown-items-divide-hr"></div>
                             <a class="dropdown-item" href="{{url_for('privacy')}}"><span class="item-text">POLÍTICA DE PRIVACIDAD</span></a>
                             <div class="dropdown-items-divide-hr"></div>
-                            <a class="dropdown-item">
+                            <a class="dropdown-item" href="">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-sun" viewBox="0 0 16 16">
                             <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
                             </svg>
@@ -94,6 +86,78 @@
                             </a>
 
                             <script>
+// Obtener el enlace de estilos por defecto
+var styleLink = document.querySelector("link[href='/static/css/styles.css']") || document.querySelector("link[href='/static/css/styles-dark.css']");
+
+// Función para obtener el valor de una cookie
+function getCookie(name) {
+  var cookies = document.cookie.split("; ");
+  for (var i = 0; i < cookies.length; i++) {
+    var parts = cookies[i].split("=");
+    if (parts[0] === name) {
+      return decodeURIComponent(parts[1]);
+    }
+  }
+  return null;
+}
+
+// Función para establecer el valor de una cookie
+function setCookie(name, value) {
+  var date = new Date();
+  date.setTime(date.getTime() + (365*24*60*60*1000)); // 1 año
+  var expires = "expires=" + date.toUTCString();
+  document.cookie = `${name}=${value}; ${expires}; path=/`;
+  console.log(`Cookie establecida: ${name}=${value}; ${expires}; path=/`);
+}
+
+// Función para verificar la cookie y establecer el estilo
+function checkCookie() {
+  var cookieValue = getCookie("dark-mode");
+  console.log(`Estado inicial de la cookie: ${cookieValue}`);
+
+  if (cookieValue === null) {
+    const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setCookie("dark-mode", prefersDarkMode ? "true" : "false");
+    cookieValue = prefersDarkMode ? "true" : "false";
+  }
+
+  if (cookieValue === "true") {
+    styleLink.href = "/static/css/styles-dark.css";
+    console.log("Modo oscuro activado al cargar la página.");
+  } else {
+    styleLink.href = "/static/css/styles.css";
+    console.log("Modo claro activado al cargar la página.");
+  }
+}
+
+// Añadir un evento load al window para verificar la cookie
+window.addEventListener("load", checkCookie);
+
+// Añadir un evento click al botón para alternar el estilo
+document.getElementById("toggle-style").addEventListener("click", function() {
+  var cookieValue = getCookie("dark-mode");
+  var newCookieValue = cookieValue === "true" ? "false" : "true";
+  setCookie("dark-mode", newCookieValue);
+
+  console.log(`Cookie actualizada a: ${newCookieValue}`);
+  console.log(`Estado de la cookie después de la actualización: ${getCookie("dark-mode")}`);
+
+  // Validar que la cookie se estableció correctamente antes de cambiar el estilo XD
+  if (getCookie("dark-mode") === newCookieValue) {
+    if (newCookieValue === "true") {
+      styleLink.href = "/static/css/styles-dark.css";
+      console.log("Modo oscuro activado.");
+    } else {
+      styleLink.href = "/static/css/styles.css";
+      console.log("Modo claro activado.");
+    }
+  } else {
+    console.error("La cookie no se actualizó correctamente.");
+  }
+});
+
+                            </script>
+                            <!--script>
                               // Crear un elemento style con el css deseado
                               var style = document.createElement("style");
                               style.innerHTML = "html, body, body :not(iframe):not(div[style^='position:absolute;top:0;left:-']) { background-color: #181a1b !important; border-color: #776e62 !important; color: #e8e6e3 !important; } html, body { opacity: 1 !important; transition: none !important; }";
@@ -165,8 +229,7 @@
                                 // Añadir el estilo al head
                                 head.appendChild(style);
                               }
-                            </script>    
-
+                            </script-->
                         </div>                   
                     </li>
 				        </ul>
@@ -179,7 +242,6 @@
  <!-- end of navigation -->
                     <!-- end of dropdown menu -->
 
- 
  <!-- content login/regis -->
  {% block content %}{% endblock %}
 <!-- end content -->

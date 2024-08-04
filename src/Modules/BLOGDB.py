@@ -1,8 +1,7 @@
-from math import e
+import re
 import sqlite3
 import datetime
 import traceback
-import time
 import os
 import markdown
 try:
@@ -11,8 +10,7 @@ except:
     try:
         from TOOLSQL import SEARCH_DB
     except:
-        pass
-    
+        pass   
 
 ######### LOGGER ###########
 import logging
@@ -71,7 +69,8 @@ def CONNECTION_TEST():
     global cur
     "CONNECTION_TEST: This function is used to test the connection to the database"
     try:
-        con_test = sqlite3.connect(DB_PATH)
+        con_test = sqlite3.connect(DB_PATH, check_same_thread=False)
+        con.row_factory = sqlite3.Row
         cur_test = con_test.cursor()
         cur_test.execute('SELECT * FROM USERDB')
         con_test.close()
@@ -79,41 +78,17 @@ def CONNECTION_TEST():
         return f'\nCONECTADO CORRECTAMENTE A SQLite3\n'
     except Exception as e:
         ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
-        if ERROR.__contains__("Unknown database"):
-            try:
-                CREATE_TABLE()
-                log.info("CONNECTION_TEST: OK (sqlite3)")
-                return f'\nCONECTADO A SQLite3 + TABLA DE DATOS CREADAS'
-            except Exception as e:
-                ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
-                log.error(f'[CONNECTION_TEST] [ERROR 1] {ERROR}')
-                return ERROR
-        else:
-            try:
-                CREATE_TABLE()
-                con = sqlite3.connect(DB_PATH, check_same_thread=False)
-                cur = con.cursor()
-                log.info("CONNECTION_TEST: OK (sqlite3)")
-                return f'\nCONECTADO CORRECTAMENTE A SQLite3\n'
-            except Exception as e:
-                ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
-                log.error(f'[CONNECTION_TEST] [ERROR 2] {ERROR}')
-                return ERROR
+        try:
+            CREATE_TABLE()
+            log.info("CONNECTION_TEST: OK (sqlite3)")
+            return f'\nCONECTADO A SQLite3 + TABLA DE DATOS CREADAS'
+        except Exception as e:
+            ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
+            log.error(f'[CONNECTION_TEST] [ERROR 1] {ERROR}')
+            return ERROR
 
 
-def CREATE_TABLE():
-    """
-    CREATE_TABLE()
-    this function is used to create a table in the database.
-
-    return: message with the table created.
-
-    Example:
-    CREATE_TABLE()
-
-    return: 'TABLA DE DATOS CREADA'
-    """
-    
+def CREATE_TABLE():    
     EXECREATE = 'CREATE TABLE BLOGDB (ID INTEGER PRIMARY KEY AUTOINCREMENT, TITLE TEXT, CONTENT TEXT, C_BY TEXT, TAGS TEXT, PERMISSION TEXT, EXTRA TEXT, TIME TEXT)'
     try:
         recon()    
@@ -122,7 +97,6 @@ def CREATE_TABLE():
         log.info(f"[CREATE_TABLE:] [OK]")
         return f'TABLA DE DATOS CREADA'
     except Exception as e:
-
         ERROR = f"ERROR AL CREAR LA TABLA:\n{e}"
         if ERROR.__contains__("Unknown database"):
             try:
@@ -145,11 +119,11 @@ def CREATE_TABLE():
 def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
     try:
         comp1 = SEARCH_BL('TITLE', TITLE)
-        if comp1 == []:
+        if comp1 == None:
             TIME = datetime.datetime.now()
             recon()
             cur.execute(
-                f'INSERT INTO BLOGDB (TITLE, CONTENT, C_BY, TAGS, EXTRA, TIME)  VALUES ("{TITLE}", "{CONTENT}", "{C_BY}", "{TAGS}", "{DESCRIP}", "{TIME}")')
+                f'INSERT INTO BLOGDB (TITLE, CONTENT, C_BY, TAGS, EXTRA, TIME)  VALUES (?, ?, ?, ?, ?, ?)', (TITLE, CONTENT, C_BY, TAGS, DESCRIP, TIME))
             con.commit()
             con.close
             log.info(
@@ -168,7 +142,6 @@ def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
 
 
 def ALL_BL():
-
     try:
         lista = []
         recon()
@@ -188,13 +161,13 @@ def ALL_BL():
         log.error(f"[ALL_BLOGS:] [ERROR] [{ERROR}] [{traceback.format_exc()}]")
         return ERROR
 
+
 def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
     try:
         recon()
-        TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA"]
+        TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA", "TIME"]
         if TYPE in TIPOS:
-            search_sql = f'SELECT * FROM BLOGDB WHERE {TYPE}="{DATA_SEARCH}"'
-            cur.execute(search_sql)
+            cur.execute(f'SELECT * FROM BLOGDB WHERE {TYPE}= ?', (DATA_SEARCH,))
             resp = []
             for row in cur.fetchall():
                 row = dict(row)
@@ -203,30 +176,15 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
                 try:
                     row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
                 except:
-                    row['C_BY'] = 'unknown'     
+                    row['C_BY'] = 'unknown'
+                row['CONTENT'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" \2\3', row['CONTENT'])
                 resp.append(row)
             log.debug(
                 f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             con.close()
-            return resp
-            
-
-        elif TYPE == 'TIME':
-            lista = []
-            cur.execute('SELECT * FROM BLOGDB')
-            for row in cur.fetchall():
-                if row['TIME'].__contains__(DATA_SEARCH):
-                    row = dict(row)
-                    row['CONTENT'] =  markdown.markdown(row['CONTENT'])
-                    row['TAGS'] = row['TAGS'].split(',')
-                    try:
-                        row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
-                    except:
-                        row['C_BY'] = 'unknown'
-                    lista.append(row)
-            con.close
-            log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            return lista
+            if len(resp) == 0:
+                return None
+            return resp           
         else:
             log.debug(
                 f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -234,35 +192,22 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
     except Exception as e:
         ERROR = f"ERROR AL BUSCAR EN LA TABLA:\n{e}"
         log.error(
-            f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH})")
+            f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH}) [{traceback.format_exc()}]")
         return ERROR
 
 
-
 def DELETEBL(B_ID):
-    """
-    DELETE(US_EM)
-    US_EM: The user email or user name.
-
-    return: True or False.
-
-    Example:
-    DELETE('user')
-
-    return: True
-    """
-
     try:
         if SEARCH_BL('ID', B_ID) != None:
             recon()
-            cur.execute(f'DELETE FROM BLOGDB WHERE ID="{B_ID}"')
+            cur.execute(f'DELETE FROM BLOGDB WHERE ID=?',(B_ID,))
             con.commit()
             con.close()
             log.info(f'[DELETEBL:] [OK] (ID: {B_ID})')
-            return 'EL CORREO SE HA BORRADO'
+            return True
         else:
             log.debug(f'[DELETEBL:] [None] (ID: {B_ID})')
-            return 'EL CORREO NO EXISTE '
+            return False
     except Exception as e:
         ERROR = f'ERROR AL BORRAR:\n{e}'
         log.error(f'[DELETEBL:] [ERROR] (ERROR={ERROR})')
@@ -270,27 +215,26 @@ def DELETEBL(B_ID):
 
 
 def EDITBL(TYPE='TITLE', B_ID='', NEWD=''):
-
     try:
         if not SEARCH_BL('ID', B_ID) == None:
             TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA", "TIME"]
             if TYPE in TIPOS:
                 recon()
                 cur.execute(
-                    f'UPDATE BLOGDB SET {TYPE}="{NEWD}" WHERE ID="{B_ID}"')
+                    f'UPDATE BLOGDB SET {TYPE}=? WHERE ID=?', (NEWD, B_ID))
                 con.commit()
                 con.close()
                 log.info(
                     f'[EDITARBL:] [OK] (type: {TYPE}, id: {B_ID}, data: {NEWD})')
-                return 'EDITADO'
+                return True
             else:
                 log.debug(
                     f'[EDITARBL:] [None] (type: {TYPE}, id: {B_ID}, data: {NEWD})')
-                return 'COMPRUEBE QUE DESEA EDITAR'
+                return False
         else:
             log.debug(
                 f'[EDITARBL:] [None] No Exist (type: {TYPE}, id: {B_ID}, data: {NEWD})')
-            return f'EL POST {B_ID} NO EXISTE'
+            return False
 
     except Exception as e:
         ERROR = f'ERROR AL EDITAR\n{e}'
@@ -329,19 +273,22 @@ if __name__ == '__main__':
 
         if entrada.startswith('crearTabla'):
             respuesta = CREATE_TABLE()
-            print(respuesta)
+            for resp in respuesta:
+                print(f'{resp}\n\n')
         
         if entrada == "sql":
             texto = input("Comando: ")
             resp = COMMANDSQL(texto)
-            print(resp)
+            for resp in respuesta:
+                print(f'{resp}\n\n')
         
         if entrada == 'insert':
             valor1 = input('TITULO: ')
             valor2 = input('CONTENIDO: ')
             valor3 = input('ID CREADOR: ')
             respuesta = INSERT_BL(valor1, valor2, valor3)
-            print(respuesta)
+            for resp in respuesta:
+                print(f'{resp}\n\n')
 
         if entrada == 'ls':
             respuesta = ALL_BL()
@@ -352,37 +299,31 @@ if __name__ == '__main__':
             valor1 = input('TIPO DE BUSQUEDA: ')
             valor2 = input('DATO A BUSCAR: ')
             respuesta = SEARCH_BL(valor1, valor2)
-            print(respuesta)
-
+            for resp in respuesta:
+                print(f'{resp}\n\n')
 
         if entrada == 'borrar':
             valor1 = input('ESCRIBA PARA BORRAR: ')
             respuesta = DELETEBL(valor1)
-
-            print(respuesta)
+            for resp in respuesta:
+                print(f'{resp}\n\n')
 
         if entrada == 'editar':
             valor1 = input('TIPO: ')
             valor2 = input('USUARIO: ')
             valor3 = input('INFO NEW: ')
             respuesta = EDITBL(valor1, valor2, valor3)
-            print(respuesta)
-
+            for resp in respuesta:
+                print(f'{resp}\n\n')
 
         if entrada == 'help':
-
             respuesta = """
             Help:
             crearTabla Crea una Tabla
             insert Inserta un usuario
             ls Lista todos los usuarios
             buscar Busca un usuario
-            encriptar Encripta un texto
-            desencriptar Desencripta un texto
-            validar Valida un usuario
             borrar Borra un usuario
             editar Edita un usuario
-            conv valida un codigo de confirmacion de correo
             """
-
             print(respuesta)
