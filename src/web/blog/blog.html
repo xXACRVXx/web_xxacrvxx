@@ -41,7 +41,7 @@
             <div class="card-blog">
               <div class="header">
                 <div class="post-avatar">
-                  <img src="{{url_for('static', filename='blog/default.png')}}" alt="">
+                  <img src="{{url_for('static', filename='blog/default.png')}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
                 </div>
                 <div class="entry-footer">
                   <div class="post-author">Por: {{ post['C_BY'] }}</div>
