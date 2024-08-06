@@ -1,5 +1,6 @@
 from os import system
 import os
+import re
 import signal
 import traceback
 from urllib import response
@@ -20,7 +21,7 @@ from Modules.TOOLSQL import (
     C_EMAIL_VAL,
     EMAIL_VAL
 )
-from Modules.BLOGDB import INSERT_BL, ALL_BL, SEARCH_BL, EDITBL, DELETEBL
+from Modules.BLOGDB import INSERT_BL, GET_BL, EDITBL, DELETEBL
 from flask import (
     Flask,
     request,
@@ -61,7 +62,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.18.18b"
+VERSION = "v0.21.34b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -85,7 +86,7 @@ def index():
             token = None
             sessions = False
 
-        posts = ALL_BL()
+        posts = GET_BL('ALL')
         recent = posts[-4:]
         recent.sort(key=lambda x: x['ID'], reverse=True) 
         if sessions == False:
@@ -392,6 +393,8 @@ def download():
                     log.info(
                         f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
                     )
+                    if os.path.isfile(os.path.join(the_path, archive)) == False:
+                        return Response(status=404)
                     return send_from_directory(the_path, archive, as_attachment=False)
                 except jwt.ExpiredSignatureError:
                     log.debug(
@@ -424,7 +427,7 @@ def download():
             user_token = str(verific["user"])
             the_path = os.path.join(app.config.get("UPLOAD_FOLDER") ,str(user_token))
             if os.path.isfile(os.path.join(the_path, archive)) == False:
-                return Response(404)
+                return Response(status=404)
             log.info(f"[{ip_client}] [/download ] Usuario descargando archivo [{archive}]")
             return send_from_directory(the_path, archive, as_attachment=False)
         except jwt.ExpiredSignatureError:
@@ -454,6 +457,8 @@ def download():
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
             )
+            if os.path.isfile(os.path.join(the_path, archive)) == False:
+                return Response(status=404)
             return send_from_directory(the_path, archive, as_attachment=True)
         except jwt.ExpiredSignatureError:
             log.debug(
@@ -655,8 +660,7 @@ def delete():
                     the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
                 )
                 archive = verific["archive"]
-                user_token = DESENCRIPT(
-                    str(verific["user"]), app.config.get("SECRET_KEY"))
+                user_token = str(verific["user"])
                 suid = SEARCH_DB("ID", user_token)
                 uss = suid[1]
                 the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token, archive)
@@ -667,15 +671,15 @@ def delete():
                 return redirect(url_for("download"))
             except jwt.ExpiredSignatureError:
                 log.debug(
-                    f"[{ip_client}] [/delete ] Usuario [{uss}] expirón token")
-                return redirect(url_for("login"))
+                    f"[{ip_client}] [/delete ] expiró el token")
+                return redirect(url_for("login"), code=403)
             except jwt.InvalidTokenError:
                 log.debug(
-                    f"[{ip_client}] [/delete ] Usuario [{uss}] token invalido")
-                return redirect(url_for("login"))
+                    f"[{ip_client}] [/delete ] token invalido")
+                return redirect(url_for("login"), code=403)
             except Exception as e:
                 log.error(
-                    f"[{ip_client}] [/delete ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                    f"[{ip_client}] [/delete ] error {e} [{traceback.format_exc()}]")
                 return redirect(url_for("login"))
         else:
             log.debug(f"[{ip_client}] [/delete ] [method GET]")
@@ -701,10 +705,26 @@ def blog():
             uss = None
             token = None
             sessions = False
-            
-        posts = ALL_BL()
+        if request.args.get('tags'):
+            posts = GET_BL('TAGS',request.args.get('tags'))
+        elif request.args.get('autor'):
+            autor = SEARCH_DB('USER', request.args.get('autor'))
+            posts = GET_BL('C_BY', autor[0])
+        elif request.args.get('time'):
+            posts = GET_BL('TIME', request.args.get('time'))
+        elif request.args.get('search'):
+            allposts = GET_BL('ALL')
+            data_search = request.args.get('search').lower()
+            posts = []
+            for post in allposts:
+                if data_search in post['TITLE'].lower() or data_search in post['CONTENT'].lower() or data_search in post['EXTRA'].lower():
+                    posts.append(post)
+        else:
+            posts = GET_BL('ALL')
         page = request.args.get('page', 1, type=int)
         per_page = 9
+        if posts == None:
+            posts = []
         total_posts = len(posts)
         total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
         start = (page - 1) * per_page
@@ -768,10 +788,10 @@ def blogview(name):
             uss = None
             token = None
             sessions = False          
-        posts = ALL_BL()
+        posts = GET_BL('ALL')
         recent = posts[-3:]
         recent.sort(key=lambda x: x['ID'], reverse=True)
-        the_posts = SEARCH_BL("TITLE", name)
+        the_posts = GET_BL("TITLE", name)
         if the_posts == None:
             return redirect(url_for("blog"))
         if sessions == True:
@@ -1180,6 +1200,29 @@ def getcookie():
     name = request.cookies.get("userID")
     return name
 
+@app.route("/doxear", methods=["POST", "GET"])
+def doxear():
+    client_ip = request.headers.get("X-Real-IP")
+    headers = request.headers
+    localis = requests.get(f"http://ip-api.com/json/{client_ip}")
+    localis = localis.json()
+    log.critical(
+        f"[/doxear ] [method GET] [ip] {client_ip} [headesrs] {headers} [localis] {localis} ")
+
+    return f"<h1>Hola {client_ip} </h1> <h2> Headers: {headers} </h2> <h3> Localis: {localis} </h3>"
+
+
+@app.errorhandler(404)
+def not_found(error=None):
+  error_page = render_template('errors/404.html')
+  return Response(error_page, status = 404)
+
+
+
+
+
+
+
 
 @app.route("/dev", methods=["POST", "GET"])
 def dev():
@@ -1203,27 +1246,7 @@ def dev4():
     
 
 
-
-
-
-        
-
-
-
-
-@app.route("/doxear", methods=["POST", "GET"])
-def doxear():
-    client_ip = request.headers.get("X-Real-IP")
-    headers = request.headers
-    localis = requests.get(f"http://ip-api.com/json/{client_ip}")
-    localis = localis.json()
-    log.critical(
-        f"[/doxear ] [method GET] [ip] {client_ip} [headesrs] {headers} [localis] {localis} ")
-
-    return f"<h1>Hola {client_ip} </h1> <h2> Headers: {headers} </h2> <h3> Localis: {localis} </h3>"
-
 ################### API/v1 #######################
-
 
 @app.route("/api/auth", methods=["POST", "GET"])
 def apiauth_v1():
@@ -1303,9 +1326,7 @@ def apimsg():
         return jsonify({"VALIDO": larespuesta})
 
 #################### API/v2 ######################
-
 # Auth v2
-
 
 @app.route("/api/v2/auth", methods=["POST", "GET"])
 def apiauth_v2():
@@ -1367,7 +1388,6 @@ def destroyer_bot():
 users = {
     'juan': '1234'
 }
-
 
 # Definir la ruta de auth
 @app.route('/auth')

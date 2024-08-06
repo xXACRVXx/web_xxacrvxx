@@ -35,14 +35,11 @@
 
       <ul class="footer-menu features">
       {% for archive in files %}
-      <li class="flex-row">
-       <div class="border center">
-          <div class="row align-items-center">
-            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">
-              <!--div class="embed-responsive embed-responsive-16by9">
-                <video class="embed-responsive-item"controls><source src="{{url_for('download')}}?token={{archive[1]}}" type="video/mp4"></video>
-              </div-->              
-              <img src="{{url_for('download')}}?token={{archive[1]}}" class="card-img-top" alt="...">
+      <li class="flex-row py-2">
+       <div style="max-width:800px" class="border card-blog">
+          <div class="post-title">
+            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">          
+              <img src="{{url_for('download')}}?token={{archive[1]}}" style="aspect-ratio: 16/9; object-fit: contain;" class="card-img-top" alt="..." onerror="this.onerror=null; this.src='/static/img/file.png'">
               {{archive[0]}} [{{archive[2]}}]</a>
           </div>
           <div class="row align-items-end"> 

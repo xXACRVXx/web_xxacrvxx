@@ -42,7 +42,7 @@
           <div class="card-blog">
             <div class="header">
               <div class="entry-footer">
-                <div class="post-author">{{ post['C_BY'] }}</div>
+                <div class="post-author">Por: {{ post['C_BY'] }}</div>
                 <a href="#" class="post-date">{{ post['TIME'][:10]}}</a>
               </div>
             </div>
@@ -72,15 +72,16 @@
           <div class="divider"></div>
           <p class="mb-5">Recientemente añadimos los blogs y queremos que cualquiera pueda publicar cosas en nuestra web, para hacerlo solo nesesita logearse</p>
           <a href="{{url_for('blogpost')}}" class="btn btn-primary">Nuevo post</a>
-          <a href="{{url_for('login')}}" class="btn btn-outline ml-2">Iniciar sesion</a>
+          <a href="{{url_for('blog')}}" class="btn btn-outline ml-2">Blog</a>
         </div>
-        <div class="col-lg-6 py-3 wow zoomIn">
-          <div class="img-place text-center">
-            <img src="../assets/img/bg_image_3.png" alt="">
-          </div>
+        <div class="col-lg-6 py-3 wow fadeInRight">
+          <h2 class="title-section">Descargar y subir archivos</h2>
+          <div class="divider"></div>
+          <p>Al crearte una cuenta en nuestra web tambien podras acceder a guardar tus archivos en nuestro servidor y poder descargarlos en otro dispositivo de forma facil y rapida o tambien para compartirlos con tus amigos,los archivos estan protegidos por nuestro servidor y solo estaran disponibles para las personas a las que les proporciones el link</p>
+          <a href="{{url_for('download')}}" class="btn btn-primary">Descargar Archivos</a>
+          <a href="{{url_for('upload')}}" class="btn btn-outline ml-2">Subir archivos</a>
         </div>
       </div>
     </div> <!-- .container -->
   </div> <!-- .page-section -->
-
   {% endblock %}

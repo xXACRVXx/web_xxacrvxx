@@ -118,7 +118,7 @@ def CREATE_TABLE():
 
 def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
     try:
-        comp1 = SEARCH_BL('TITLE', TITLE)
+        comp1 = GET_BL('TITLE', TITLE)
         if comp1 == None:
             TIME = datetime.datetime.now()
             recon()
@@ -141,31 +141,11 @@ def INSERT_BL(TITLE='', CONTENT='', C_BY='', TAGS=None, DESCRIP=None):
         return ERROR
 
 
-def ALL_BL():
-    try:
-        lista = []
-        recon()
-        for row in cur.execute('SELECT * FROM BLOGDB'):
-            row = dict(row)
-            row['CONTENT'] =  markdown.markdown(row['CONTENT'])
-            row['TAGS'] = row['TAGS'].split(',')
-            try:
-                row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
-            except:
-                row['C_BY'] = 'unknown'           
-            lista.append(row)
-        con.close
-        return lista
-    except Exception as e:
-        ERROR = f"ERROR AL BUSCAR TODO EN LA TABLA:\n{e}"
-        log.error(f"[ALL_BLOGS:] [ERROR] [{ERROR}] [{traceback.format_exc()}]")
-        return ERROR
 
-
-def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
+def GET_BL(TYPE='TITLE', DATA_SEARCH=''):
     try:
         recon()
-        TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA", "TIME"]
+        TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA"]
         if TYPE in TIPOS:
             cur.execute(f'SELECT * FROM BLOGDB WHERE {TYPE}= ?', (DATA_SEARCH,))
             resp = []
@@ -184,7 +164,30 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
             con.close()
             if len(resp) == 0:
                 return None
-            return resp           
+            return resp  
+        elif TYPE == 'TIME':
+            lista = []
+            cur.execute('SELECT * FROM BLOGDB')
+            for row in cur.fetchall():
+                ALL = row
+                if ALL['TIME'].__contains__(DATA_SEARCH):
+                    lista.append(ALL)
+            con.close
+            log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
+            return lista
+        elif TYPE == 'ALL':
+            lista = []
+            for row in cur.execute('SELECT * FROM BLOGDB'):
+                row = dict(row)
+                row['CONTENT'] =  markdown.markdown(row['CONTENT'])
+                row['TAGS'] = row['TAGS'].split(',')
+                try:
+                    row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
+                except:
+                    row['C_BY'] = 'unknown'           
+                lista.append(row)
+            con.close
+            return lista  
         else:
             log.debug(
                 f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -198,7 +201,7 @@ def SEARCH_BL(TYPE='TITLE', DATA_SEARCH=''):
 
 def DELETEBL(B_ID):
     try:
-        if SEARCH_BL('ID', B_ID) != None:
+        if GET_BL('ID', B_ID) != None:
             recon()
             cur.execute(f'DELETE FROM BLOGDB WHERE ID=?',(B_ID,))
             con.commit()
@@ -216,7 +219,7 @@ def DELETEBL(B_ID):
 
 def EDITBL(TYPE='TITLE', B_ID='', NEWD=''):
     try:
-        if not SEARCH_BL('ID', B_ID) == None:
+        if not GET_BL('ID', B_ID) == None:
             TIPOS = ["ID", "TITLE", "CONTENT", "C_BY", "TAGS", "PERMISSION", "EXTRA", "TIME"]
             if TYPE in TIPOS:
                 recon()
@@ -291,14 +294,14 @@ if __name__ == '__main__':
                 print(f'{resp}\n\n')
 
         if entrada == 'ls':
-            respuesta = ALL_BL()
+            respuesta = GET_BL('ALL')
             for resp in respuesta:
                 print(f'{resp}\n\n')
 
         if entrada == 'buscar':
             valor1 = input('TIPO DE BUSQUEDA: ')
             valor2 = input('DATO A BUSCAR: ')
-            respuesta = SEARCH_BL(valor1, valor2)
+            respuesta = GET_BL(valor1, valor2)
             for resp in respuesta:
                 print(f'{resp}\n\n')
 

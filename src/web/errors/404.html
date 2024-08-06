@@ -1,0 +1,40 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Nuevo{% endblock %}
+
+
+{% block content %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
+                <li class="breadcrumb-item active">Nuevo</li>
+              </ul>
+            </nav>
+            <h1 class="text-center"><spam><strong>ERROR 404</strong></spam></h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  <main>
+    <div class="page-section border-top">
+      <div class="container">
+        <div class="text-center wow fadeInUp">
+          <div class="subhead">404 NOT FOUND</div>
+          <h2 class="title-section"><span class="marked">¡Oops!</span> Página no encontrada :(</h2>
+          <div class="divider mx-auto"></div>
+        </div>
+    
+        <div class="text-center">
+          <a href="{{url_for('index')}}" class="btn btn-outline-primary rounded-pill">Vuelve al inicio</a>
+        </div>
+      </div> <!-- .container -->
+    </div> <!-- .page-section -->
+  </main>
+
+  {% endblock %}
