@@ -1,5 +1,6 @@
 from os import system
 import os
+import random
 import re
 import signal
 import traceback
@@ -62,7 +63,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.24.04b"
+VERSION = "v0.25.04b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -94,8 +95,7 @@ def index():
             return render_template("index.html", recent=recent, version=VERSION)
         else:
             try:
-                verific = jwt.decode(jwt=str(token), key=str(app.config.get(
-                    "SECRET_KEY")), algorithms=["HS256"])
+                verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
                 log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
                 return render_template("app/index.html", recent=recent, user=uss, version=VERSION)
             except jwt.ExpiredSignatureError:
@@ -104,10 +104,8 @@ def index():
             except jwt.InvalidTokenError:
                 log.debug(f"[{ip_client}] [/ ] Token invalido")
                 return redirect(url_for("login"))
-
     except Exception as e:
-        log.error(
-            f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
+        log.error(f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
         return render_template("index.html", version=VERSION)
 
 
@@ -122,44 +120,29 @@ def login():
             if email.__contains__('"'):
                 flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
                 log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html")
-            
+                return render_template("auth/log-in_layout.html")           
             if VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
                     TheUser = SEARCH_DB("EMAIL", email)
                 else:
                     TheUser = SEARCH_DB("USER", email)
-
-                data_token = {
-                    "exp": datetime.datetime.now(datetime.UTC)
-                    + datetime.timedelta(days=128, minutes=0, seconds=0),
-                    "iat": datetime.datetime.now(datetime.UTC)}
-                thetoken = jwt.encode(
-                    data_token,
-                    app.config.get("SECRET_KEY"),
-                    algorithm="HS256")
-
+                data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+                thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
                 session["user"] = TheUser[0]
                 session["token"] = thetoken
-
                 if TheUser[4] != "True":
                     return redirect(url_for("EmailSend", email=TheUser[2]))
-                
                 flash("Cuenta iniciada correctamente","success")
                 log.info(f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
                 return redirect(url_for("index"))
             else:
                 flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
-                log.debug(
-                    f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
+                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
                 return render_template("auth/log-in_layout.html")
-
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
-            log.error(
-                f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
+            log.error(f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
             return render_template("auth/log-in_layout.html")
-
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
         return render_template("auth/log-in_layout.html")
@@ -829,6 +812,22 @@ def blogview(name):
         return redirect(url_for("index"))
 
 
+@app.route("/redirect")
+def w_redirect():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        if request.args.get('url'):
+            return redirect(request.args.get('url'))
+        if  request.args.get('r'):
+            return redirect(request.args.get('r'))
+        else:
+            return redirect(url_for("index"))
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/details ] ERROR[0013]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
 @app.route("/details")
 def detalles():
     ip_client = request.headers.get("X-Real-IP")
@@ -1233,6 +1232,12 @@ def not_found(error=None):
   return Response(error_page, status = 404)
 
 
+@app.errorhandler(500)
+def not_found(error=None):
+  error_page = render_template('errors/500.html')
+  return Response(error_page, status = 500)
+
+
 
 
 
@@ -1257,6 +1262,10 @@ def dev3():
 @app.route("/dev4", methods=["POST", "GET"])
 def dev4():
     return render_template("_dev/auth/terms-conditions.html")
+
+@app.route("/dev5", methods=["POST", "GET"])
+def dev5():
+    return render_template("_dev/auth/privacy-policy.html")
 
     
 
@@ -1407,6 +1416,8 @@ users = {
 # Definir la ruta de auth
 @app.route('/auth')
 def auth_form():
+    if request.args.get('username') is None:
+        return render_template("auth/log-in_layout.html")
     username = request.args.get('username')
     return render_template("auth/AuthApi.html", username=username)
 
@@ -1414,28 +1425,30 @@ def auth_form():
 @app.route('/auth/authorize', methods=["POST", "GET"])
 def authorize():
     # Obtener el nombre de usuario y la contraseña del usuario
-    username = request.form.get('username')
-    password = request.form.get('password')
-    key = app.config.get("SECRET_KEY")
-    log.info(f"[dcfgfrgdgdfg ] [method POST] {username} {password}")
+    if request.method == "POST":
+        username = request.form.get('username')
+        password = request.form.get('password')
+        key = app.config.get("SECRET_KEY")
+        log.info(f"[auth ] [method POST] {username} {password}")
 
-    # Verificar las credenciales del usuario
-    if username.__contains__('"'):
-                ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
-                return render_template("auth/log-in_layout.html", ERROR2=ERROR)
-    if VALIDAR(username, password, key) == True:
-        if username.__contains__("@"):
-            TheUser = SEARCH_DB("EMAIL", username)
+        # Verificar las credenciales del usuario
+        if username.__contains__('"'):
+                    ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
+                    return render_template("auth/log-in_layout.html", ERROR2=ERROR)
+        if VALIDAR(username, password, key) == True:
+            if username.__contains__("@"):
+                TheUser = SEARCH_DB("EMAIL", username)
+            else:
+                TheUser = SEARCH_DB("USER", username)
+            # Generar un código de autorización
+            code = '123456'
+
+            # Redirigir al usuario a la aplicación
+            return render_template("auth/Authresponse.html", code=code)
         else:
-            TheUser = SEARCH_DB("USER", username)
-        # Generar un código de autorización
-        code = '123456'
-
-        # Redirigir al usuario a la aplicación
-        return render_template("auth/Authresponse.html", code=code)
-    else:
-        # Devolver un error
-        return f'Error de autorización,{username,password} '
+            # Devolver un error
+            return f'Error de autorización,{username,password} '
+    return render_template("auth/log-in_layout.html")
 
 # Definir la ruta de devolución de llamada
 @app.route('/auth/callback')
@@ -1448,7 +1461,6 @@ def callback():
 
     # Devolver el token de acceso
     return token
-
 
 
 #################### SoketIO #####################
