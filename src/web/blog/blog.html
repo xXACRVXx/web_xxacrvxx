@@ -5,6 +5,13 @@
 
 
 {% block content %}
+
+<style>
+ .hidden {
+   display: none;
+ }
+</style> 
+
 <div class="container mt-5">
   <div style="height: 320px;" class="page-banner">
     <div class="row justify-content-center align-items-center h-100">
@@ -24,12 +31,15 @@
     <div class="page-section">
       <div class="container">
         <div class="row">
-          <div class="col-lg-7 py-3 wow fadeInLeft">
+          <div class="col-lg-5 py-3 wow fadeInLeft">
             <h2>Publicar <a href="{{url_for('blogpost')}}" class="btn btn-primary">Nuevo post</a></h2> 
           </div>
-          <div class="col-lg-5 py-3 fa-align-left wow fadeInRight">
+          <div  class="col-lg-3 py-3 wow fadeInUp ">
+            <button id="removeQueryDiv" class="btn btn-outline-danger hidden" onclick="removeQueryParams()" >Quitar Filtros</button>
+          </div>
+          <div class="col-lg-4 py-3 fa-align-left wow fadeInRight">
             <form class="form-inline mt-2 mt-md-0">
-              <input class="form-control mr-sm-2" type="text" placeholder="Buscar" aria-label="Buscar" name="search">
+              <input class="form-control col-lg-8 mr-sm-2" type="text" placeholder="Buscar" aria-label="Buscar" name="search">
               <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
             </form>
           </div>
@@ -107,5 +117,18 @@
       </div>
     </div>
   </main>
+
+
+<script>
+  function removeQueryParams() {
+    const url = window.location.origin + window.location.pathname;
+    window.location.href =url;
+  }
+  
+  if (window.location.search) {
+    document.getElementById('removeQueryDiv').classList.remove('hidden')
+  } 
+</script>
+
 
   {% endblock %}

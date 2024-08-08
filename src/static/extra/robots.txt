@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /downloads/
 Disallow: /upload/
+Disallow: /blogpost
 Allow: /
 Allow: /blog
 Allow: /blog/*

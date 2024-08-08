@@ -31,12 +31,12 @@
                 <div class="post-date">
                   <span class="icon">
                     <span class="mai-time-outline"></span>
-                  </span> <a href="#">{{ post['TIME'][:10]}}</a>
+                  </span> <a href="{{ url_for('blog', time=post['TIME'][:10]) }}">{{ post['TIME'][:10]}}</a>
                 </div>
                 <div class="post-comment-count ml-2">
                   <span class="icon">
                     <span class="mai-person-outline"></span>
-                  </span> Por: <a href="#">{{ post['C_BY'] }}</a>
+                  </span> Por: <a href="{{ url_for('blog', author=post['C_BY']) }}">{{ post['C_BY'] }}</a>
                 </div>
               </div>
               <div class="post-content">
@@ -83,13 +83,13 @@
                 {% for rpost in recent %}
                 <div class="blog-item">
                     <a class="post-thumb" href="">
-                      <img src="../assets/img/blog/blog-1.jpg" alt="">
+                      <img src="{{url_for('static', filename='blog/default.png')}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
                     </a>
                     <div class="content">
                       <h6 class="post-title"><a href="{{ url_for('blogview', name=rpost['TITLE']) }}">{{ rpost['TITLE'] }}</a></h6>
                       <div class="meta">
-                        <a href="#"><span class="mai-calendar"></span> {{ rpost['TIME'][:10]}}</a>
-                        <a href="#"><span class="mai-person"></span> {{ rpost['C_BY'] }}</a>
+                        <a href="{{ url_for('blog', time=post['TIME'][:10]) }}"><span class="mai-calendar"></span> {{ rpost['TIME'][:10]}}</a>
+                        <a href="{{ url_for('blog', author=post['C_BY']) }}"><span class="mai-person"></span> {{ rpost['C_BY'] }}</a>
                       </div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
                 <div class="divider"></div>
                 <div class="tag-clouds">
                   {% for tags in post["TAGS"]%}
-                  <a href="#" class="tag-cloud-link">{{ tags }}</a>
+                  <a href="{{ url_for('blog', tags=post['TAGS']) }}" class="tag-cloud-link">{{ tags }}</a>
                   {% endfor %}          
                 </div>
                 

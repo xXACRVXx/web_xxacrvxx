@@ -1,0 +1,48 @@
+{% extends 'layout.html' %}
+
+{% block title %}Nube Privada{% endblock %}
+
+{% block content %}
+
+    <div class="container mt-5">
+      <div class="page-banner">
+        <div class="row justify-content-center align-items-center h-100">
+          <div class="col-md-6">
+            <nav aria-label="Breadcrumb">
+              <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+                <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
+                <li class="breadcrumb-item active">Nube</li>
+              </ul>
+            </nav>
+            <h1 class="text-center">Nube Privada</h1>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-6 py-3 wow fadeInLeft">
+            <h2 class="title-section">Descargar y subir archivos</h2>
+            <div class="divider"></div>
+            {% if not user %}
+            <h3><a href="{{url_for('login')}}" >[Necesita iniciar su cuenta]</a></h3>
+            {% endif %}
+            <p>Al crearte una cuenta en nuestra web tambien podras acceder a guardar tus archivos en nuestro servidor y poder descargarlos en otro dispositivo de forma facil y rapida o tambien para compartirlos con tus amigos,los archivos estan protegidos por nuestro servidor y solo estaran disponibles para las personas a las que les proporciones el link</p>
+            <a href="{{url_for('download')}}" class="btn btn-primary">Descargar Archivos</a>
+            <a href="{{url_for('upload')}}" class="btn btn-outline ml-2">Subir archivos</a>
+          </div>
+          <div class="col-lg-6 py-3 wow zoomIn">
+            <div class="img-place text-center">
+              <img src="{{url_for('static', filename='img/cloud/cloud3.png')}}" alt="">
+            </div>
+          </div>
+        </div>
+      </div> <!-- .container -->
+    </div> <!-- .page-section -->
+  </main>
+
+  {% endblock %}

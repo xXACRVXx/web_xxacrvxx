@@ -9,73 +9,128 @@
 
 <url>
   <loc>https://xxacrvxx.ydns.eu/</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/blog</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/cloud</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/services</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://xxacrvxx.ydns.eu/news</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/contact</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/login</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/regist</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog/Nuevos%20post%20en%20markdown</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/blog/Futuro%20soporte%20de%20Markdown%20en%20el%20blog</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://xxacrvxx.ydns.eu/blog/Correcion%20de%20erroes%20en%20el%20blog</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <loc>https://xxacrvxx.ydns.eu/blog/Correcion%20de%20errores%20en%20el%20blog</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/blog/Nuevo%20blog%20para%20la%20web%20(beta)</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://xxacrvxx.ydns.eu/blog/Prueba%202</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/privacy</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
+  <loc>https://xxacrvxx.ydns.eu/blog?time=2024-07-31</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?time=2024-07-30</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?time=2024-07-29</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog/Prueba%202</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
   <loc>https://xxacrvxx.ydns.eu/blog/Prueba</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://xxacrvxx.ydns.eu/details</loc>
-  <lastmod>2024-07-31T02:10:31+00:00</lastmod>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
   <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/conditions</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?author=admin</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?tags=news&amp;tags=+test&amp;tags=+bugfix</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?tags=news</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?tags=%23bugfix</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?tags=test2</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+<url>
+  <loc>https://xxacrvxx.ydns.eu/blog?tags=test</loc>
+  <lastmod>2024-08-07T08:32:58+00:00</lastmod>
+  <priority>0.51</priority>
 </url>
 
 

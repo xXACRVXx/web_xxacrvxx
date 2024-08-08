@@ -2134,6 +2134,8 @@ a.text-dark:hover, a.text-dark:focus {
 .blog-item .post-thumb img {
   width: auto;
   height: 100%;
+  aspect-ratio: 10/8;
+  object-fit: cover;
 }
 
 .blog-item .post-title a {

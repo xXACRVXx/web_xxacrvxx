@@ -169,6 +169,13 @@ def GET_BL(TYPE='TITLE', DATA_SEARCH=''):
             lista = []
             cur.execute('SELECT * FROM BLOGDB')
             for row in cur.fetchall():
+                row = dict(row)
+                row['CONTENT'] =  markdown.markdown(row['CONTENT'])
+                row['TAGS'] = row['TAGS'].split(',')
+                try:
+                    row['C_BY'] = SEARCH_DB('ID', row['C_BY'])[1]
+                except:
+                    row['C_BY'] = 'unknown'  
                 ALL = row
                 if ALL['TIME'].__contains__(DATA_SEARCH):
                     lista.append(ALL)

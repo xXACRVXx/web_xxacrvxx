@@ -62,7 +62,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.22.37b"
+VERSION = "v0.24.04b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -366,6 +366,30 @@ def EmailConfirm():
                 f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
             flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
             return render_template("auth/EmailConfirm.html")
+
+
+@app.route("/cloud")
+def cloud():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False
+        if sessions == True:
+            return render_template("files/cloud.html", user=uss, version=VERSION)
+        else:
+            return render_template("files/cloud.html", version=VERSION)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/cloud ] ERROR[0015]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/download")
@@ -690,6 +714,7 @@ def delete():
             return redirect(url_for("login"))
 
 
+@app.route("/news")
 @app.route("/blog/")
 @app.route("/blog")
 def blog():
@@ -851,29 +876,6 @@ def servicios():
             f"[{ip_client}] [/services ] ERROR[0014]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
         
-
-@app.route("/news")
-def nuevo():
-    ip_client = request.headers.get("X-Real-IP")
-    try:
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-        if sessions == True:
-            return render_template("news.html", user=uss, version=VERSION)
-        else:
-            return render_template("news.html", version=VERSION)
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/news ] ERROR[0015]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
 
 
 @app.route("/contact", methods=["POST", "GET"])
@@ -1042,6 +1044,19 @@ def sitemap_xml():
         the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
         log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
         return send_from_directory(the_path, "sitemap.xml", as_attachment=False)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/sitemap.xml ] ERROR[0023]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
+@app.route("/v2/sitemap.xml")
+def sitemap2_xml():
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        the_path = os.path.join(CONFIG.SYSTEM_PATH,"static","extra")
+        log.debug(f"[{ip_client}] [/sitemap.xml ] [OK]")
+        return send_from_directory(the_path, "sitemap.xml", as_attachment=True)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/sitemap.xml ] ERROR[0023]: {e} [{traceback.format_exc()}]")
