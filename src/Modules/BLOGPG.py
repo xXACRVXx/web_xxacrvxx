@@ -1,9 +1,11 @@
+from psycopg.rows import dict_row
+import psycopg
 import re
-import sqlite3
 import datetime
 import traceback
 import os
 import markdown
+from dotenv import load_dotenv
 try:
     from Modules.TOOLSQL import SEARCH_DB
 except:
@@ -19,47 +21,35 @@ try:
 except:
     pass
 
-log = logging.getLogger("BLOGDB")
+log = logging.getLogger("BLOGPG")
 
 ############################
 
 
 ########## EDIT ############
+load_dotenv("config.env") # carga las variables de entorno desde el archivo .env
 
-DB_FOLDER = "Databases"
+HOST = os.getenv("HOST_DB")
+PORT = os.getenv("PORT_DB")
+DB_NAME = os.getenv("NAME_DB")
+USERPG = os.getenv("USERPG_DB")
+PASSWPG = os.getenv("PASSWPG_DB")
 
-DB_NAME = "blogdb.db"
-
+DB_PATH = f"postgresql://{USERPG}:{PASSWPG}@{HOST}:{PORT}/{DB_NAME}"
+print(DB_PATH)
+#DB_PATH = f"host={HOST} port={PORT} dbname={DB_NAME} user={USERPG} password={PASSWPG}"
 ############################
-
-SYSTEM_PATH = os.getcwd()
-
-PATH = os.path.join(SYSTEM_PATH, DB_FOLDER)
-
-PARENT_DIR = os.path.dirname(SYSTEM_PATH)
-
-if os.path.exists(PATH) and os.path.isdir(PATH):
-    DB_PATH = os.path.join(PATH, DB_NAME)
-else:
-    PARENT_PATH = os.path.join(PARENT_DIR, DB_FOLDER)
-    if os.path.exists(PARENT_PATH) and os.path.isdir(PARENT_PATH):
-        DB_PATH = os.path.join(PARENT_PATH, DB_NAME)
-    else:
-        os.makedirs(PATH, exist_ok=True)
-        DB_PATH = os.path.join(PATH, DB_NAME)
 
 
 ######### connection and cursor #########
-con = sqlite3.connect(DB_PATH, check_same_thread=False)
-con.row_factory = sqlite3.Row
+con = psycopg.connect(DB_PATH, row_factory=dict_row)
 cur = con.cursor()
 
 
 def recon():
     global con
     global cur
-    con = sqlite3.connect(DB_PATH, check_same_thread=False)
-    con.row_factory = sqlite3.Row
+    con = psycopg.connect(DB_PATH, row_factory=dict_row)
     cur = con.cursor()
 ##########################################
 
@@ -69,30 +59,30 @@ def CONNECTION_TEST():
     global cur
     "CONNECTION_TEST: This function is used to test the connection to the database"
     try:
-        con_test = sqlite3.connect(DB_PATH, check_same_thread=False)
-        con.row_factory = sqlite3.Row
+        con_test = psycopg.connect(DB_PATH)
         cur_test = con_test.cursor()
-        cur_test.execute('SELECT * FROM BLOGDB')
+        cur_test.execute('SELECT * FROM blogpg')
         con_test.close()
-        log.info("CONNECTION_TEST: OK (sqlite3) ")
-        return f'\nCONECTADO CORRECTAMENTE A SQLite3\n'
+        log.info("CONNECTION_TEST: OK (psycopg3) ")
+        return f'\nCONECTADO CORRECTAMENTE A PostgreSQL\n'
     except Exception as e:
-        ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
+        ERROR = f"ERROR AL CONECTARSE A PostgreSQL:\n{e}"
         try:
             CREATE_TABLE()
-            log.info("CONNECTION_TEST: OK (sqlite3)")
-            return f'\nCONECTADO A SQLite3 + TABLA DE DATOS CREADAS'
+            log.info("CONNECTION_TEST: OK (psycopg3)")
+            return f'\nCONECTADO A PostgreSQL + TABLA DE DATOS CREADAS'
         except Exception as e:
-            ERROR = f"ERROR AL CONECTARSE A SQLite3:\n{e}"
+            ERROR = f"ERROR AL CONECTARSE A PostgreSQL:\n{e}"
             log.error(f'[CONNECTION_TEST] [ERROR 1] {ERROR}')
             return ERROR
 
 
 def CREATE_TABLE():    
-    EXECREATE = 'CREATE TABLE BLOGDB (id INTEGER PRIMARY KEY AUTOINCREMENT, title text, descript text, content text, creat_id integer, tags text, category text, image text, count_view integer, permission text, extra text, time text)'
+    EXECREATE = 'CREATE TABLE IF NOT EXISTS blogpg (id SERIAL PRIMARY KEY, title text, descript text, content text, creat_id integer, tags text, category text, image text, count_view integer, permission text, extra text, time text)'
     try:
         recon()    
         cur.execute(EXECREATE)
+        con.commit()
         con.close()
         log.info(f"[CREATE_TABLE:] [OK]")
         return f'TABLA DE DATOS CREADA'
@@ -123,7 +113,7 @@ def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=No
             TIME = datetime.datetime.now()
             recon()
             cur.execute(
-                f'INSERT INTO BLOGDB (title, descript, content, creat_id, image, tags, category, time)  VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS, CATEGORY, TIME))
+                'INSERT INTO blogpg (title, descript, content, creat_id, image, tags, category, time)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS, CATEGORY, str(TIME)))
             con.commit()
             con.close
             log.info(
@@ -147,7 +137,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
         recon()
         TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "cout_view", "permission", "extra"]
         if TYPE in TIPOS:
-            cur.execute(f'SELECT * FROM BLOGDB WHERE {TYPE}= ?', (DATA_SEARCH,))
+            cur.execute(f'SELECT * FROM blogpg WHERE {TYPE}= %s', (DATA_SEARCH,))
             resp = []
             for row in cur.fetchall():
                 row = dict(row)
@@ -169,7 +159,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
             return resp  
         elif TYPE == 'time':
             lista = []
-            cur.execute('SELECT * FROM BLOGDB')
+            cur.execute('SELECT * FROM blogpg')
             for row in cur.fetchall():
                 row = dict(row)
                 if MARKDOWN:
@@ -188,7 +178,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
             return lista
         elif TYPE == 'tags':
             lista = []
-            cur.execute('SELECT * FROM BLOGDB')
+            cur.execute('SELECT * FROM blogpg')
             for row in cur.fetchall():
                 row = dict(row)
                 if MARKDOWN:
@@ -207,7 +197,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
             return lista
         elif TYPE == 'all':
             lista = []
-            for row in cur.execute('SELECT * FROM BLOGDB'):
+            for row in cur.execute('SELECT * FROM blogpg'):
                 row = dict(row)
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
@@ -235,7 +225,7 @@ def DELETEBL(B_ID):
     try:
         if GET_BL('id', B_ID) != None:
             recon()
-            cur.execute(f'DELETE FROM BLOGDB WHERE id=?',(B_ID,))
+            cur.execute('DELETE FROM blogpg WHERE id= %s',(B_ID,))
             con.commit()
             con.close()
             log.info(f'[DELETEBL:] [OK] (ID: {B_ID})')
@@ -256,7 +246,7 @@ def EDITBL(TYPE='title', B_ID='', NEWD=''):
             if TYPE in TIPOS:
                 recon()
                 cur.execute(
-                    f'UPDATE BLOGDB SET {TYPE}=? WHERE id=?', (NEWD, B_ID))
+                    f'UPDATE blogpg SET {TYPE}=%s WHERE id=%s', (NEWD, B_ID))
                 con.commit()
                 con.close()
                 log.info(
@@ -297,12 +287,6 @@ def COMMANDSQL(text):
 if __name__ == '__main__':
 
     print(CONNECTION_TEST())
-    existe = os.path.isfile(DB_PATH)
-    if existe == True:
-        print("RUTA =", DB_PATH)
-    else:
-        print(f"ERROR: LA RUTA ={DB_PATH} NO EXISTE")
-
     while True:
         entrada = str(input('\nEscribe aqui: '))
 

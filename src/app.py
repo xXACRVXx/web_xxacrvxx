@@ -1,7 +1,6 @@
 from os import system
 import os
 import random
-import re
 import signal
 import traceback
 from urllib import response
@@ -22,7 +21,7 @@ from Modules.TOOLSQL import (
     C_EMAIL_VAL,
     EMAIL_VAL
 )
-from Modules.BLOGDB import INSERT_BL, GET_BL, EDITBL, DELETEBL
+from Modules.BLOGPG import INSERT_BL, GET_BL, EDITBL, DELETEBL
 from flask import (
     Flask,
     request,
@@ -63,7 +62,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.25.04b"
+VERSION = "v0.42.25b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -87,9 +86,9 @@ def index():
             token = None
             sessions = False
 
-        posts = GET_BL('ALL')
+        posts = GET_BL('all')
         recent = posts[-4:]
-        recent.sort(key=lambda x: x['ID'], reverse=True) 
+        recent.sort(key=lambda x: x['id'], reverse=True) 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
             return render_template("index.html", recent=recent, version=VERSION)
@@ -714,21 +713,21 @@ def blog():
             token = None
             sessions = False
         if request.args.get('tags'):
-            posts = GET_BL('TAGS',request.args.get('tags'))
+            posts = GET_BL('tags',request.args.get('tags'))
         elif request.args.get('autor'):
             autor = SEARCH_DB('USER', request.args.get('autor'))
-            posts = GET_BL('C_BY', autor[0])
+            posts = GET_BL('creat_id', autor[0])
         elif request.args.get('time'):
-            posts = GET_BL('TIME', request.args.get('time'))
+            posts = GET_BL('time', request.args.get('time'))
         elif request.args.get('search'):
-            allposts = GET_BL('ALL')
+            allposts = GET_BL('all')
             data_search = request.args.get('search').lower()
             posts = []
             for post in allposts:
-                if data_search in post['TITLE'].lower() or data_search in post['CONTENT'].lower() or data_search in post['EXTRA'].lower():
+                if data_search in post['title'].lower() or data_search in post['content'].lower() or data_search in post['descript'].lower():
                     posts.append(post)
         else:
-            posts = GET_BL('ALL')
+            posts = GET_BL('all')
         page = request.args.get('page', 1, type=int)
         per_page = 9
         if posts == None:
@@ -738,7 +737,7 @@ def blog():
         start = (page - 1) * per_page
         end = start + per_page
         paginated_posts = posts[start:end]
-        paginated_posts.sort(key=lambda x: x['ID'], reverse=True)
+        paginated_posts.sort(key=lambda x: x['id'], reverse=True)
         if sessions == True:
             return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
         else:
@@ -765,12 +764,14 @@ def blogpost():
             sessions = False
         if sessions == True:
             if request.method == "POST":
-                C_BY = uid
+                CREAT_ID = uid
                 TITLE = request.form.get("title")
-                CONTENT = request.form.get("content")
-                TAGS = request.form.get("tags").replace(" ", "")
                 DESCRIP = request.form.get("descrip")
-                INSERT_BL(TITLE, CONTENT, C_BY, TAGS, DESCRIP)
+                CONTENT = request.form.get("content")
+                IMAGE = request.form.get("image")
+                TAGS = request.form.get("tags").replace(" ", "")
+                
+                INSERT_BL(TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS)
                 return redirect(url_for("blog"))
             else:
                 return render_template("blog/blogpost.html", user=uss, version=VERSION)
@@ -796,10 +797,10 @@ def blogview(name):
             uss = None
             token = None
             sessions = False          
-        posts = GET_BL('ALL')
+        posts = GET_BL('all')
         recent = posts[-3:]
-        recent.sort(key=lambda x: x['ID'], reverse=True)
-        the_posts = GET_BL("TITLE", name)
+        recent.sort(key=lambda x: x['id'], reverse=True)
+        the_posts = GET_BL("title", name)
         if the_posts == None:
             return redirect(url_for("blog"))
         if sessions == True:

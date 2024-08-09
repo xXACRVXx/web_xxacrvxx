@@ -5,42 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <meta name="google-site-verification" content="0EJz3NQhyR1UmBwAk9_EklAevx8mY5qbRL400HMTqNY" />
+  <meta name="yandex-verification" content="3309f8d555efa5d6" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="copyright" content="xXACRVXx">
   <meta name="robots" content="INDEX, FOLLOW, ARCHIVE" />
 {%if the_post %}
   {% for post in the_post %}
-  <meta name="description" content="{{post['EXTRA']}}">
+  <meta name="description" content="{{post['descript']}}">
   <meta name="keywords" content="Informática, Compartir, IT desarrollo, Comunidad, Conocimiento, blog" />
   <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
   <meta property="og:site_name" content="La web de xxacrvxx" /> <!-- website name -->
-  <meta property="og:site" content="xxacrvxx.ydns.eu/blog/{{post['TITLE']}}" /> <!-- website link -->
-  <meta property="og:title" content="{{post['TITLE']}}"/> <!-- title shown in the actual shared post -->
-  <meta property="og:description" content="{{post['EXTRA']}}" /> <!-- description shown in the actual shared post -->
-  {% for tags in post["TAGS"] %}
+  <meta property="og:site" content="xxacrvxx.ydns.eu/blog/{{post['title']}}" /> <!-- website link -->
+  <meta property="og:title" content="{{post['title']}}"/> <!-- title shown in the actual shared post -->
+  <meta property="og:description" content="{{post['descript']}}" /> <!-- description shown in the actual shared post -->
+  <meta property="og:image" content="{{post['image']}}" /> <!-- image link, make sure it's jpg -->
+  <meta property="og:url" content="xxacrvxx.ydns.eu/blog/{{post['title']}}" /> <!-- where do you want your post to link to -->
+  <meta property="og:type" content="article" />
+  <meta property="og:image:alt" content="{{post['title']}}" />
+  {% for tags in post["tags"] %}
   <meta property="article:tag" content="{{tags}}" />
   {% endfor %}
-  <meta property="og:image" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /> <!-- image link, make sure it's jpg -->
-  <meta property="og:url" content="xxacrvxx.ydns.eu/blog/{{post['TITLE']}}" /> <!-- where do you want your post to link to -->
-  <meta property="og:type" content="article" />
-  <meta property="og:image:alt" content="{{post['TITLE']}}" />
-  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /><meta name="twitter:site" content="@xXACRVXx" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content="En desarrolo XD" /><meta name="twitter:description" content="esta web esta en desarrollo XD" />
-  <meta name="twitter:title" content="{{post['TITLE']}}" />
+  <meta prperty="article:published_time" content="{{post['time']}}" />
+  <meta name="twitter:image:src" content="{{post['image']}}" />
+  <meta name="twitter:site" content="@xXACRVXx" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{post['title']}}" />
+  <meta name="twitter:description" content="{{post['descript']}}" />
   {% endfor %}
-{% else %}
-  <meta name="description" content="xXACRVXx es mi web personal, donde se pueden ver y pulbicar posts en el blog, descargar y subir archivos entre otras cosas que ire agregando">
+  {% else %}
+  <meta name="description" content="xXACRVXx es mi web personal, donde se pueden ver y pulbicar posts en el blog, descargar y subir archivos en nuestra nube entre otras cosas que ire agregando">
   <meta name="keywords" content="Informática, Compartir, IT desarrollo, Comunidad, Conocimiento, blog" />
   <!-- OG Meta Tags to improve the way the post looks when you share the page on LinkedIn, Facebook, Google+ -->
 	<meta property="og:site_name" content="La web de xxacrvxx" /> <!-- website name -->
 	<meta property="og:site" content="xxacrvxx.ydns.eu" /> <!-- website link -->
 	<meta property="og:title" content="La web de xxacrvxx"/> <!-- title shown in the actual shared post -->
-	<meta property="og:description" content="pues este es mi sitio web XD el sitio web de xxacrvxx, la verdad no se que poner aqui" /> <!-- description shown in the actual shared post -->
+	<meta property="og:description" content="xXACRVXx es mi web personal, donde se pueden ver y pulbicar posts en el blog, descargar y subir archivos en nuestra nube entre otras cosas que ire agregando" /> <!-- description shown in the actual shared post -->
 	<meta property="og:image" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /> <!-- image link, make sure it's jpg -->
 	<meta property="og:url" content="xxacrvxx.ydns.eu" /> <!-- where do you want your post to link to -->
 	<meta property="og:type" content="article" />
   <meta property="og:image:alt" content="xXACRVXx XD web en desarrollo" />
-  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /><meta name="twitter:site" content="@xXACRVXx" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content="En desarrolo XD" /><meta name="twitter:description" content="esta web esta en desarrollo XD" />
+  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" />
+  <meta name="twitter:site" content="@xXACRVXx" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="La web de xxacrvxx" />
+  <meta name="twitter:description" content="xXACRVXx es mi web personal, donde se pueden ver y pulbicar posts en el blog, descargar y subir archivos en nuestra nube entre otras cosas que ire agregando" />
   {% endif %}
   <!-- Website Title -->
   <title>{% block title %}{% endblock %}</title>

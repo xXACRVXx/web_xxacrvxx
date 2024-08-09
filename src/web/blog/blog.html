@@ -50,20 +50,20 @@
           <div class="col-md-6 col-lg-4 py-3">
             <div class="card-blog">
               <div class="header">
-                <div class="post-avatar">
-                  <img src="{{url_for('static', filename='blog/default.png')}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
+                <div href="{{ url_for('blogview', name=post['title']) }}" class="post-avatar">
+                  <img src="{{post['image']}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
                 </div>
                 <div class="entry-footer">
-                  <div class="post-author">Por: {{ post['C_BY'] }}</div>
-                  <a href="{{ url_for('blog', time=post['TIME'][:10]) }}" class="post-date">{{ post['TIME'][:10]}}</a>
+                  <div class="post-author">Por: {{ post['creat_id'] }}</div>
+                  <a href="{{ url_for('blog', time=post['time'][:10]) }}" class="post-date">{{ post['time'][:10]}}</a>
                 </div>
               </div>
               <div class="body">
-                <div class="post-title"><a href="{{ url_for('blogview', name=post['TITLE']) }}">{{ post['TITLE'] }}</a></div>
-                <div class="post-excerpt">{{ post['EXTRA'] }}</div>
+                <div class="post-title"><a href="{{ url_for('blogview', name=post['title']) }}">{{ post['title'] }}</a></div>
+                <div class="post-excerpt">{{ post['descript'] }}</div>
               </div>
               <div class="footer">
-                <a href="{{ url_for('blogview', name=post['TITLE']) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
+                <a href="{{ url_for('blogview', name=post['title']) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
               </div>
             </div>
           </div>

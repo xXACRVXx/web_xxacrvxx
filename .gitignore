@@ -11,9 +11,7 @@ src/Modules/__pycache__
 src/Modules/PRUEBAS.py
 src/Modules/logs/*
 
-src/Databases/__pycache__
-src/Databases/toolmysql.py
-src/Databases/database.db
+src/Databases/*
 
 test/*
 client/*
@@ -26,5 +24,4 @@ src/web/chat/chat1.html
 src/web/chat/chat2.html
 src/web/chat/chat3.html
 
-src/Databases/blogdb.db
-src/Modules/BLOGPG.py
+src/Modules/_test/*
