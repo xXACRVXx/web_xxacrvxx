@@ -106,14 +106,14 @@ def CREATE_TABLE():
             return ERROR
 
 
-def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=None, CATEGORY=None):
+def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=None, CATEGORY=None, COUNT_VIEW=0):
     try:
         comp1 = GET_BL('title', TITLE)
         if comp1 == None:
             TIME = datetime.datetime.now()
             recon()
             cur.execute(
-                'INSERT INTO blogpg (title, descript, content, creat_id, image, tags, category, time)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS, CATEGORY, str(TIME)))
+                'INSERT INTO blogpg (title, descript, content, creat_id, image, count_view, tags, category, time)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, COUNT_VIEW, TAGS, CATEGORY, str(TIME)))
             con.commit()
             con.close
             log.info(
@@ -132,10 +132,10 @@ def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=No
 
 
 
-def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
+def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False):
     try:
         recon()
-        TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "cout_view", "permission", "extra"]
+        TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "count_view", "permission", "extra"]
         if TYPE in TIPOS:
             cur.execute(f'SELECT * FROM blogpg WHERE {TYPE}= %s', (DATA_SEARCH,))
             resp = []
@@ -150,6 +150,10 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
                     except:
                         row['creat_id'] = 'unknown'
                 row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
+                if SUM_VIEW:
+                    row['count_view'] = int(row['count_view']) + 1
+                    #cur.execute('UPDATE blogpg SET count_view = %s WHERE id = %s', (row['count_view'], row['id']))
+                    #con.commit()
                 resp.append(row)
             log.debug(
                 f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -242,7 +246,7 @@ def DELETEBL(B_ID):
 def EDITBL(TYPE='title', B_ID='', NEWD=''):
     try:
         if not GET_BL('id', B_ID) == None:
-            TIPOS = ["id", "descript", "title", "content", "creat_id", "tags", "category", "image", "cout_view", "permission", "extra", "time"]
+            TIPOS = ["id", "descript", "title", "content", "creat_id", "tags", "category", "image", "count_view", "permission", "extra", "time"]
             if TYPE in TIPOS:
                 recon()
                 cur.execute(

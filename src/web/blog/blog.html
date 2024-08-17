@@ -53,9 +53,14 @@
                 <div href="{{ url_for('blogview', name=post['title']) }}" class="post-avatar">
                   <img src="{{post['image']}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
                 </div>
-                <div class="entry-footer">
-                  <div class="post-author">Por: {{ post['creat_id'] }}</div>
-                  <a href="{{ url_for('blog', time=post['time'][:10]) }}" class="post-date">{{ post['time'][:10]}}</a>
+                <div class="row">
+                  <div class="entry-footer col-lg-8">
+                    <div class="post-author">Por: {{ post['creat_id'] }}</div>
+                    <div class="post-date">visto: {{ post['count_view']}} veces</div>
+                  </div>
+                  <div class="entry-footer col-lg-4">
+                    <a href="{{ url_for('blog', time=post['time'][:10]) }}" class="post-date">{{ post['time'][:10]}}</a>
+                  </div>
                 </div>
               </div>
               <div class="body">

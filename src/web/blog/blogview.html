@@ -39,6 +39,11 @@
                     <span class="mai-person-outline"></span>
                   </span> Por: <a href="{{ url_for('blog', author=post['creat_id']) }}">{{ post['creat_id'] }}</a>
                 </div>
+                <div id="post-view" class="post-comment-count ml-2">
+                  <span class="icon">
+                    <span class="mai-eye-outline"></span>
+                  </span> Visto: {{ post['count_view'] }} veces
+                </div>
               </div>
               <div id="post-content" class="post-content">
                 {{ post['content'] | safe }}

@@ -61,7 +61,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.42.26b"
+VERSION = "v0.68.2b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 CONNECTION_TEST()
@@ -73,6 +73,7 @@ CONNECTION_TEST()
 @app.route("/")
 def index():
     ip_client = request.headers.get("X-Real-IP")
+    dark_mode = request.cookies.get('dark-mode', 'false')
     try:
         try:
             uid = session["user"]
@@ -90,12 +91,12 @@ def index():
         recent.sort(key=lambda x: x['id'], reverse=True) 
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
-            return render_template("index.html", recent=recent, version=VERSION)
+            return render_template("index.html", recent=recent, cookie=dark_mode, version=VERSION)
         else:
             try:
                 verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
                 log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
-                return render_template("app/index.html", recent=recent, user=uss, version=VERSION)
+                return render_template("app/index.html", recent=recent, user=uss, cookie=dark_mode, version=VERSION)
             except jwt.ExpiredSignatureError:
                 log.debug(f"[{ip_client}] [/ ] Token expirado")
                 return redirect(url_for("login"))
@@ -104,7 +105,7 @@ def index():
                 return redirect(url_for("login"))
     except Exception as e:
         log.error(f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
-        return render_template("index.html", version=VERSION)
+        return render_template("index.html", cookie=dark_mode, version=VERSION)
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -178,8 +179,7 @@ def regist():
 
                 if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
                     flash(response, "warning")
-                    log.info(
-                        f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
+                    log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
                     flash(response, "warning")
@@ -189,8 +189,7 @@ def regist():
 
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
-            log.error(
-                f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
+            log.error(f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
             return render_template("auth/sign-up_layout.html")
     else:
         log.debug(f"[{ip_client}] [/regist ] [metodo GET]")
@@ -351,6 +350,7 @@ def EmailConfirm():
 
 @app.route("/cloud")
 def cloud():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -364,9 +364,9 @@ def cloud():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("files/cloud.html", user=uss, version=VERSION)
+            return render_template("files/cloud.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("files/cloud.html", version=VERSION)
+            return render_template("files/cloud.html", cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/cloud ] ERROR[0015]: {e} [{traceback.format_exc()}]")
@@ -375,6 +375,7 @@ def cloud():
 
 @app.route("/download")
 def download():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     if request.args.get("file"):
         try:
@@ -532,7 +533,7 @@ def download():
                         space=CONFIG.Free_Space(),
                         page=page,
                         total_pages=total_pages,
-                        version=VERSION
+                        cookie=dark_mode, version=VERSION
                     )
 
                 except jwt.ExpiredSignatureError:
@@ -556,6 +557,7 @@ def download():
 
 @app.route("/upload", methods=["POST", "GET"])
 def upload():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
@@ -583,11 +585,9 @@ def upload():
                     if os.path.isdir(DIR) == False:
                         os.mkdir(DIR)
                     the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid), filename)
-
                     file_path = the_path
                     file.save(file_path)
-                    log.info(
-                        f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
+                    log.info(f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
                     return jsonify({"nombre": filename})
                 except jwt.ExpiredSignatureError:
                     log.debug(
@@ -629,7 +629,7 @@ def upload():
                     log.debug(
                         f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
                     return render_template(
-                        "files/upload.html", user=uss, space=CONFIG.Free_Space(), version=VERSION
+                        "files/upload.html", user=uss, space=CONFIG.Free_Space(), cookie=dark_mode, version=VERSION
                     )
 
                 except jwt.ExpiredSignatureError:
@@ -641,8 +641,7 @@ def upload():
                         f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] token invalido")
                     return redirect(url_for("login"))
                 except Exception as e:
-                    log.warning(
-                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
+                    log.warning(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
                     return redirect(url_for("login"))
             else:
                 log.debug(
@@ -656,27 +655,24 @@ def upload():
 
 @app.route("/delete")
 def delete():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         if request.args.get("del_file"):
             try:
                 the_token = request.args.get("del_file")
-                verific = jwt.decode(
-                    the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-                )
+                verific = jwt.decode(the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
                 archive = verific["archive"]
                 user_token = str(verific["user"])
                 suid = SEARCH_DB("ID", user_token)
                 uss = suid[1]
                 the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token, archive)
                 os.remove(the_path)
-                log.info(
-                    f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
+                log.info( f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
                 flash(f"{archive} borrado correctamente","success")
                 return redirect(url_for("download"))
             except jwt.ExpiredSignatureError:
-                log.debug(
-                    f"[{ip_client}] [/delete ] expiró el token")
+                log.debug(f"[{ip_client}] [/delete ] expiró el token")
                 return redirect(url_for("login"), code=403)
             except jwt.InvalidTokenError:
                 log.debug(
@@ -690,8 +686,7 @@ def delete():
             log.debug(f"[{ip_client}] [/delete ] [method GET]")
             return redirect(url_for("download"))
     except Exception as e:
-            log.error(
-                f"[{ip_client}] [/delete ] ERROR[0012]: {e} [{traceback.format_exc()}]")
+            log.error(f"[{ip_client}] [/delete ] ERROR[0012]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
 
@@ -699,6 +694,7 @@ def delete():
 @app.route("/blog/")
 @app.route("/blog")
 def blog():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -727,6 +723,7 @@ def blog():
                     posts.append(post)
         else:
             posts = GET_BL('all')
+
         page = request.args.get('page', 1, type=int)
         per_page = 9
         if posts == None:
@@ -738,17 +735,52 @@ def blog():
         paginated_posts = posts[start:end]
         paginated_posts.sort(key=lambda x: x['id'], reverse=True)
         if sessions == True:
-            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, version=VERSION)
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, version=VERSION)       
+            return render_template("blog/blog.html", posts=paginated_posts, page=page, total_pages=total_pages, cookie=dark_mode, version=VERSION)       
     except Exception as e:
         log.error(
             f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 
+@app.route("/blog/<name>", methods=["POST", "GET"])
+def blogview(name):
+    dark_mode = request.cookies.get('dark-mode', 'false')
+    ip_client = request.headers.get("X-Real-IP")
+    try:      
+        log.info(f"Name: {name}")
+        try:
+            uid = session["user"]
+            suid = SEARCH_DB("ID", uid)
+            uss = suid[1]
+            token = session["token"]
+            sessions = True
+        except:
+            uss = None
+            token = None
+            sessions = False     
+        posts = GET_BL('all')
+        posts.sort(key=lambda x: x['id'], reverse=True)
+        recent = posts[:3]
+        the_posts = GET_BL("title", name, SUM_VIEW=True)
+        if the_posts == None:
+            return redirect(url_for("blog"))
+        for edit_post in the_posts:
+            EDITBL('count_view', edit_post['id'], edit_post['count_view'])
+        if sessions == True:
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, cookie=dark_mode, version=VERSION)
+        else:
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, cookie=dark_mode, version=VERSION)    
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+
+
 @app.route("/blogpost", methods=["POST", "GET"])
 def blogpost():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -773,7 +805,7 @@ def blogpost():
                 INSERT_BL(TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS)
                 return redirect(url_for("blog"))
             else:
-                return render_template("blog/blogpost.html", user=uss, version=VERSION)
+                return render_template("blog/blogpost.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
             return redirect(url_for("login"))
     except Exception as e:
@@ -781,39 +813,9 @@ def blogpost():
         return redirect(url_for("index"))
 
 
-@app.route("/blog/<name>", methods=["POST", "GET"])
-def blogview(name):
-    ip_client = request.headers.get("X-Real-IP")
-    try:      
-        log.info(f"Name: {name}")
-        try:
-            uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False          
-        posts = GET_BL('all')
-        recent = posts[-3:]
-        recent.sort(key=lambda x: x['id'], reverse=True)
-        the_posts = GET_BL("title", name)
-        if the_posts == None:
-            return redirect(url_for("blog"))
-        if sessions == True:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, version=VERSION)
-        else:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, version=VERSION)    
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
-
-
 @app.route("/redirect")
 def w_redirect():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         if request.args.get('url'):
@@ -830,6 +832,7 @@ def w_redirect():
 
 @app.route("/details")
 def detalles():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -843,9 +846,9 @@ def detalles():
             token = None
             sessions = False
         if sessions == True:
-            return render_template('details.html', user=uss, version=VERSION)
+            return render_template('details.html', user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template('details.html', version=VERSION)
+            return render_template('details.html', cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/details ] ERROR[0013]: {e} [{traceback.format_exc()}]")
@@ -854,6 +857,7 @@ def detalles():
 
 @app.route("/services")
 def servicios():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -867,9 +871,9 @@ def servicios():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("services.html", user=uss, version=VERSION)
+            return render_template("services.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("services.html", version=VERSION)
+            return render_template("services.html", cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/services ] ERROR[0014]: {e} [{traceback.format_exc()}]")
@@ -879,6 +883,7 @@ def servicios():
 
 @app.route("/contact", methods=["POST", "GET"])
 def contactar():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
@@ -919,9 +924,9 @@ def contactar():
             resp = "Mensaje enviado, espere nuestra respuesta en su correo"
 
             if sessions == True:
-                return render_template("contact.html", user=uss, response=resp, version=VERSION)
+                return render_template("contact.html", user=uss, response=resp, cookie=dark_mode, version=VERSION)
             else:
-                return render_template("contact.html", response=resp, version=VERSION)
+                return render_template("contact.html", response=resp, cookie=dark_mode, version=VERSION)
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/contact ] ERROR[0016]: {e} [{traceback.format_exc()}]")
@@ -939,9 +944,9 @@ def contactar():
                 token = None
                 sessions = False
             if sessions == True:
-                return render_template("contact.html", user=uss, version=VERSION)
+                return render_template("contact.html", user=uss, cookie=dark_mode, version=VERSION)
             else:
-                return render_template("contact.html", version=VERSION)
+                return render_template("contact.html", cookie=dark_mode, version=VERSION)
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/contact ] ERROR[0017]: {e} [{traceback.format_exc()}]")
@@ -950,6 +955,7 @@ def contactar():
 
 @app.route("/conditions")
 def ter_y_co():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -963,9 +969,9 @@ def ter_y_co():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("privacy.html", user=uss, version=VERSION)
+            return render_template("privacy.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("privacy.html", version=VERSION)
+            return render_template("privacy.html", cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/conditions ] ERROR[0018]: {e} [{traceback.format_exc()}]")
@@ -974,6 +980,7 @@ def ter_y_co():
 
 @app.route("/privacy")
 def privacy():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -987,9 +994,9 @@ def privacy():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("privacy.html", user=uss, version=VERSION)
+            return render_template("privacy.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("privacy.html", version=VERSION)
+            return render_template("privacy.html", cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/privacy ] ERROR[0019]: {e} [{traceback.format_exc()}]")
@@ -1088,6 +1095,7 @@ def healthcheck():
             f"[{ip_client}] [/healthcheck ] ERROR[0024]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
+
 @app.route("/status")
 def status_server():
     return redirect(url_for("healthcheck"))
@@ -1143,6 +1151,7 @@ def testchat3():
 
 @app.route("/layout")
 def layout():
+    dark_mode = request.cookies.get('dark-mode', 'false')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -1156,9 +1165,9 @@ def layout():
             token = None
             sessions = False
         if sessions == True:
-            return render_template("layout.html", user=uss, version=VERSION)
+            return render_template("layout.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
-            return render_template("layout.html", version=VERSION)
+            return render_template("layout.html", cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(
             f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")

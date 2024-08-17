@@ -34,7 +34,51 @@
   <link href="{{url_for('static', filename='css/fontawesome-all.css') }}" rel="stylesheet">
   <link href="{{url_for('static', filename='css/swiper.css') }}" rel="stylesheet">
 	<link href="{{url_for('static', filename='css/magnific-popup.css') }}" rel="stylesheet">
-	<link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+	<link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet" id="theme-link">
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Función para obtener el valor de una cookie por su nombre
+        function getCookie(name) {
+            let value = "; " + document.cookie;
+            let parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+
+        // Función para establecer una cookie
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/";
+        }
+
+        // Verificar el estado de la cookie dark-mode al cargar la página
+        let themeLink = document.getElementById('theme-link');
+        let darkMode = getCookie('dark-mode');
+
+        if (darkMode === "true") {
+            themeLink.setAttribute('href', '/static/css/styles-dark.css');
+        } else if (darkMode === undefined) {
+            // Si la cookie no existe, crearla con el valor false
+            setCookie('dark-mode', 'false', 7); // La cookie durará 7 días
+        }
+
+        // Alternar entre temas y actualizar la cookie cuando se hace clic en el botón
+        document.getElementById('toggle-style').addEventListener('click', function() {
+            if (themeLink.getAttribute('href') === '/static/css/styles-dark.css') {
+                themeLink.setAttribute('href', '/static/css/styles.css');
+                setCookie('dark-mode', 'false', 7);
+            } else {
+                themeLink.setAttribute('href', '/static/css/styles-dark.css');
+                setCookie('dark-mode', 'true', 7);
+            }
+        });
+    });
+  </script>
 
 </head>
 
@@ -85,78 +129,7 @@
                             <spam class="item-text" id="toggle-style">MODO OSCURO</spam>
                             </a>
 
-                            <script>
-// Obtener el enlace de estilos por defecto
-var styleLink = document.querySelector("link[href='/static/css/styles.css']") || document.querySelector("link[href='/static/css/styles-dark.css']");
 
-// Función para obtener el valor de una cookie
-function getCookie(name) {
-  var cookies = document.cookie.split("; ");
-  for (var i = 0; i < cookies.length; i++) {
-    var parts = cookies[i].split("=");
-    if (parts[0] === name) {
-      return decodeURIComponent(parts[1]);
-    }
-  }
-  return null;
-}
-
-// Función para establecer el valor de una cookie
-function setCookie(name, value) {
-  var date = new Date();
-  date.setTime(date.getTime() + (365*24*60*60*1000)); // 1 año
-  var expires = "expires=" + date.toUTCString();
-  document.cookie = `${name}=${value}; ${expires}; path=/`;
-  console.log(`Cookie establecida: ${name}=${value}; ${expires}; path=/`);
-}
-
-// Función para verificar la cookie y establecer el estilo
-function checkCookie() {
-  var cookieValue = getCookie("dark-mode");
-  console.log(`Estado inicial de la cookie: ${cookieValue}`);
-
-  if (cookieValue === null) {
-    const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setCookie("dark-mode", prefersDarkMode ? "true" : "false");
-    cookieValue = prefersDarkMode ? "true" : "false";
-  }
-
-  if (cookieValue === "true") {
-    styleLink.href = "/static/css/styles-dark.css";
-    console.log("Modo oscuro activado al cargar la página.");
-  } else {
-    styleLink.href = "/static/css/styles.css";
-    console.log("Modo claro activado al cargar la página.");
-  }
-}
-
-// Añadir un evento load al window para verificar la cookie
-window.addEventListener("load", checkCookie);
-
-// Añadir un evento click al botón para alternar el estilo
-document.getElementById("toggle-style").addEventListener("click", function() {
-  var cookieValue = getCookie("dark-mode");
-  var newCookieValue = cookieValue === "true" ? "false" : "true";
-  setCookie("dark-mode", newCookieValue);
-
-  console.log(`Cookie actualizada a: ${newCookieValue}`);
-  console.log(`Estado de la cookie después de la actualización: ${getCookie("dark-mode")}`);
-
-  // Validar que la cookie se estableció correctamente antes de cambiar el estilo XD
-  if (getCookie("dark-mode") === newCookieValue) {
-    if (newCookieValue === "true") {
-      styleLink.href = "/static/css/styles-dark.css";
-      console.log("Modo oscuro activado.");
-    } else {
-      styleLink.href = "/static/css/styles.css";
-      console.log("Modo claro activado.");
-    }
-  } else {
-    console.error("La cookie no se actualizó correctamente.");
-  }
-});
-
-                            </script>
                             <!--script>
                               // Crear un elemento style con el css deseado
                               var style = document.createElement("style");
