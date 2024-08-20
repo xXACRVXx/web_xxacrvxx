@@ -2,25 +2,12 @@ import os
 import random
 import signal
 import traceback
-from urllib import response
 import requests
 import json
 from werkzeug.utils import secure_filename
 from Modules.SENDMAIL import SEND_MAIL
-from Modules.TOOLSQL import (
-    ENCRIPT,
-    DESENCRIPT,
-    INSERT_DB,
-    ALL_USERS,
-    SEARCH_DB,
-    VALIDAR,
-    DELETE,
-    EDITAR,
-    CONNECTION_TEST,
-    C_EMAIL_VAL,
-    EMAIL_VAL
-)
-from Modules.BLOGPG import INSERT_BL, GET_BL, EDITBL, DELETEBL
+from Modules import USERPG
+from Modules import BLOGPG
 from flask import (
     Flask,
     request,
@@ -61,10 +48,10 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.68.2b"
+VERSION = "v0.70.0b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
-CONNECTION_TEST()
+USERPG.CONNECTION_TEST()
 
 
 ######################## WEB ########################
@@ -77,8 +64,8 @@ def index():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -86,7 +73,7 @@ def index():
             token = None
             sessions = False
 
-        posts = GET_BL('all')
+        posts = BLOGPG.GET_BL('all')
         recent = posts[-4:]
         recent.sort(key=lambda x: x['id'], reverse=True) 
         if sessions == False:
@@ -113,26 +100,27 @@ def login():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            email = request.form.get("email")
+            email = request.form.get("email").lower()
             passw = request.form.get("passw")
             key = app.config.get("SECRET_KEY")
             if email.__contains__('"'):
                 flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
                 log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html")           
-            if VALIDAR(email, passw, key) == True:
+                return render_template("auth/log-in_layout.html")    
+            log.info(f"[{ip_client}] [/login ] Usuario [{email}] [{passw}]intentando iniciar sesion")       
+            if USERPG.VALIDAR(email, passw, key) == True:
                 if email.__contains__("@"):
-                    TheUser = SEARCH_DB("EMAIL", email)
+                    TheUser = USERPG.GET_USER("email", email)
                 else:
-                    TheUser = SEARCH_DB("USER", email)
+                    TheUser = USERPG.GET_USER("username", email)
                 data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
                 thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
-                session["user"] = TheUser[0]
+                session["user"] = TheUser['id']
                 session["token"] = thetoken
-                if TheUser[4] != "True":
-                    return redirect(url_for("EmailSend", email=TheUser[2]))
+                if TheUser['email_confirm'] != "true":
+                    return redirect(url_for("EmailSend", email=TheUser['email']))
                 flash("Cuenta iniciada correctamente","success")
-                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser[1]}] logueado correctamente")
+                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser['username']}] logueado correctamente")
                 return redirect(url_for("index"))
             else:
                 flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
@@ -152,8 +140,8 @@ def regist():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            username = request.form.get("username")
-            email = request.form.get("email")
+            username = request.form.get("username").lower()
+            email = request.form.get("email").lower()
             passw = request.form.get("passw")
             if username.__contains__('"'):
                 flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
@@ -174,8 +162,8 @@ def regist():
                 return render_template("auth/sign-up_layout.html")
 
             else:
-                EPASSW = ENCRIPT(passw, app.config.get("SECRET_KEY"))
-                response = INSERT_DB(username, email, EPASSW)
+                EPASSW = USERPG.ENCRIPT(passw, app.config.get("SECRET_KEY"))
+                response = USERPG.INSERT_USER(username, email, EPASSW)
 
                 if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
                     flash(response, "warning")
@@ -212,13 +200,13 @@ def EmailSend():
     if request.args.get("email"):
         email = request.args.get("email")
         try:
-            user = SEARCH_DB("EMAIL", email)
+            user = USERPG.GET_USER("email", email)
             if user == None:
                 flash(f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela', 'warning')
                 log.info(
                     f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
                 return render_template("auth/EmailSend.html")
-            code = C_EMAIL_VAL(user[1])
+            code = USERPG.C_EMAIL_VAL(user['username'])
             if code == True:
                 flash(f'El correo "{email}" ya fue confirmado anteriormente', 'warning')
                 log.info(
@@ -226,7 +214,7 @@ def EmailSend():
                 return render_template("auth/EmailSend.html")
 
             datos_send_token = {
-                "user": user[1],
+                "user": user['username'],
                 "email": email,
                 "code": code}
 
@@ -243,7 +231,7 @@ def EmailSend():
                 <div class="container"> <!-- añadido un contenedor para el contenido -->
                 <h1>Confirmación de cuenta</h1>
                 <h2>
-                Hola <strong>{user[1]}</strong>, Gracias por registrate en nuestra web. 
+                Hola <strong>{user['username']}</strong>, Gracias por registrate en nuestra web. 
                 Para completar el proceso, por favor usa este código para confirmar tu cuenta:
                 </h2>
                 <h1><strong>{code}</strong></h1>
@@ -260,7 +248,7 @@ def EmailSend():
 
             SEND_MAIL(email, subject, message)
             log.info(
-                f"[{ip_client}] [/EmailSend ] Usuario [{user[1]}] envio correo a [{email}] para confirmar su cuenta")
+                f"[{ip_client}] [/EmailSend ] Usuario [{user['username']}] envio correo a [{email}] para confirmar su cuenta")
             return redirect(url_for("EmailConfirm", email=email))
         except Exception as e:
             log.error(
@@ -278,7 +266,7 @@ def EmailConfirm():
         try:
             email = request.form.get("email")
             code = request.form.get("code")
-            response = EMAIL_VAL(email, code, True)
+            response = USERPG.EMAIL_VAL(email, code, True)
             if response == True:
                 log.info(
                     f"[{ip_client}] [/EmailConfirm ] Correo [{email}] a activado su cuenta")
@@ -310,20 +298,20 @@ def EmailConfirm():
                     user = verific["user"]
                     email = verific["email"]
                     code = verific["code"]
-                    user_data = SEARCH_DB("USER", user)
+                    user_data = USERPG.GET_USER("username", user)
                     if user_data == None:
                         log.warning(
                             f"[{ip_client}] [/EmailConfirm ] WARNING[0001] user [{user}], email [{email}] intento falsear el token")
                         return redirect(url_for("EmailSend"))
 
-                    response = EMAIL_VAL(email, code, True)
+                    response = USERPG.EMAIL_VAL(email, code, True)
                     if response == True:
                         log.info(
-                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] cuenta activada")
+                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data['username']}] cuenta activada")
                         return redirect(url_for("index"))
                     else:
                         log.debug(
-                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data[1]}] codigo incorrecto")
+                            f"[{ip_client}] [/EmailConfirm ] Usuario [{user_data['username']}] codigo incorrecto")
                         return redirect(url_for("EmailSend"))
 
                 except jwt.ExpiredSignatureError:
@@ -355,8 +343,8 @@ def cloud():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -381,8 +369,8 @@ def download():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -457,8 +445,8 @@ def download():
             )
             archive = verific["archive"]
             user_token = str(verific["user"])
-            suid = SEARCH_DB("ID", user_token)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", user_token)
+            uss = suid['username']
             the_path = os.path.join(app.config.get("UPLOAD_FOLDER") , str(user_token))
             log.info(
                 f"[{ip_client}] [/download ] Usuario [{uss}] descargando archivo [{archive}]"
@@ -482,8 +470,8 @@ def download():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -563,8 +551,8 @@ def upload():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -613,8 +601,8 @@ def upload():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -664,8 +652,8 @@ def delete():
                 verific = jwt.decode(the_token, app.config.get("SECRET_KEY"), algorithms=["HS256"])
                 archive = verific["archive"]
                 user_token = str(verific["user"])
-                suid = SEARCH_DB("ID", user_token)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", user_token)
+                uss = suid['username']
                 the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token, archive)
                 os.remove(the_path)
                 log.info( f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
@@ -699,8 +687,8 @@ def blog():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -708,21 +696,21 @@ def blog():
             token = None
             sessions = False
         if request.args.get('tags'):
-            posts = GET_BL('tags',request.args.get('tags'))
+            posts = BLOGPG.GET_BL('tags',request.args.get('tags'))
         elif request.args.get('autor'):
-            autor = SEARCH_DB('USER', request.args.get('autor'))
-            posts = GET_BL('creat_id', autor[0])
+            autor = USERPG.GET_USER('username', request.args.get('autor'))
+            posts = BLOGPG.GET_BL('creat_id', autor['username'])
         elif request.args.get('time'):
-            posts = GET_BL('time', request.args.get('time'))
+            posts = BLOGPG.GET_BL('time', request.args.get('time'))
         elif request.args.get('search'):
-            allposts = GET_BL('all')
+            allposts = BLOGPG.GET_BL('all')
             data_search = request.args.get('search').lower()
             posts = []
             for post in allposts:
                 if data_search in post['title'].lower() or data_search in post['content'].lower() or data_search in post['descript'].lower():
                     posts.append(post)
         else:
-            posts = GET_BL('all')
+            posts = BLOGPG.GET_BL('all')
 
         page = request.args.get('page', 1, type=int)
         per_page = 9
@@ -752,22 +740,22 @@ def blogview(name):
         log.info(f"Name: {name}")
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
             uss = None
             token = None
             sessions = False     
-        posts = GET_BL('all')
+        posts = BLOGPG.GET_BL('all')
         posts.sort(key=lambda x: x['id'], reverse=True)
         recent = posts[:3]
-        the_posts = GET_BL("title", name, SUM_VIEW=True)
+        the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=True)
         if the_posts == None:
             return redirect(url_for("blog"))
         for edit_post in the_posts:
-            EDITBL('count_view', edit_post['id'], edit_post['count_view'])
+            BLOGPG.EDITBL('count_view', edit_post['id'], edit_post['count_view'])
         if sessions == True:
             return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -785,8 +773,8 @@ def blogpost():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -795,14 +783,14 @@ def blogpost():
             sessions = False
         if sessions == True:
             if request.method == "POST":
-                CREAT_ID = uid
+                CREAT_ID = uss
                 TITLE = request.form.get("title")
                 DESCRIP = request.form.get("descrip")
                 CONTENT = request.form.get("content")
                 IMAGE = request.form.get("image")
                 TAGS = request.form.get("tags").replace(" ", "")
                 
-                INSERT_BL(TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS)
+                BLOGPG.INSERT_BL(TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, TAGS)
                 return redirect(url_for("blog"))
             else:
                 return render_template("blog/blogpost.html", user=uss, cookie=dark_mode, version=VERSION)
@@ -837,8 +825,8 @@ def detalles():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -862,8 +850,8 @@ def servicios():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -889,8 +877,8 @@ def contactar():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -935,8 +923,8 @@ def contactar():
         try:
             try:
                 uid = session["user"]
-                suid = SEARCH_DB("ID", uid)
-                uss = suid[1]
+                suid = USERPG.GET_USER("id", uid)
+                uss = suid['username']
                 token = session["token"]
                 sessions = True
             except:
@@ -960,8 +948,8 @@ def ter_y_co():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -985,8 +973,8 @@ def privacy():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -1071,6 +1059,12 @@ def sitemap2_xml():
 
 @app.route("/healthcheck")
 def healthcheck():
+    return "ok"
+    
+
+
+@app.route("/status")
+def status_server():
     ip_client = request.headers.get("X-Real-IP")
     try:
         actual_time = time.time()
@@ -1081,24 +1075,19 @@ def healthcheck():
         
         html=f"""
         <html>
-        <head> <title>Server Healthcheck</title></head>
+        <head> <title>Server Status</title></head>
         <body>
-        <h1>Server Healthcheck</h1>
+        <h1>Server Status</h1>
         </body>
         <p><strong>Server Time:</strong> {total_time_hour} hours {total_time_min} min {total_time_sec} sec active :)</p>
         </html>
         """ 
-        log.debug(f"[{ip_client}] [/healthcheck ] [OK]")
+        log.debug(f"[{ip_client}] [/Status ] [OK]")
         return html
     except Exception as e:
         log.error(
-            f"[{ip_client}] [/healthcheck ] ERROR[0024]: {e} [{traceback.format_exc()}]")
+            f"[{ip_client}] [/Status ] ERROR[0024]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
-
-
-@app.route("/status")
-def status_server():
-    return redirect(url_for("healthcheck"))
     
 
 @app.route("/admin/logger")
@@ -1107,8 +1096,8 @@ def getlogger():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -1156,8 +1145,8 @@ def layout():
     try:
         try:
             uid = session["user"]
-            suid = SEARCH_DB("ID", uid)
-            uss = suid[1]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
             token = session["token"]
             sessions = True
         except:
@@ -1285,15 +1274,15 @@ def dev5():
 def apiauth_v1():
     try:
         auth = request.get_json()
-        auth_user = auth["USER"]
+        auth_user = auth["username"]
         auth_email = auth["EMAIL"]
         auth_passw = auth["PASSW"]
         print(auth_user, auth_email, auth_passw)
 
         key = app.config.get("SECRET_KEY")
-        E_EMAIL = ENCRIPT(auth_email, key)
-        E_PASSW = ENCRIPT(auth_passw, key)
-        if VALIDAR(auth_user, auth_passw, key) == True:
+        E_EMAIL = USERPG.ENCRIPT(auth_email, key)
+        E_PASSW = USERPG.ENCRIPT(auth_passw, key)
+        if USERPG.VALIDAR(auth_user, auth_passw, key) == True:
             datos_send_token = {
                 "exp": datetime.datetime.utcnow()
                 + datetime.timedelta(days=0, minutes=13, seconds=0),
@@ -1444,11 +1433,11 @@ def authorize():
         if username.__contains__('"'):
                     ERROR = "EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS"
                     return render_template("auth/log-in_layout.html", ERROR2=ERROR)
-        if VALIDAR(username, password, key) == True:
+        if USERPG.VALIDAR(username, password, key) == True:
             if username.__contains__("@"):
-                TheUser = SEARCH_DB("EMAIL", username)
+                TheUser = USERPG.GET_USER("email", username)
             else:
-                TheUser = SEARCH_DB("USER", username)
+                TheUser = USERPG.GET_USER("username", username)
             # Generar un código de autorización
             code = '123456'
 

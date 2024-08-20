@@ -154,11 +154,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 row['tags'] = row['tags'].split(',')
-                if UID:
-                    try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
-                    except:
-                        row['creat_id'] = 'unknown'
                 row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
                 resp.append(row)
             log.debug(
@@ -175,11 +170,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 row['tags'] = row['tags'].split(',')
-                if UID:
-                    try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
-                    except:
-                        row['creat_id'] = 'unknown'
                 ALL = row
                 if ALL['tags'].__contains__(DATA_SEARCH):
                     lista.append(ALL)
@@ -194,11 +184,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 row['tags'] = row['tags'].split(',')
-                if UID:
-                    try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
-                    except:
-                        row['creat_id'] = 'unknown'
                 ALL = row
                 if DATA_SEARCH in ALL['tags']:
                     lista.append(ALL)
@@ -212,11 +197,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True):
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 row['tags'] = row['tags'].split(',')
-                if UID:
-                    try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
-                    except:
-                        row['creat_id'] = 'unknown'    
                 lista.append(row)
             con.close
             return lista  

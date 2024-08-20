@@ -7,10 +7,10 @@ import os
 import markdown
 from dotenv import load_dotenv
 try:
-    from Modules.TOOLSQL import SEARCH_DB
+    from Modules.USERDB import GET_USER
 except:
     try:
-        from TOOLSQL import SEARCH_DB
+        from USERDB import GET_USER
     except:
         pass   
 
@@ -36,7 +36,6 @@ USERPG = os.getenv("USERPG_DB")
 PASSWPG = os.getenv("PASSWPG_DB")
 
 DB_PATH = f"postgresql://{USERPG}:{PASSWPG}@{HOST}:{PORT}/{DB_NAME}"
-print(DB_PATH)
 #DB_PATH = f"host={HOST} port={PORT} dbname={DB_NAME} user={USERPG} password={PASSWPG}"
 ############################
 
@@ -144,16 +143,14 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 row['tags'] = row['tags'].split(',')
+                row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
                 if UID:
                     try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
+                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
                     except:
                         row['creat_id'] = 'unknown'
-                row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
                 if SUM_VIEW:
                     row['count_view'] = int(row['count_view']) + 1
-                    #cur.execute('UPDATE blogpg SET count_view = %s WHERE id = %s', (row['count_view'], row['id']))
-                    #con.commit()
                 resp.append(row)
             log.debug(
                 f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -171,12 +168,11 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
+                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
                     except:
                         row['creat_id'] = 'unknown'
-                ALL = row
-                if ALL['tags'].__contains__(DATA_SEARCH):
-                    lista.append(ALL)
+                if row['time'].__contains__(DATA_SEARCH):
+                    lista.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             return lista
@@ -190,12 +186,11 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
+                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
                     except:
-                        row['creat_id'] = 'unknown'
-                ALL = row
-                if DATA_SEARCH in ALL['tags']:
-                    lista.append(ALL)
+                        row['creat_id'] = 'unknown'   
+                if DATA_SEARCH in row['tags']:
+                    lista.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             return lista
@@ -208,7 +203,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = SEARCH_DB('ID', row['creat_id'])[1]
+                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
                     except:
                         row['creat_id'] = 'unknown'    
                 lista.append(row)

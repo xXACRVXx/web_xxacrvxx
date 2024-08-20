@@ -150,7 +150,7 @@
                                   // Comprobar si el nombre coincide con el parámetro
                                   if (parts[0] == name) {
                                     // Devolver el valor de la cookie decodificado
-                                    return decodeURIComponent(parts[1]);
+                                    return decodeURIComponent(parts['username']);
                                   }
                                 }
                                 // Si no se encuentra la cookie, devolver false

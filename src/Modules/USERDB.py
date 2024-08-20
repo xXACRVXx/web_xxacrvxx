@@ -1,4 +1,5 @@
 import sqlite3
+import traceback
 import jwt
 import datetime
 import cryptocode
@@ -46,7 +47,7 @@ else:
 
 ######### connection and cursor #########
 con = sqlite3.connect(DB_PATH, check_same_thread=False)
-
+con.row_factory = sqlite3.Row
 cur = con.cursor()
 
 
@@ -54,6 +55,7 @@ def recon():
     global con
     global cur
     con = sqlite3.connect(DB_PATH, check_same_thread=False)
+    con.row_factory = sqlite3.Row
     cur = con.cursor()
 ##########################################
 
@@ -236,7 +238,7 @@ def CREATE_TABLE():
             return ERROR
 
 
-def INSERT_DB(USER='', EMAIL='', PASSW=''):
+def INSERT_USER(USER='', EMAIL='', PASSW=''):
     """
     INSER_DB(USER='', EMAIL='', PASSW='')
     USER: The user name.
@@ -251,14 +253,13 @@ def INSERT_DB(USER='', EMAIL='', PASSW=''):
     return: 'USUARIO CREADO CORRECTAMENTE'
     """
     try:
-        comp1 = SEARCH_DB('USER', USER)
+        comp1 = GET_USER('USER', USER)
         if comp1 == None:
-            comp2 = SEARCH_DB('EMAIL', EMAIL)
+            comp2 = GET_USER('EMAIL', EMAIL)
             if comp2 == None:
                 TIME = datetime.datetime.now()
                 recon()
-                cur.execute(
-                    f'INSERT INTO USERDB (USER, EMAIL, PASSW, TIME)  VALUES ("{USER}", "{EMAIL}", "{PASSW}", "{TIME}")')
+                cur.execute('INSERT INTO USERDB (USER, EMAIL, PASSW, TIME)  VALUES (?,?,?,?)', (USER, EMAIL, PASSW, TIME))
                 con.commit()
                 con.close
                 log.info(
@@ -279,37 +280,8 @@ def INSERT_DB(USER='', EMAIL='', PASSW=''):
         return ERROR
 
 
-def ALL_USERS():
-    """
-    ALL_USERS()
-    this function is used to get all the users in the database.
 
-    return: list with all the users.
-
-    Example:
-    ALL_USERS()
-
-    return: [
-        [1, 'user', 'email', 'passw', 'email_confirm', 'random', 'datos', 'extra', 'time'],
-        [2, 'user2', 'email2', 'passw2', 'email_confirm2', 'random2', 'datos2', 'extra2', 'time2'],
-        [3, 'user3', 'email3', 'passw3', 'email_confirm3', 'random3', 'datos3', 'extra3', 'time3']
-    ]   
-    """
-    try:
-        lista = []
-        recon()
-        for row in cur.execute('SELECT * FROM USERDB'):
-            ALL = row
-            lista.append(ALL)
-        con.close
-        log.debug(f"[ALL_USERS:] [OK]")
-        return lista
-    except Exception as e:
-        ERROR = f"ERROR AL BUSCAR TODO EN LA TABLA:\n{e}"
-        log.error(f"[ALL_USERS:] [ERROR] [{ERROR}]")
-        return ERROR
-
-def SEARCH_DB(TYPE='USER', DATA_SEARCH=''):
+def GET_USER(TYPE='all', DATA_SEARCH=''):
     """
     SEARCH_DB(TYPE='USER', DATA_SEARCH='')
     TYPE: The type of data to search.
@@ -324,38 +296,48 @@ def SEARCH_DB(TYPE='USER', DATA_SEARCH=''):
     """
     try:
         recon()
-        TIPOS = ["ID", "USER", "EMAIL", "PASSW",
-                 "EMAIL_CONFIRM", "RANDOM", "DATOS", "EXTRA"]
+        TIPOS = ["ID", "USER", "EMAIL", "PASSW", "EMAIL_CONFIRM", "RANDOM", "DATOS", "EXTRA"]
         if TYPE in TIPOS:
-            search_sql = f'SELECT * FROM USERDB WHERE {TYPE}="{DATA_SEARCH}"'
-            cur.execute(search_sql)
-            resp = None
-            for rew in cur.fetchall():
-                log.debug(
-                    f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-                resp = rew
+            cur.execute(f'SELECT * FROM USERDB WHERE {TYPE}= ?', (DATA_SEARCH,))
+            resp = []
+            for row in cur.fetchall():
+                row = dict(row)
+                resp = row
             con.close()
+            log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
+            if len(resp) == 0:
+                return None
             return resp
             
-
         elif TYPE == 'TIME':
-            lista = []
+            resp = []
             cur.execute('SELECT * FROM USERDB')
             for row in cur.fetchall():
-                ALL = row
-                if ALL[8].__contains__(DATA_SEARCH):
-                    lista.append(ALL)
+                row = dict(row)
+                if row["TIME"].__contains__(DATA_SEARCH):
+                    resp.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            return lista
+            if len(resp) == 0:
+                return None
+            return resp
+        elif TYPE == 'all':
+            resp = []
+            cur.execute('SELECT * FROM USERDB')
+            for row in cur.fetchall():
+                row = dict(row)
+                resp.append(row)
+            con.close
+            log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
+            if len(resp) == 0:
+                return None
+            return resp
         else:
-            log.debug(
-                f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
+            log.debug(f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
             return None
     except Exception as e:
         ERROR = f"ERROR AL BUSCAR EN LA TABLA:\n{e}"
-        log.error(
-            f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH})")
+        log.error(f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH}) [{traceback.format_exc()}]")
         return ERROR
 
 
@@ -376,9 +358,9 @@ def VALIDAR(US_EM, PASSW, KEY):
 
     try:
         if US_EM.__contains__('@'):
-            DTE = SEARCH_DB('EMAIL', US_EM)
+            DTE = GET_USER('EMAIL', US_EM)
             if not DTE == None:
-                DPASSW = DESENCRIPT(DTE[3], KEY)
+                DPASSW = DESENCRIPT(DTE['PASSW'], KEY)
                 if PASSW == DPASSW:
                     log.debug('[VALIDAR:] [True]')
                     return True
@@ -389,9 +371,9 @@ def VALIDAR(US_EM, PASSW, KEY):
                 log.debug('[VALIDAR:] [False] (SEARCH_DB=None)')
                 return False
         else:
-            DTU = SEARCH_DB('USER', US_EM)
+            DTU = GET_USER('USER', US_EM)
             if not DTU == None:
-                DPASSW = DESENCRIPT(DTU[3], KEY)
+                DPASSW = DESENCRIPT(DTU['PASSW'], KEY)
                 if PASSW == DPASSW:
                     log.debug('[VALIDAR:] [True]')
                     return True
@@ -408,47 +390,33 @@ def VALIDAR(US_EM, PASSW, KEY):
         return ERROR
 
 
-def DELETE(US_EM):
+def DELETE(UID):
     """
-    DELETE(US_EM)
+    DELETE(UID)
     US_EM: The user email or user name.
 
     return: True or False.
 
     Example:
-    DELETE('user')
+    DELETE('uid')
 
     return: True
     """
-
     try:
-        if US_EM.__contains__('@'):
-            if SEARCH_DB('EMAIL', US_EM) != None:
-                recon()
-                cur.execute(f'DELETE FROM USERDB WHERE EMAIL="{US_EM}"')
-                con.commit()
-                con.close()
-                log.info(f'[DELETE:] [OK] (Email: {US_EM})')
-                return 'EL CORREO SE HA BORRADO'
-            else:
-                log.debug(f'[DELETE:] [None] (Email: {US_EM})')
-                return 'EL CORREO NO EXISTE '
+        if GET_USER('id', UID) != None:
+            recon()
+            cur.execute('DELETE FROM USERDB WHERE id= ?',(UID,))
+            con.commit()
+            con.close()
+            log.info(f'[DELETEBL:] [OK] (ID: {UID})')
+            return True
         else:
-            if SEARCH_DB('USER', US_EM) != None:
-                recon()
-                cur.execute(f'DELETE FROM USERDB WHERE USER="{US_EM}"')
-                con.commit()
-                con.close()
-                log.info(f'[DELETE:] [OK] (user: {US_EM})')
-                return 'EL USUARIO SE HA BORRADO'
-            else:
-                log.debug(f'[DELETE:] [None] (user: {US_EM})')
-                return 'EL USUARIO NO EXISTE '
+            log.debug(f'[DELETEBL:] [None] (ID: {UID})')
+            return False
     except Exception as e:
         ERROR = f'ERROR AL BORRAR:\n{e}'
-        log.error(f'[DELETE:] [ERROR] (ERROR={ERROR})')
+        log.error(f'[DELETEBL:] [ERROR] (ERROR={ERROR})')
         return ERROR
-
 
 def EDITAR(TYPE='USER', USER='', NEWD=''):
     """
@@ -465,13 +433,13 @@ def EDITAR(TYPE='USER', USER='', NEWD=''):
     """
 
     try:
-        if not SEARCH_DB('USER', USER) == None:
+        if not GET_USER('USER', USER) == None:
             TIPOS = ["ID", "USER", "EMAIL", "PASSW",
                      "EMAIL_CONFIRM", "RANDOM", "DATOS", "EXTRA", "TIME"]
             if TYPE in TIPOS:
                 recon()
                 cur.execute(
-                    f'UPDATE USERDB SET {TYPE}="{NEWD}" WHERE USER="{USER}"')
+                    f'UPDATE USERDB SET {TYPE}=? WHERE USER=?', (NEWD, USER))
                 con.commit()
                 con.close()
                 log.info(
@@ -497,15 +465,15 @@ def C_EMAIL_VAL(USER="", VERIFIC=False):
     try:
         numero = random.randint(100000, 999999)
 
-        DTU = SEARCH_DB('USER', USER)
+        DTU = GET_USER('USER', USER)
 
-        if VERIFIC == True and DTU[4] == "True":
+        if VERIFIC == True and DTU['EMAIL_CONFIRM'] == "True":
             return True
 
         elif not DTU == None:
             recon()
             cur.execute(
-                f'UPDATE USERDB SET RANDOM="{str(numero)}" WHERE USER="{USER}"')
+                f'UPDATE USERDB SET RANDOM=? WHERE USER=?',(numero, USER))
             con.commit()
             con.close()
             return numero
@@ -519,16 +487,16 @@ def C_EMAIL_VAL(USER="", VERIFIC=False):
 def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
 
     try:
-        DTU = SEARCH_DB('EMAIL', EMAIL)
+        DTU = GET_USER('EMAIL', EMAIL)
         if not DTU == None:
-            DCOD = DTU[5]
-            if VERIFIC == True and DTU[4] == "True":
+            DCOD = DTU["RANDOM"]
+            if VERIFIC == True and DTU['EMAIL_CONFIRM'] == "True":
                 return True
 
             elif str(COD) == str(DCOD):
                 recon()
                 cur.execute(
-                    f'UPDATE USERDB SET EMAIL_CONFIRM="True" WHERE EMAIL="{EMAIL}"')
+                    f'UPDATE USERDB SET EMAIL_CONFIRM="True" WHERE EMAIL=?', (EMAIL,))
                 con.commit()
                 con.close()
                 return True
@@ -536,7 +504,7 @@ def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
             else:
                 recon()
                 cur.execute(
-                    f'UPDATE USERDB SET EMAIL_CONFIRM="False" WHERE EMAIL="{EMAIL}"')
+                    f'UPDATE USERDB SET EMAIL_CONFIRM="False" WHERE EMAIL=?', (EMAIL,))
                 con.commit()
                 con.close()
                 return False
@@ -555,6 +523,7 @@ def COMMANDSQL(text):
         for row in cur.execute(text):
             ALL = row
             lista.append(ALL)
+        con.commit()
         con.close
         log.debug(f"[COMMANDSQL:] [{text}] [OK]")
         return lista
@@ -591,17 +560,21 @@ if __name__ == '__main__':
             valor3 = input('contraseña: ')
             valor4 = input('db_passw: ')
             valor5 = ENCRIPT(valor3, valor4)
-            respuesta = INSERT_DB(valor1, valor2, valor5)
+            respuesta = INSERT_USER(valor1, valor2, valor5)
             print(respuesta)
 
         if entrada == 'ls':
-            respuesta = ALL_USERS()
-            print(respuesta)
-
+            respuesta = GET_USER('all')
+            try:
+                for resp in respuesta:
+                    print(f'{resp}\n\n')
+            except:
+                print(respuesta)
+                
         if entrada == 'buscar':
             valor1 = input('TIPO DE BUSQUEDA: ')
             valor2 = input('DATO A BUSCAR: ')
-            respuesta = SEARCH_DB(valor1, valor2)
+            respuesta = GET_USER(valor1, valor2)
             print(respuesta)
 
         if entrada == 'encriptar':
