@@ -5,7 +5,7 @@ import traceback
 import jwt
 import datetime
 import cryptocode
-import time
+import bcrypt
 import random
 import os
 
@@ -228,15 +228,15 @@ def INSERT_USER(USER='', EMAIL='', PASSW='', PERMISSION=0):
                 con.close
                 log.info(
                     f"[INSERT_DB:] [OK] (username: {USER}, email: {EMAIL}, passw: {PASSW})")
-                return f'USUARIO {USER} CREADO CORRECTAMENTE'
+                return f'Usuaro {USER} creado correctamente'
             else:
                 log.debug(
                     f"[INSERT_DB:] [ERROR] EMAIL EXIST (username: {USER}, email: {EMAIL}, passw: {PASSW})")
-                return f'EL CORREO {EMAIL} YA EXISTE'
+                return f'El correo {EMAIL} ya existe'
         else:
             log.debug(
                 f"[INSERT_DB:] [ERROR] USER EXIST (username: {USER}, email: {EMAIL}, passw: {PASSW})")
-            return f'EL USUARIO {USER} YA EXISTE'
+            return f'El usuario {USER} ya existe'
     except Exception as e:
         ERROR = f"ERROR AL INCERTAR EN LA TABLA:\n{e}"
         log.error(
@@ -304,54 +304,6 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
         log.error(f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH}) [{traceback.format_exc()}]")
         return ERROR
 
-
-def VALIDAR(US_EM, PASSW, KEY):
-    """
-    VALIDAR(US_EM, PASSW, KEY)
-    US_EM: The username email or username name.
-    PASSW: The username password.
-    KEY: The key to desencrypt the password.
-
-    return: True or False.
-
-    Example:
-    VALIDAR('username', 'passw', 'key')
-
-    return: True
-    """
-
-    try:
-        if US_EM.__contains__('@'):
-            DTE = GET_USER('email', US_EM)
-            if not DTE == None:
-                DPASSW = DESENCRIPT(DTE['passw'], KEY)
-                if PASSW == DPASSW:
-                    log.debug('[VALIDAR:] [True]')
-                    return True
-                else:
-                    log.debug('[VALIDAR:] [False]')
-                    return False
-            else:
-                log.debug('[VALIDAR:] [False] (SEARCH_DB=None)')
-                return False
-        else:
-            DTU = GET_USER('username', US_EM)
-            if not DTU == None:
-                DPASSW = DESENCRIPT(DTU['passw'], KEY)
-                if PASSW == DPASSW:
-                    log.debug('[VALIDAR:] [True]')
-                    return True
-                else:
-                    log.debug('[VALIDAR:] [False]')
-                    return False
-            else:
-                log.debug('[VALIDAR:] [False] (SEARCH_DB=None)')
-                return False
-
-    except Exception as e:
-        ERROR = f'ERRROR AL VALIDAR:\n{e}'
-        log.error(f'[VALIDAR:] [False] (ERROR={ERROR})')
-        return ERROR
 
 
 def DELETE(UID):
@@ -516,9 +468,8 @@ if __name__ == '__main__':
             valor1 = input('usuario: ')
             valor2 = input('correo: ')
             valor3 = input('contraseña: ')
-            valor4 = input('db_passw: ')
-            valor5 = ENCRIPT(valor3, valor4)
-            respuesta = INSERT_USER(valor1, valor2, valor5)
+            valor4 = bcrypt.hashpw(valor3.encode('utf-8'), bcrypt.gensalt())
+            respuesta = INSERT_USER(valor1, valor2, valor4.decode('utf-8'))
             print(respuesta)
 
         if entrada == 'ls':
@@ -547,12 +498,6 @@ if __name__ == '__main__':
             respuesta = DESENCRIPT(valor1, valor2)
             print(respuesta)
 
-        if entrada == 'validar':
-            valor1 = input('ESCRIBA EL USER/EMAIL PARA VALIDAR: ')
-            valor2 = input('ESCRIBA LA CONTRASEÑA PARA VALIDAR: ')
-            valor3 = input('db_passw: ')
-            respuesta = VALIDAR(valor1, valor2, valor3)
-            print(respuesta)
 
         if entrada == 'borrar':
             valor1 = input('ESCRIBA PARA BORRAR: ')

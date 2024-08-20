@@ -1,5 +1,5 @@
 import os
-import random
+import bcrypt
 import signal
 import traceback
 import requests
@@ -8,29 +8,16 @@ from werkzeug.utils import secure_filename
 from Modules.SENDMAIL import SEND_MAIL
 from Modules import USERPG
 from Modules import BLOGPG
-from flask import (
-    Flask,
-    request,
-    render_template,
-    redirect,
-    url_for,
-    jsonify,
-    Response,
-    flash,
-    session,
-    send_file,
-    send_from_directory,
-    make_response,
+from flask import (Flask, request, render_template, redirect, url_for, jsonify,
+    Response, flash, session, send_file, send_from_directory, make_response,
 )
 from flask_socketio import SocketIO, emit, send
-
 from flask_cors import CORS, cross_origin
 from Modules import CONFIG
 import jwt
 import datetime
 import time
 import sys
-
 from dotenv import load_dotenv
 
 from termcolor import colored
@@ -48,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.70.0b"
+VERSION = "v0.71.0b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -100,32 +87,31 @@ def login():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            email = request.form.get("email").lower()
+            email = request.form.get("email")
             passw = request.form.get("passw")
-            key = app.config.get("SECRET_KEY")
-            if email.__contains__('"'):
-                flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
-                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/log-in_layout.html")    
-            log.info(f"[{ip_client}] [/login ] Usuario [{email}] [{passw}]intentando iniciar sesion")       
-            if USERPG.VALIDAR(email, passw, key) == True:
-                if email.__contains__("@"):
-                    TheUser = USERPG.GET_USER("email", email)
-                else:
-                    TheUser = USERPG.GET_USER("username", email)
-                data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
-                thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
-                session["user"] = TheUser['id']
-                session["token"] = thetoken
-                if TheUser['email_confirm'] != "true":
-                    return redirect(url_for("EmailSend", email=TheUser['email']))
-                flash("Cuenta iniciada correctamente","success")
-                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser['username']}] logueado correctamente")
-                return redirect(url_for("index"))
+            if email.__contains__("@"):
+                TheUser = USERPG.GET_USER("email", email)
+                log.info(f"[{passw}] [{TheUser['passw']}]")
+                if bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
+                    flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
+                    log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
+                    return render_template("auth/log-in_layout.html")
             else:
-                flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
-                log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                return render_template("auth/log-in_layout.html")
+                TheUser = USERPG.GET_USER("username", email)
+                log.info(f"[{passw}] [{TheUser['passw']}]")
+                if bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
+                    flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
+                    log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
+                    return render_template("auth/log-in_layout.html")
+            data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+            thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
+            session["user"] = TheUser['id']
+            session["token"] = thetoken
+            if TheUser['email_confirm'] != "true":
+                return redirect(url_for("EmailSend", email=TheUser['email']))
+            flash("Cuenta iniciada correctamente","success")
+            log.info(f"[{ip_client}] [/login ] Usuario [{TheUser['username']}] logueado correctamente")
+            return redirect(url_for("index"))             
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
@@ -140,33 +126,24 @@ def regist():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            username = request.form.get("username").lower()
-            email = request.form.get("email").lower()
+            username = request.form.get("username")
+            email = request.form.get("email")
             passw = request.form.get("passw")
-            if username.__contains__('"'):
-                flash("EL USUARIO/CORREO NO PUEDE CONTENER COMILLAS", "error")
-                log.debug(
-                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
-                return render_template("auth/sign-up_layout.html")
-
-            elif username.__contains__("@"):
-                flash("EL USUARIO NO PUEDE CONTENER @", "error")
+            if username.__contains__("@"):
+                flash("El usuario no puede contener @", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
                 return render_template("auth/sign-up_layout.html")
-
-            elif email.__contains__('"'):
-                flash("EL CORREO NO PUEDE CONTENER COMILLAS", "error")
+            elif passw.__len__() < 8:
+                flash("La contraseña no puede tener menos de 8 dijitos", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html")
-
             else:
-                EPASSW = USERPG.ENCRIPT(passw, app.config.get("SECRET_KEY"))
-                response = USERPG.INSERT_USER(username, email, EPASSW)
-
-                if response == "USUARIO [{usuario}] CREADO CORRECTAMENTE":
-                    flash(response, "warning")
+                EPASSW = bcrypt.hashpw(passw.encode('utf-8'), bcrypt.gensalt())
+                response = USERPG.INSERT_USER(username, email, EPASSW.decode('utf-8'))
+                if response == f"Usuaro {username} creado correctamente":
+                    flash(response, "info")
                     log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
@@ -174,7 +151,6 @@ def regist():
                     log.debug(
                         f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
                     return render_template("auth/sign-up_layout.html")
-
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
