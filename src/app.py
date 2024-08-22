@@ -35,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.71.0b"
+VERSION = "v0.72.5b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -61,8 +61,9 @@ def index():
             sessions = False
 
         posts = BLOGPG.GET_BL('all')
-        recent = posts[-4:]
-        recent.sort(key=lambda x: x['id'], reverse=True) 
+        
+        posts.sort(key=lambda x: x['id'], reverse=True) 
+        recent = posts[:4]
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
             return render_template("index.html", recent=recent, cookie=dark_mode, version=VERSION)
@@ -718,11 +719,9 @@ def blogview(name):
             uid = session["user"]
             suid = USERPG.GET_USER("id", uid)
             uss = suid['username']
-            token = session["token"]
             sessions = True
         except:
             uss = None
-            token = None
             sessions = False     
         posts = BLOGPG.GET_BL('all')
         posts.sort(key=lambda x: x['id'], reverse=True)
@@ -731,9 +730,9 @@ def blogview(name):
         if the_posts == None:
             return redirect(url_for("blog"))
         for edit_post in the_posts:
-            BLOGPG.EDITBL('count_view', edit_post['id'], edit_post['count_view'])
+            BLOGPG.EDIT_BL('count_view', edit_post['id'], edit_post['count_view'])
         if sessions == True:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, user=uss, cookie=dark_mode, version=VERSION)
+            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, uid=uid, user=uss, cookie=dark_mode, version=VERSION)
         else:
             return render_template("blog/blogview.html",the_post=the_posts, recent=recent, cookie=dark_mode, version=VERSION)    
     except Exception as e:
@@ -751,15 +750,13 @@ def blogpost():
             uid = session["user"]
             suid = USERPG.GET_USER("id", uid)
             uss = suid['username']
-            token = session["token"]
             sessions = True
         except:
             uss = None
-            token = None
             sessions = False
         if sessions == True:
             if request.method == "POST":
-                CREAT_ID = uss
+                CREAT_ID = uid
                 TITLE = request.form.get("title")
                 DESCRIP = request.form.get("descrip")
                 CONTENT = request.form.get("content")
@@ -774,6 +771,39 @@ def blogpost():
             return redirect(url_for("login"))
     except Exception as e:
         log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+    
+@app.route("/blogdelete/<post_id>")
+def blogdelete(post_id):
+    dark_mode = request.cookies.get('dark-mode', 'false')
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
+            sessions = True
+        except:
+            uss = None
+            sessions = False
+        if sessions == True:
+            if BLOGPG.GET_BL('id', post_id):
+                post = BLOGPG.GET_BL('id', post_id, UID=False)[0]
+                if post['creat_id'] == int(uid):
+                    BLOGPG.DELETE_BL(post_id)
+                    flash("Post borrado correctamente", "success")
+                    return redirect(url_for("blog"))
+                else:
+                    flash("No tienes permiso para borrar este post", "danger")
+                    return redirect(url_for("blog"))
+            else:
+                flash("El post no existe", "danger")
+                return redirect(url_for("blog"))
+        else:
+            return Response(status=403)
+    except Exception as e:
+        log.error(
+            f"[{ip_client}] [/details ] ERROR[0013]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
 
 

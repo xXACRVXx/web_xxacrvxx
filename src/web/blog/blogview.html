@@ -81,7 +81,21 @@
           </div>
           <div class="col-lg-4">
             <div class="widget">
-  
+              {% if user == post['creat_id'] %}
+                <!-- Widget edit -->
+                <div class="widget-box">
+                  <a href="" class="btn btn-primary btn-block">Editar Post</a>
+                  <a href="{{ url_for('blogdelete', post_id=post['id'])}}" class="btn btn-danger btn-block">Borrar Post</a>
+                  </form>
+                </div>
+              {% endif %}
+              <!-- Widget search -->
+              <div class="widget-box">
+                <form action="{{ url_for('blog')}}" class="search-widget">
+                  <input type="text" class="form-control" placeholder="Buscar" name="search">
+                  <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+                </form>
+              </div>
               <!-- Widget recent post -->
               <div class="widget-box">
                 <h4 class="widget-title">Post Recientes</h4>

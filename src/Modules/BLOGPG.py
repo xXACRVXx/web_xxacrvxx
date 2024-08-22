@@ -7,10 +7,10 @@ import os
 import markdown
 from dotenv import load_dotenv
 try:
-    from Modules.USERDB import GET_USER
+    from Modules.USERPG import GET_USER
 except:
     try:
-        from USERDB import GET_USER
+        from USERPG import GET_USER
     except:
         pass   
 
@@ -135,6 +135,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
     try:
         recon()
         TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "count_view", "permission", "extra"]
+        users = GET_USER('all')
         if TYPE in TIPOS:
             cur.execute(f'SELECT * FROM blogpg WHERE {TYPE}= %s', (DATA_SEARCH,))
             resp = []
@@ -146,7 +147,11 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
                 if UID:
                     try:
-                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
+                        for user in users:
+                            if user['id'] == row['creat_id']:
+                                row['creat_id'] = user['username']
+                        if type(row['creat_id']) == int:
+                            row['creat_id'] = 'unknown'
                     except:
                         row['creat_id'] = 'unknown'
                 if SUM_VIEW:
@@ -159,7 +164,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 return None
             return resp  
         elif TYPE == 'time':
-            lista = []
+            resp = []
             cur.execute('SELECT * FROM blogpg')
             for row in cur.fetchall():
                 row = dict(row)
@@ -168,16 +173,22 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
+                        for user in users:
+                            if user['id'] == row['creat_id']:
+                                row['creat_id'] = user['username']
+                        if type(row['creat_id']) == int:
+                            row['creat_id'] = 'unknown'
                     except:
                         row['creat_id'] = 'unknown'
                 if row['time'].__contains__(DATA_SEARCH):
-                    lista.append(row)
+                    resp.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            return lista
+            if len(resp) == 0:
+                return None
+            return resp
         elif TYPE == 'tags':
-            lista = []
+            resp = []
             cur.execute('SELECT * FROM blogpg')
             for row in cur.fetchall():
                 row = dict(row)
@@ -186,16 +197,22 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
+                        for user in users:
+                            if user['id'] == row['creat_id']:
+                                row['creat_id'] = user['username']
+                        if type(row['creat_id']) == int:
+                            row['creat_id'] = 'unknown'
                     except:
-                        row['creat_id'] = 'unknown'   
+                        row['creat_id'] = 'unknown'  
                 if DATA_SEARCH in row['tags']:
-                    lista.append(row)
+                    resp.append(row)
             con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            return lista
+            if len(resp) == 0:
+                return None
+            return resp
         elif TYPE == 'all':
-            lista = []
+            resp = []
             for row in cur.execute('SELECT * FROM blogpg'):
                 row = dict(row)
                 if MARKDOWN:
@@ -203,12 +220,18 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row['tags'] = row['tags'].split(',')
                 if UID:
                     try:
-                        row['creat_id'] = GET_USER('id', row['creat_id'])['username']
+                        for user in users:
+                            if user['id'] == row['creat_id']:
+                                row['creat_id'] = user['username']
+                        if type(row['creat_id']) == int:
+                            row['creat_id'] = 'unknown'
                     except:
-                        row['creat_id'] = 'unknown'    
-                lista.append(row)
+                        row['creat_id'] = 'unknown'
+                resp.append(row)
             con.close
-            return lista  
+            if len(resp) == 0:
+                return None
+            return resp
         else:
             log.debug(
                 f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -220,7 +243,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
         return ERROR
 
 
-def DELETEBL(B_ID):
+def DELETE_BL(B_ID):
     try:
         if GET_BL('id', B_ID) != None:
             recon()
@@ -238,7 +261,7 @@ def DELETEBL(B_ID):
         return ERROR
 
 
-def EDITBL(TYPE='title', B_ID='', NEWD=''):
+def EDIT_BL(TYPE='title', B_ID='', NEWD=''):
     try:
         if not GET_BL('id', B_ID) == None:
             TIPOS = ["id", "descript", "title", "content", "creat_id", "tags", "category", "image", "count_view", "permission", "extra", "time"]
@@ -330,14 +353,14 @@ if __name__ == '__main__':
 
         if entrada == 'borrar':
             valor1 = input('ESCRIBA ID PARA BORRAR: ')
-            resp = DELETEBL(valor1)
+            resp = DELETE_BL(valor1)
             print(f'{resp}\n\n')
 
         if entrada == 'editar':
             valor1 = input('TIPO: ')
             valor2 = input('ID: ')
             valor3 = input('INFO NEW: ')
-            resp = EDITBL(valor1, valor2, valor3)
+            resp = EDIT_BL(valor1, valor2, valor3)
             print(f'{resp}\n\n')
 
         if entrada == 'help':
