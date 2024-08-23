@@ -131,7 +131,7 @@ def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=No
 
 
 
-def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False):
+def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False, TAGS=True):
     try:
         recon()
         TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "count_view", "permission", "extra"]
@@ -143,7 +143,8 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row = dict(row)
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
-                row['tags'] = row['tags'].split(',')
+                if TAGS:
+                    row['tags'] = row['tags'].split(',')
                 row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
                 if UID:
                     try:

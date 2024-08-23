@@ -84,7 +84,7 @@
               {% if user == post['creat_id'] %}
                 <!-- Widget edit -->
                 <div class="widget-box">
-                  <a href="" class="btn btn-primary btn-block">Editar Post</a>
+                  <a href="{{ url_for('blogedit', post_id=post['id'])}}" class="btn btn-primary btn-block">Editar Post</a>
                   <a href="{{ url_for('blogdelete', post_id=post['id'])}}" class="btn btn-danger btn-block">Borrar Post</a>
                   </form>
                 </div>

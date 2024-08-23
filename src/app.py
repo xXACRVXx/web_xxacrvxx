@@ -35,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.72.5b"
+VERSION = "v0.78.1b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -772,6 +772,58 @@ def blogpost():
     except Exception as e:
         log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
+ 
+
+@app.route("/blogedit/<post_id>", methods=["POST", "GET"])
+def blogedit(post_id):
+    dark_mode = request.cookies.get('dark-mode', 'false')
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
+            sessions = True
+        except:
+            uss = None
+            sessions = False
+        if sessions == True:
+            if BLOGPG.GET_BL('id', post_id):
+                post = BLOGPG.GET_BL('id', post_id, MARKDOWN=False, UID=False, TAGS=False)[0]
+            else:
+                flash("No tienes permiso para editar este post", "danger")
+                log.warning(f"[{ip_client}] [/layout ] Usuario [{uss}] no autorizado")
+                return redirect(url_for("blog"))     
+            if request.method == "POST":
+                
+                    if post['creat_id'] == int(uid):
+                        TITLE = request.form.get("title")
+                        DESCRIP = request.form.get("descrip")
+                        CONTENT = request.form.get("content")
+                        IMAGE = request.form.get("image")
+                        TAGS = request.form.get("tags").replace(" ", "")
+                        try:
+                            BLOGPG.EDIT_BL("title", post_id, TITLE)
+                            BLOGPG.EDIT_BL("descript", post_id, DESCRIP)
+                            BLOGPG.EDIT_BL("content", post_id, CONTENT)
+                            BLOGPG.EDIT_BL("image", post_id, IMAGE)
+                            BLOGPG.EDIT_BL("tags", post_id, TAGS)
+                            flash("Post editado correctamente", "success")
+                            return redirect(url_for("blog"))
+                        except Exception as e:
+                            flash("Error al editar el post", "danger")
+                            log.error(f"[{ip_client}] [/blogedit ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+                            return redirect(url_for("blog"))
+            else:
+                return render_template("blog/blogedit.html", post=post, postid=post_id, user=uss, cookie=dark_mode, version=VERSION)
+        else:
+            flash("No tienes permiso para editar este post", "danger")
+            log.warning(f"[{ip_client}] [/layout ] Usuario no autorizado")
+            return redirect(url_for("login"))
+    except Exception as e:
+        log.error(f"[{ip_client}] [/layout ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+    
     
 @app.route("/blogdelete/<post_id>")
 def blogdelete(post_id):
