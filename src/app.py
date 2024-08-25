@@ -20,7 +20,6 @@ import datetime
 import time
 import sys
 from dotenv import load_dotenv
-
 from termcolor import colored
 import logging
 import Modules.LOGGER
@@ -36,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.79.37b"
+VERSION = "v0.79.38b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
