@@ -13,7 +13,7 @@ from flask import (Flask, request, render_template, redirect, url_for, jsonify,
     Response, flash, session, send_file, send_from_directory, make_response,
 )
 from flask_socketio import SocketIO, emit, send
-from flask_cors import CORS, cross_origin
+#from flask_cors import CORS, cross_origin
 from Modules import CONFIG
 import jwt
 import datetime
@@ -35,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.79.38b"
+VERSION = "v0.79.39b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
