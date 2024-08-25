@@ -8,6 +8,7 @@ import cryptocode
 import bcrypt
 import random
 import os
+import argparse
 
 
 ######### LOGGER ###########
@@ -37,15 +38,22 @@ DB_PATH = f"postgresql://{USERPG}:{PASSWPG}@{HOST}:{PORT}/{DB_NAME}"
 
 
 ######### connection and cursor #########
-con = psycopg.connect(DB_PATH, row_factory=dict_row)
-cur = con.cursor()
-
-
-def recon():
-    global con
-    global cur
+try:
     con = psycopg.connect(DB_PATH, row_factory=dict_row)
     cur = con.cursor()
+except Exception as e:
+    log.error(f'[CONNECTION_TEST] [ERROR 1] {e}')
+    pass
+
+def recon():
+    try:
+        global con
+        global cur
+        con = psycopg.connect(DB_PATH, row_factory=dict_row)
+        cur = con.cursor()
+    except Exception as e:
+        log.error(f'[CONNECTION_TEST] [ERROR 1] {e}')
+        pass
 ##########################################
 
 
@@ -448,97 +456,204 @@ def COMMANDSQL(text):
         return ERROR
 
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description='Administra la base de datos de usuarios.')
+    
+    parser.add_argument('command', type=str, help='El comando a ejecutar', choices=['crearTabla', 'sql', 'insert', 'ls', 'buscar', 'encriptar', 'desencriptar', 'borrar', 'editar', 'conc', 'conv', 'help'], nargs='?')
+    parser.add_argument('--user', type=str, help='Nombre de usuario para insertar o buscar')
+    parser.add_argument('--email', type=str, help='Correo electrónico para insertar o validar')
+    parser.add_argument('--password', type=str, help='Contraseña para insertar o encriptar')
+    parser.add_argument('--sql_command', type=str, help='Comando SQL para ejecutar')
+    parser.add_argument('--search_type', type=str, help='Tipo de búsqueda')
+    parser.add_argument('--search_data', type=str, help='Dato para buscar')
+    parser.add_argument('--text', type=str, help='Texto para encriptar o desencriptar')
+    parser.add_argument('--new_info', type=str, help='Nueva información para editar')
+    parser.add_argument('--code', type=str, help='Código de validación')
+    
+    args = parser.parse_args()
 
-    print(CONNECTION_TEST())
-
-    while True:
-        entrada = str(input('\nEscribe aqui: '))
-
-        if entrada.startswith('crearTabla'):
+    if args.command:
+        # Modo con argumentos
+        if args.command == 'crearTabla':
             respuesta = CREATE_TABLE()
             print(respuesta)
-        
-        if entrada == "sql":
-            texto = input("Comando: ")
-            resp = COMMANDSQL(texto)
-            print(resp)
-        
-        if entrada == 'insert':
-            valor1 = input('usuario: ')
-            valor2 = input('correo: ')
-            valor3 = input('contraseña: ')
-            valor4 = bcrypt.hashpw(valor3.encode('utf-8'), bcrypt.gensalt())
-            respuesta = INSERT_USER(valor1, valor2, valor4.decode('utf-8'))
-            print(respuesta)
 
-        if entrada == 'ls':
+        elif args.command == 'sql':
+            if args.sql_command:
+                resp = COMMANDSQL(args.sql_command)
+                print(resp)
+            else:
+                print("Por favor, proporciona un comando SQL con --sql_command.")
+
+        elif args.command == 'insert':
+            if args.user and args.email and args.password:
+                hashed_password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt())
+                respuesta = INSERT_USER(args.user, args.email, hashed_password.decode('utf-8'))
+                print(respuesta)
+            else:
+                print("Por favor, proporciona usuario, correo y contraseña con --user, --email, y --password.")
+
+        elif args.command == 'ls':
             respuesta = GET_USER('all')
             try:
                 for resp in respuesta:
                     print(f'{resp}\n\n')
             except:
                 print(respuesta)
-                
-        if entrada == 'buscar':
-            valor1 = input('TIPO DE BUSQUEDA: ')
-            valor2 = input('DATO A BUSCAR: ')
-            respuesta = GET_USER(valor1, valor2)
-            print(respuesta)
 
-        if entrada == 'encriptar':
-            valor1 = input('ESCRIBA PARA ENCTIPTAR: ')
-            valor2 = input('ESCRIBA LA CONTRASEÑA PARA ENCRIPTAR: ')
-            respuesta = ENCRIPT(valor1, valor2)
-            print(respuesta)
+        elif args.command == 'buscar':
+            if args.search_type and args.search_data:
+                respuesta = GET_USER(args.search_type, args.search_data)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona tipo de búsqueda y dato con --search_type y --search_data.")
 
-        if entrada == 'desencriptar':
-            valor1 = input('ESCRIBA PARA DESENCTIPTAR: ')
-            valor2 = input('ESCRIBA LA CONTRASEÑA PARA DESENCRIPTAR: ')
-            respuesta = DESENCRIPT(valor1, valor2)
-            print(respuesta)
+        elif args.command == 'encriptar':
+            if args.text and args.password:
+                respuesta = ENCRIPT(args.text, args.password)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona el texto y la contraseña con --text y --password.")
 
+        elif args.command == 'desencriptar':
+            if args.text and args.password:
+                respuesta = DESENCRIPT(args.text, args.password)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona el texto y la contraseña con --text y --password.")
 
-        if entrada == 'borrar':
-            valor1 = input('ESCRIBA PARA BORRAR: ')
-            respuesta = DELETE(valor1)
+        elif args.command == 'borrar':
+            if args.user:
+                respuesta = DELETE(args.user)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona el usuario a borrar con --user.")
 
-            print(respuesta)
+        elif args.command == 'editar':
+            if args.search_type and args.user and args.new_info:
+                respuesta = EDITAR(args.search_type, args.user, args.new_info)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona tipo, usuario, y nueva información con --search_type, --user, y --new_info.")
 
-        if entrada == 'editar':
-            valor1 = input('TIPO: ')
-            valor2 = input('USUARIO: ')
-            valor3 = input('INFO NEW: ')
-            respuesta = EDITAR(valor1, valor2, valor3)
-            print(respuesta)
+        elif args.command == 'conc':
+            if args.user:
+                respuesta = C_EMAIL_VAL(args.user)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona el usuario con --user.")
 
-        if entrada == 'conc':
-            valor1 = input('ESCRIBA PARA USUARIO: ')
-            respuesta = C_EMAIL_VAL(valor1)
+        elif args.command == 'conv':
+            if args.user and args.code:
+                respuesta = EMAIL_VAL(args.user, args.code)
+                print(respuesta)
+            else:
+                print("Por favor, proporciona el usuario y el código con --user y --code.")
 
-            print(respuesta)
+        elif args.command == 'help':
+            print("""
+                Help:
+                crearTabla - Crea una Tabla
+                sql - Ejecuta un comando SQL
+                insert - Inserta un usuario
+                ls - Lista todos los usuarios
+                buscar - Busca un usuario
+                encriptar - Encripta un texto
+                desencriptar - Desencripta un texto
+                borrar - Borra un usuario
+                editar - Edita un usuario
+                conc - Valida un usuario por email
+                conv - Valida un código de confirmación de correo
+            """)
+    else:
+        # Modo interactivo
+        print(CONNECTION_TEST())
 
-        if entrada == 'conv':
-            valor1 = input('ESCRIBA PARA USUARIO: ')
-            valor2 = input('ESCRIBA PARA CODIGO: ')
-            respuesta = EMAIL_VAL(valor1, valor2)
+        while True:
+            entrada = str(input('\nEscribe aqui: '))
 
-            print(respuesta)
+            if entrada.startswith('crearTabla'):
+                respuesta = CREATE_TABLE()
+                print(respuesta)
+            
+            elif entrada == "sql":
+                texto = input("Comando: ")
+                resp = COMMANDSQL(texto)
+                print(resp)
+            
+            elif entrada == 'insert':
+                valor1 = input('usuario: ')
+                valor2 = input('correo: ')
+                valor3 = input('contraseña: ')
+                valor4 = bcrypt.hashpw(valor3.encode('utf-8'), bcrypt.gensalt())
+                respuesta = INSERT_USER(valor1, valor2, valor4.decode('utf-8'))
+                print(respuesta)
 
-        if entrada == 'help':
+            elif entrada == 'ls':
+                respuesta = GET_USER('all')
+                try:
+                    for resp in respuesta:
+                        print(f'{resp}\n\n')
+                except:
+                    print(respuesta)
+                    
+            elif entrada == 'buscar':
+                valor1 = input('TIPO DE BUSQUEDA: ')
+                valor2 = input('DATO A BUSCAR: ')
+                respuesta = GET_USER(valor1, valor2)
+                print(respuesta)
 
-            respuesta = """
-            Help:
-            crearTabla Crea una Tabla
-            insert Inserta un usuario
-            ls Lista todos los usuarios
-            buscar Busca un usuario
-            encriptar Encripta un texto
-            desencriptar Desencripta un texto
-            validar Valida un usuario
-            borrar Borra un usuario
-            editar Edita un usuario
-            conv valida un codigo de confirmacion de correo
-            """
+            elif entrada == 'encriptar':
+                valor1 = input('ESCRIBA PARA ENCRIPTAR: ')
+                valor2 = input('ESCRIBA LA CONTRASEÑA PARA ENCRIPTAR: ')
+                respuesta = ENCRIPT(valor1, valor2)
+                print(respuesta)
 
-            print(respuesta)
+            elif entrada == 'desencriptar':
+                valor1 = input('ESCRIBA PARA DESENCRIPTAR: ')
+                valor2 = input('ESCRIBA LA CONTRASEÑA PARA DESENCRIPTAR: ')
+                respuesta = DESENCRIPT(valor1, valor2)
+                print(respuesta)
+
+            elif entrada == 'borrar':
+                valor1 = input('ESCRIBA PARA BORRAR: ')
+                respuesta = DELETE(valor1)
+                print(respuesta)
+
+            elif entrada == 'editar':
+                valor1 = input('TIPO: ')
+                valor2 = input('USUARIO: ')
+                valor3 = input('INFO NEW: ')
+                respuesta = EDITAR(valor1, valor2, valor3)
+                print(respuesta)
+
+            elif entrada == 'conc':
+                valor1 = input('ESCRIBA PARA USUARIO: ')
+                respuesta = C_EMAIL_VAL(valor1)
+                print(respuesta)
+
+            elif entrada == 'conv':
+                valor1 = input('ESCRIBA PARA USUARIO: ')
+                valor2 = input('ESCRIBA PARA CODIGO: ')
+                respuesta = EMAIL_VAL(valor1, valor2)
+                print(respuesta)
+
+            elif entrada == 'help':
+                respuesta = """
+                Help:
+                crearTabla - Crea una Tabla
+                sql - Ejecuta un comando SQL
+                insert - Inserta un usuario
+                ls - Lista todos los usuarios
+                buscar - Busca un usuario
+                encriptar - Encripta un texto
+                desencriptar - Desencripta un texto
+                borrar - Borra un usuario
+                editar - Edita un usuario
+                conc - Valida un usuario por email
+                conv - Valida un código de confirmación de correo
+                """
+                print(respuesta)
+
+if __name__ == '__main__':
+    main()

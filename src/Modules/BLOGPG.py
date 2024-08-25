@@ -5,6 +5,7 @@ import datetime
 import traceback
 import os
 import markdown
+import argparse
 from dotenv import load_dotenv
 try:
     from Modules.USERPG import GET_USER
@@ -41,15 +42,21 @@ DB_PATH = f"postgresql://{USERPG}:{PASSWPG}@{HOST}:{PORT}/{DB_NAME}"
 
 
 ######### connection and cursor #########
-con = psycopg.connect(DB_PATH, row_factory=dict_row)
-cur = con.cursor()
-
-
-def recon():
-    global con
-    global cur
+try:
     con = psycopg.connect(DB_PATH, row_factory=dict_row)
     cur = con.cursor()
+except Exception as e:
+    log.error(f'[CONNECTION] [ERROR] {e}')
+    traceback.print_exc()
+
+def recon():
+    try:
+        global con
+        global cur
+        con = psycopg.connect(DB_PATH, row_factory=dict_row)
+        cur = con.cursor()
+    except Exception as e:
+        log.error(f'[CONNECTION] [ERROR] {e}')
 ##########################################
 
 
@@ -306,35 +313,46 @@ def COMMANDSQL(text):
         log.error(f"[COMMANDSQL:] [ERROR] [{ERROR}]")
         return ERROR
 
+def main():
+    parser = argparse.ArgumentParser(description='Administra la base de datos de blog.')
+    
+    parser.add_argument('command', type=str, help='El comando a ejecutar', choices=['crearTabla', 'sql', 'insert', 'ls', 'buscar', 'borrar', 'editar', 'help'], nargs='?')
+    parser.add_argument('--titulo', type=str, help='Título del blog')
+    parser.add_argument('--descripcion', type=str, help='Descripción del blog')
+    parser.add_argument('--contenido', type=str, help='Contenido del blog')
+    parser.add_argument('--autor_id', type=str, help='ID del autor del blog')
+    parser.add_argument('--imagen', type=str, help='Imagen del blog')
+    parser.add_argument('--tags', type=str, help='Tags del blog')
+    parser.add_argument('--categoria', type=str, help='Categoría del blog')
+    parser.add_argument('--sql_command', type=str, help='Comando SQL para ejecutar')
+    parser.add_argument('--search_type', type=str, help='Tipo de búsqueda')
+    parser.add_argument('--search_data', type=str, help='Dato para buscar')
+    parser.add_argument('--blog_id', type=str, help='ID del blog para editar o borrar')
+    parser.add_argument('--new_info', type=str, help='Nueva información para editar')
+    
+    args = parser.parse_args()
 
-if __name__ == '__main__':
-
-    print(CONNECTION_TEST())
-    while True:
-        entrada = str(input('\nEscribe aqui: '))
-
-        if entrada.startswith('crearTabla'):
+    if args.command:
+        # Modo con argumentos
+        if args.command == 'crearTabla':
             resp = CREATE_TABLE()
             print(f'{resp}\n\n')
-        
-        if entrada == "sql":
-            texto = input("Comando: ")
-            resp = COMMANDSQL(texto)
-            for resp in respuesta:
-                print(f'{resp}\n\n')
-        
-        if entrada == 'insert':
-            valor1 = input('TITULO: ')
-            valor2 = input('DESCRIPCION: ')
-            valor3 = input('CONTENIDO: ')
-            valor4 = input('AUTOR_ID: ')
-            valor5 = input('IMAGEN: ')
-            valor6 = input('TAGS: ')
-            valor7 = input('CATEGORIA: ')
-            resp = INSERT_BL(valor1, valor2, valor3, valor4, valor5, valor6, valor7)
-            print(f'{resp}\n\n')
 
-        if entrada == 'ls':
+        elif args.command == 'sql':
+            if args.sql_command:
+                resp = COMMANDSQL(args.sql_command)
+                print(f'{resp}\n\n')
+            else:
+                print("Por favor, proporciona un comando SQL con --sql_command.")
+
+        elif args.command == 'insert':
+            if args.titulo and args.descripcion and args.contenido and args.autor_id:
+                resp = INSERT_BL(args.titulo, args.descripcion, args.contenido, args.autor_id, args.imagen, args.tags, args.categoria)
+                print(f'{resp}\n\n')
+            else:
+                print("Por favor, proporciona título, descripción, contenido y autor_id con --titulo, --descripcion, --contenido, y --autor_id.")
+
+        elif args.command == 'ls':
             respuesta = GET_BL('all', MARKDOWN=False, UID=False)
             try:
                 for resp in respuesta:
@@ -342,36 +360,110 @@ if __name__ == '__main__':
             except:
                 print(respuesta)
 
-        if entrada == 'buscar':
-            valor1 = input('TIPO DE BUSQUEDA: ')
-            valor2 = input('DATO A BUSCAR: ')
-            respuesta = GET_BL(valor1, valor2, MARKDOWN=False, UID=False)
-            try:
-                for resp in respuesta:
-                    print(f'{resp}\n\n')
-            except:
+        elif args.command == 'buscar':
+            if args.search_type and args.search_data:
+                respuesta = GET_BL(args.search_type, args.search_data, MARKDOWN=False, UID=False)
+                try:
+                    for resp in respuesta:
+                        print(f'{resp}\n\n')
+                except:
+                    print(respuesta)
+            else:
+                print("Por favor, proporciona tipo de búsqueda y dato con --search_type y --search_data.")
+
+        elif args.command == 'borrar':
+            if args.blog_id:
+                resp = DELETE_BL(args.blog_id)
+                print(f'{resp}\n\n')
+            else:
+                print("Por favor, proporciona el ID del blog con --blog_id.")
+
+        elif args.command == 'editar':
+            if args.search_type and args.blog_id and args.new_info:
+                resp = EDIT_BL(args.search_type, args.blog_id, args.new_info)
+                print(f'{resp}\n\n')
+            else:
+                print("Por favor, proporciona tipo, ID, y nueva información con --search_type, --blog_id, y --new_info.")
+
+        elif args.command == 'help':
+            print("""
+            Help:
+            crearTabla - Crea una Tabla
+            sql - Ejecuta un comando SQL
+            insert - Inserta un blog
+            ls - Lista todos los blogs
+            buscar - Busca un blog
+            borrar - Borra un blog
+            editar - Edita un blog
+            """)
+
+    else:
+        # Modo interactivo
+        print(CONNECTION_TEST())
+        while True:
+            entrada = str(input('\nEscribe aqui: '))
+
+            if entrada.startswith('crearTabla'):
+                resp = CREATE_TABLE()
+                print(f'{resp}\n\n')
+            
+            elif entrada == "sql":
+                texto = input("Comando: ")
+                resp = COMMANDSQL(texto)
+                print(f'{resp}\n\n')
+            
+            elif entrada == 'insert':
+                valor1 = input('TITULO: ')
+                valor2 = input('DESCRIPCION: ')
+                valor3 = input('CONTENIDO: ')
+                valor4 = input('AUTOR_ID: ')
+                valor5 = input('IMAGEN: ')
+                valor6 = input('TAGS: ')
+                valor7 = input('CATEGORIA: ')
+                resp = INSERT_BL(valor1, valor2, valor3, valor4, valor5, valor6, valor7)
+                print(f'{resp}\n\n')
+
+            elif entrada == 'ls':
+                respuesta = GET_BL('all', MARKDOWN=False, UID=False)
+                try:
+                    for resp in respuesta:
+                        print(f'{resp}\n\n')
+                except:
+                    print(respuesta)
+
+            elif entrada == 'buscar':
+                valor1 = input('TIPO DE BUSQUEDA: ')
+                valor2 = input('DATO A BUSCAR: ')
+                respuesta = GET_BL(valor1, valor2, MARKDOWN=False, UID=False)
+                try:
+                    for resp in respuesta:
+                        print(f'{resp}\n\n')
+                except:
+                    print(respuesta)
+
+            elif entrada == 'borrar':
+                valor1 = input('ESCRIBA ID PARA BORRAR: ')
+                resp = DELETE_BL(valor1)
+                print(f'{resp}\n\n')
+
+            elif entrada == 'editar':
+                valor1 = input('TIPO: ')
+                valor2 = input('ID: ')
+                valor3 = input('INFO NEW: ')
+                resp = EDIT_BL(valor1, valor2, valor3)
+                print(f'{resp}\n\n')
+
+            elif entrada == 'help':
+                respuesta = """
+                Help:
+                crearTabla - Crea una Tabla
+                insert - Inserta un blog
+                ls - Lista todos los blogs
+                buscar - Busca un blog
+                borrar - Borra un blog
+                editar - Edita un blog
+                """
                 print(respuesta)
 
-        if entrada == 'borrar':
-            valor1 = input('ESCRIBA ID PARA BORRAR: ')
-            resp = DELETE_BL(valor1)
-            print(f'{resp}\n\n')
-
-        if entrada == 'editar':
-            valor1 = input('TIPO: ')
-            valor2 = input('ID: ')
-            valor3 = input('INFO NEW: ')
-            resp = EDIT_BL(valor1, valor2, valor3)
-            print(f'{resp}\n\n')
-
-        if entrada == 'help':
-            respuesta = """
-            Help:
-            crearTabla Crea una Tabla
-            insert Inserta un usuario
-            ls Lista todos los usuarios
-            buscar Busca un usuario
-            borrar Borra un usuario
-            editar Edita un usuario
-            """
-            print(respuesta)
+if __name__ == '__main__':
+    main()

@@ -1,4 +1,5 @@
 import os
+import re
 import bcrypt
 import signal
 import traceback
@@ -35,7 +36,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.78.1b"
+VERSION = "v0.79.37b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -47,7 +48,7 @@ USERPG.CONNECTION_TEST()
 @app.route("/")
 def index():
     ip_client = request.headers.get("X-Real-IP")
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     try:
         try:
             uid = session["user"]
@@ -90,35 +91,40 @@ def login():
         try:
             email = request.form.get("email")
             passw = request.form.get("passw")
-            if email.__contains__("@"):
+            redirect_for = request.form.get("redirect_for")
+            re_mail = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
+            if re.match(re_mail, email):
                 TheUser = USERPG.GET_USER("email", email)
-                log.info(f"[{passw}] [{TheUser['passw']}]")
-                if bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
-                    flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
-                    log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                    return render_template("auth/log-in_layout.html")
             else:
                 TheUser = USERPG.GET_USER("username", email)
-                log.info(f"[{passw}] [{TheUser['passw']}]")
-                if bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
-                    flash("USUARIO/CORREO O CONTRASEÑA INCORRECTOS, SI NO RECUERDA SU CONTRASEÑA CLICk", "warning")
-                    log.debug(f"[{ip_client}] [/login ] Usuario/Correo/Contraseña incorrectos")
-                    return render_template("auth/log-in_layout.html")
-            data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
-            thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
-            session["user"] = TheUser['id']
-            session["token"] = thetoken
-            if TheUser['email_confirm'] != "true":
-                return redirect(url_for("EmailSend", email=TheUser['email']))
-            flash("Cuenta iniciada correctamente","success")
-            log.info(f"[{ip_client}] [/login ] Usuario [{TheUser['username']}] logueado correctamente")
-            return redirect(url_for("index"))             
+            if TheUser == None:
+                flash("Usuario o contraseña  incorrecta, si no recuerda su contraseña click", "warning")
+                return render_template("auth/log-in_layout.html")
+            elif bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
+                flash("Usuario o contraseña  incorrecta, si no recuerda su contraseña click", "warning")
+                return render_template("auth/log-in_layout.html")
+            else:
+                data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+                thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
+                session.permanent = True
+                session["user"] = TheUser['id']
+                session["token"] = thetoken
+                if TheUser['email_confirm'] != "true":
+                    return redirect(url_for("EmailSend", email=TheUser['email']))
+                flash("Cuenta iniciada correctamente","success")
+                log.info(f"[{ip_client}] [/login ] Usuario [{TheUser['username']}] logueado correctamente")
+                if redirect_for != '':
+                    return redirect(redirect_for)
+                return redirect(url_for("index"))             
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(f"[{ip_client}] [/login ] ERROR[0002]: {e} [{traceback.format_exc()}]")
             return render_template("auth/log-in_layout.html")
     else:
         log.debug(f"[{ip_client}] [/login ] [metodo GET]")
+        if request.args.get("redirect") != None:
+            redirect_for = request.args.get("redirect")
+            return render_template("auth/log-in_layout.html", redirect_for=redirect_for)
         return render_template("auth/log-in_layout.html")
 
 
@@ -130,8 +136,9 @@ def regist():
             username = request.form.get("username")
             email = request.form.get("email")
             passw = request.form.get("passw")
-            if username.__contains__("@"):
-                flash("El usuario no puede contener @", "error")
+            re_mail = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
+            if re.match(re_mail,username):
+                flash("El usuario no puede ser un correo", "error")
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
                 return render_template("auth/sign-up_layout.html")
@@ -140,7 +147,7 @@ def regist():
                 log.debug(
                     f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html")
-            else:
+            elif re.match(re_mail, email):
                 EPASSW = bcrypt.hashpw(passw.encode('utf-8'), bcrypt.gensalt())
                 response = USERPG.INSERT_USER(username, email, EPASSW.decode('utf-8'))
                 if response == f"Usuaro {username} creado correctamente":
@@ -149,9 +156,12 @@ def regist():
                     return redirect(url_for("EmailSend", email=email))
                 else:
                     flash(response, "warning")
-                    log.debug(
-                        f"[{ip_client}] [/regist ] Usuario {username} NO CREADO {response}")
+                    log.debug(f"[{ip_client}] [/regist ] Usuario {username} no creado {response}")
                     return render_template("auth/sign-up_layout.html")
+            else:
+                flash("El correo electronico no es valido", "error")
+                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [correo]")
+                return render_template("auth/sign-up_layout.html")
         except Exception as e:
             flash("Ups algo salio mal, intentalo de nuevo", "error")
             log.error(f"[{ip_client}] [/regist ] ERROR[0003]: {e} [{traceback.format_exc()}]")
@@ -201,27 +211,96 @@ def EmailSend():
                 algorithm="HS256")
 
             subject = f"Confirmación de cuenta [{code}]"
-            message = f"""<html>
-                <head>
-                </head>
-                <body>
-                <div class="container"> <!-- añadido un contenedor para el contenido -->
-                <h1>Confirmación de cuenta</h1>
-                <h2>
-                Hola <strong>{user['username']}</strong>, Gracias por registrate en nuestra web. 
-                Para completar el proceso, por favor usa este código para confirmar tu cuenta:
-                </h2>
-                <h1><strong>{code}</strong></h1>
-                <h2>O haz clic en el siguiente link:</h2>
-                <h1><a href="https://xxacrvxx.ydns.eu/EmailConfirm?token={token}">Confirmar mi cuenta</a></h1>
-                </div> <!-- fin del contenedor -->
-                <h2>
-                Esta confirmacion sera valida por 30 minutos, si no has solicitado esto, ignora este correo.
-                <p>Saludos,
-                El equipo de xXACRVXx</p>
-                </h2>
-                </body>
-                </html>"""
+            message = f"""
+<html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 0;
+                color: #333;
+                text-align: center;
+            }}
+            .container {{
+                max-width: 600px;
+                width: 90%;
+                margin: 0 auto;
+                background-color: #fff;
+                padding: 15px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }}
+            h1 {{
+                color: #6c55f9;
+                font-size: 22px;
+                margin-bottom: 20px;
+            }}
+            h2 {{
+                color: #333;
+                font-size: 16px;
+                margin-bottom: 20px;
+                line-height: 1.5;
+            }}
+            p {{
+                color: #555;
+                font-size: 14px;
+                line-height: 1.5;
+                margin-top: 20px;
+            }}
+            a {{
+                color: #6c55f9;
+                text-decoration: none;
+                font-weight: bold;
+            }}
+            .code {{
+                font-size: 20px;
+                color: #6c55f9;
+                background-color: #f4f4f4;
+                padding: 10px;
+                border-radius: 5px;
+                border: 1px solid #6c55f9;
+                display: inline-block;
+                margin-top: 20px;
+                user-select: text; 
+            }}
+            .footer {{
+                margin-top: 30px;
+                font-size: 12px;
+                color: #777;
+            }}
+            @media (max-width: 600px) {{
+                h1 {{
+                    font-size: 20px;
+                }}
+                h2 {{
+                    font-size: 14px;
+                }}
+                .code {{
+                    font-size: 18px;
+                    padding: 8px;
+                }}
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Confirmación de cuenta</h1>
+            <h2>Hola <strong>{user['username']}</strong>,</h2>
+            <h2>¡Gracias por registrarte en nuestra plataforma! Por favor, confirma tu correo electrónico copiando y pegando el siguiente código:</h2>
+            <div class="code">{code}</div>
+            <h2>O haz clic en el enlace a continuación para confirmar directamente:</h2>
+            <h1><a href="https://xxacrvxx.ydns.eu/EmailConfirm?token={token}">Confirmar mi cuenta</a></h1>
+            <p>Este código será válido durante 30 minutos. Si no solicitaste este registro, ignora este correo.</p>
+            <div class="footer">
+                <p>Saludos,<br>El equipo de xXACRVXx</p>
+            </div>
+        </div>
+    </body>
+</html>
+"""
 
             SEND_MAIL(email, subject, message)
             log.info(
@@ -315,7 +394,7 @@ def EmailConfirm():
 
 @app.route("/cloud")
 def cloud():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -340,7 +419,7 @@ def cloud():
 
 @app.route("/download")
 def download():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     if request.args.get("file"):
         try:
@@ -472,7 +551,6 @@ def download():
                         datos_send_token = {
                             "user": USER_ENCRIPT,
                             "archive": archive,
-                            "file_size": file_size,
                         }
                         the_token = jwt.encode(
                             datos_send_token,
@@ -512,7 +590,7 @@ def download():
 
             else:
                 log.debug(f"[{ip_client}] [/download ] Usuario no logueado")
-                return redirect(url_for("login"))
+                return redirect(url_for("login" , redirect='download'))
 
         except Exception as e:
             log.error(
@@ -522,7 +600,7 @@ def download():
 
 @app.route("/upload", methods=["POST", "GET"])
 def upload():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
@@ -620,7 +698,7 @@ def upload():
 
 @app.route("/delete")
 def delete():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         if request.args.get("del_file"):
@@ -659,7 +737,7 @@ def delete():
 @app.route("/blog/")
 @app.route("/blog")
 def blog():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -711,7 +789,7 @@ def blog():
 
 @app.route("/blog/<name>", methods=["POST", "GET"])
 def blogview(name):
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:      
         log.info(f"Name: {name}")
@@ -743,7 +821,7 @@ def blogview(name):
 
 @app.route("/blogpost", methods=["POST", "GET"])
 def blogpost():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -776,7 +854,7 @@ def blogpost():
 
 @app.route("/blogedit/<post_id>", methods=["POST", "GET"])
 def blogedit(post_id):
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -827,7 +905,7 @@ def blogedit(post_id):
     
 @app.route("/blogdelete/<post_id>")
 def blogdelete(post_id):
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -861,7 +939,7 @@ def blogdelete(post_id):
 
 @app.route("/redirect")
 def w_redirect():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         if request.args.get('url'):
@@ -878,7 +956,7 @@ def w_redirect():
 
 @app.route("/details")
 def detalles():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -903,7 +981,7 @@ def detalles():
 
 @app.route("/services")
 def servicios():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -929,7 +1007,7 @@ def servicios():
 
 @app.route("/contact", methods=["POST", "GET"])
 def contactar():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
@@ -1001,7 +1079,7 @@ def contactar():
 
 @app.route("/conditions")
 def ter_y_co():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -1026,7 +1104,7 @@ def ter_y_co():
 
 @app.route("/privacy")
 def privacy():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:
@@ -1198,7 +1276,7 @@ def testchat3():
 
 @app.route("/layout")
 def layout():
-    dark_mode = request.cookies.get('dark-mode', 'false')
+    dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
         try:

@@ -29,7 +29,7 @@
             <h2 class="title-section">Descargar y subir archivos</h2>
             <div class="divider"></div>
             {% if not user %}
-            <h3><a href="{{url_for('login')}}" >[Necesita iniciar su cuenta]</a></h3>
+            <h3><a class="btn btn-primary rounded-pill" href="{{url_for('login', redirect='cloud')}}" >Necesita iniciar su cuenta para continuar</a></h3>
             {% endif %}
             <p>Al crearte una cuenta en nuestra web tambien podras acceder a guardar tus archivos en nuestro servidor y poder descargarlos en otro dispositivo de forma facil y rapida o tambien para compartirlos con tus amigos,los archivos estan protegidos por nuestro servidor y solo estaran disponibles para las personas a las que les proporciones el link</p>
             <a href="{{url_for('download')}}" class="btn btn-primary">Descargar Archivos</a>

@@ -40,11 +40,11 @@
 	<meta property="og:site" content="xxacrvxx.ydns.eu" /> <!-- website link -->
 	<meta property="og:title" content="La web de xxacrvxx"/> <!-- title shown in the actual shared post -->
 	<meta property="og:description" content="xXACRVXx es mi web personal, donde se pueden ver y pulbicar posts en el blog, descargar y subir archivos en nuestra nube entre otras cosas que ire agregando" /> <!-- description shown in the actual shared post -->
-	<meta property="og:image" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" /> <!-- image link, make sure it's jpg -->
+	<meta property="og:image" content="https://xxacrvxx.ydns.eu/static/favicon.png" /> <!-- image link, make sure it's jpg -->
 	<meta property="og:url" content="xxacrvxx.ydns.eu" /> <!-- where do you want your post to link to -->
 	<meta property="og:type" content="article" />
   <meta property="og:image:alt" content="xXACRVXx XD web en desarrollo" />
-  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/img/bg_image_1.png" />
+  <meta name="twitter:image:src" content="https://xxacrvxx.ydns.eu/static/favicon.png" />
   <meta name="twitter:site" content="@xXACRVXx" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="La web de xxacrvxx" />
@@ -188,7 +188,7 @@
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
        {% for category, message in messages %}
-          <div class="alert alert-{{category}} alert-dismissable">
+          <div class="alert alert-{{category}} alert-dismissable  wow fadeInRight">
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <strong>{{ message }}</strong> 
           </div>    
