@@ -1,0 +1,13 @@
+# Creator: GHOST <https://github.com/GHOSTsama2503>
+services:
+  web:
+    build:
+      context: .
+    restart: always
+    deploy:
+      replicas: 3
+    ports:
+      - 9001-9003:9001
+    volumes:
+      - "./src:/src"
+    env_file: src/config.env

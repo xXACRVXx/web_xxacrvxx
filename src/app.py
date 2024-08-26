@@ -35,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.79.39b"
+VERSION = "v0.80.1b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -60,8 +60,7 @@ def index():
             token = None
             sessions = False
 
-        posts = BLOGPG.GET_BL('all')
-        
+        posts = BLOGPG.GET_BL('all')       
         posts.sort(key=lambda x: x['id'], reverse=True) 
         recent = posts[:4]
         if sessions == False:
@@ -138,13 +137,11 @@ def regist():
             re_mail = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
             if re.match(re_mail,username):
                 flash("El usuario no puede ser un correo", "error")
-                log.debug(
-                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
+                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
                 return render_template("auth/sign-up_layout.html")
             elif passw.__len__() < 8:
                 flash("La contraseña no puede tener menos de 8 dijitos", "error")
-                log.debug(
-                    f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
                 return render_template("auth/sign-up_layout.html")
             elif re.match(re_mail, email):
                 EPASSW = bcrypt.hashpw(passw.encode('utf-8'), bcrypt.gensalt())
@@ -180,6 +177,131 @@ def logout():
     return redirect(url_for("index"))
 
 
+@app.route("/resetpassw", methods=["POST", "GET"])
+def resetpassw():
+    ip_client = request.headers.get("X-Real-IP")
+    
+    if request.args.get("token"):
+        token = request.args.get("token")
+        try:
+            verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
+            log.info(f"[{ip_client}] [/resetpassw ] Token valido [{verific['user']}]")
+            return render_template("auth/ResetPassword.html", token=token)
+        except jwt.ExpiredSignatureError:
+            log.debug(f"[{ip_client}] [/resetpassw ] Token expirado")
+            return redirect(url_for("index"))
+        except jwt.InvalidTokenError:
+            log.debug(f"[{ip_client}] [/resetpassw ] Token invalido")
+            return redirect(url_for("index"))
+    if request.args.get("email"):
+        email = request.args.get("email")
+        try:
+            user = USERPG.GET_USER("email", email)
+            if user == None:
+                flash(f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela', 'warning')
+                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
+                return render_template("auth/EmailSend.html")
+            code = USERPG.C_EMAIL_VAL(user['username'])
+            datos_send_token = {"user": user['username'], "email": email, "code": code}
+            token = jwt.encode(datos_send_token, app.config.get("SECRET_KEY"), algorithm="HS256")
+
+            subject = f"Recuperecion de cuenta"
+            message = f"""
+            <html>
+                <head>
+                    <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                            background-color: #f4f4f4;
+                            margin: 0;
+                            padding: 0;
+                            color: #333;
+                            text-align: center;
+                        }}
+                        .container {{
+                            max-width: 600px;
+                            width: 90%;
+                            margin: 0 auto;
+                            background-color: #fff;
+                            padding: 15px;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            text-align: center;
+                        }}
+                        h1 {{
+                            color: #6c55f9;
+                            font-size: 22px;
+                            margin-bottom: 20px;
+                        }}
+                        h2 {{
+                            color: #333;
+                            font-size: 16px;
+                            margin-bottom: 20px;
+                            line-height: 1.5;
+                        }}
+                        p {{
+                            color: #555;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            margin-top: 20px;
+                        }}
+                        a {{
+                            color: #6c55f9;
+                            text-decoration: none;
+                            font-weight: bold;
+                        }}
+                        .code {{
+                            font-size: 20px;
+                            color: #6c55f9;
+                            background-color: #f4f4f4;
+                            padding: 10px;
+                            border-radius: 5px;
+                            border: 1px solid #6c55f9;
+                            display: inline-block;
+                            margin-top: 20px;
+                            user-select: text; 
+                        }}
+                        .footer {{
+                            margin-top: 30px;
+                            font-size: 12px;
+                            color: #777;
+                        }}
+                        @media (max-width: 600px) {{
+                            h1 {{font-size: 20px;}}
+                            h2 {{font-size: 14px;}}
+                            .code {{
+                                font-size: 18px;
+                                padding: 8px;
+                            }}
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Recuperacion de cuenta</h1>
+                        <h2>Hola <strong>{user['username']}</strong>,</h2>
+                        <h2>Por favor haz clic en el enlace a continuación para recuperar tu contrasena</h2>
+                        <h1><a href="https://xxacrvxx.ydns.eu/resetpassw?token={token}">Confirmar mi cuenta</a></h1>
+                        <p>Este enlace será válido durante 30 minutos. Si no solicitaste esto, ignora este correo.</p>
+                        <div class="footer">
+                            <p>Saludos,<br>El equipo de xXACRVXx</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """
+
+            SEND_MAIL(email, subject, message)
+            log.info(f"[{ip_client}] [/EmailSend ] Usuario [{user['username']}] envio correo a [{email}] para confirmar su cuenta")
+            return render_template("auth/EmailSend.html", email=email)
+        except Exception as e:
+            log.error(f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
+            flash(f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde", 'error')
+            return render_template("auth/EmailSend.html")
+    else:
+        return render_template("auth/EmailSend.html")
+
+
 @app.route("/confirm")
 def EmailSend():
     ip_client = request.headers.get("X-Real-IP")
@@ -189,125 +311,110 @@ def EmailSend():
             user = USERPG.GET_USER("email", email)
             if user == None:
                 flash(f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela', 'warning')
-                log.info(
-                    f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
+                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
                 return render_template("auth/EmailSend.html")
-            code = USERPG.C_EMAIL_VAL(user['username'])
+            code = USERPG.C_EMAIL_VAL(user['username'], VERIFIC=True)
             if code == True:
-                flash(f'El correo "{email}" ya fue confirmado anteriormente', 'warning')
-                log.info(
-                    f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
+                flash(f'El correo "{email}" ya fue confirmado anteriormente', 'error')
+                log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
                 return render_template("auth/EmailSend.html")
 
-            datos_send_token = {
-                "user": user['username'],
-                "email": email,
-                "code": code}
-
-            token = jwt.encode(
-                datos_send_token,
-                app.config.get("SECRET_KEY"),
-                algorithm="HS256")
+            datos_send_token = {"user": user['username'], "email": email, "code": code}
+            token = jwt.encode(datos_send_token, app.config.get("SECRET_KEY"), algorithm="HS256")
 
             subject = f"Confirmación de cuenta [{code}]"
             message = f"""
-<html>
-    <head>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f4;
-                margin: 0;
-                padding: 0;
-                color: #333;
-                text-align: center;
-            }}
-            .container {{
-                max-width: 600px;
-                width: 90%;
-                margin: 0 auto;
-                background-color: #fff;
-                padding: 15px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                text-align: center;
-            }}
-            h1 {{
-                color: #6c55f9;
-                font-size: 22px;
-                margin-bottom: 20px;
-            }}
-            h2 {{
-                color: #333;
-                font-size: 16px;
-                margin-bottom: 20px;
-                line-height: 1.5;
-            }}
-            p {{
-                color: #555;
-                font-size: 14px;
-                line-height: 1.5;
-                margin-top: 20px;
-            }}
-            a {{
-                color: #6c55f9;
-                text-decoration: none;
-                font-weight: bold;
-            }}
-            .code {{
-                font-size: 20px;
-                color: #6c55f9;
-                background-color: #f4f4f4;
-                padding: 10px;
-                border-radius: 5px;
-                border: 1px solid #6c55f9;
-                display: inline-block;
-                margin-top: 20px;
-                user-select: text; 
-            }}
-            .footer {{
-                margin-top: 30px;
-                font-size: 12px;
-                color: #777;
-            }}
-            @media (max-width: 600px) {{
-                h1 {{
-                    font-size: 20px;
-                }}
-                h2 {{
-                    font-size: 14px;
-                }}
-                .code {{
-                    font-size: 18px;
-                    padding: 8px;
-                }}
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Confirmación de cuenta</h1>
-            <h2>Hola <strong>{user['username']}</strong>,</h2>
-            <h2>¡Gracias por registrarte en nuestra plataforma! Por favor, confirma tu correo electrónico copiando y pegando el siguiente código:</h2>
-            <div class="code">{code}</div>
-            <h2>O haz clic en el enlace a continuación para confirmar directamente:</h2>
-            <h1><a href="https://xxacrvxx.ydns.eu/EmailConfirm?token={token}">Confirmar mi cuenta</a></h1>
-            <p>Este código será válido durante 30 minutos. Si no solicitaste este registro, ignora este correo.</p>
-            <div class="footer">
-                <p>Saludos,<br>El equipo de xXACRVXx</p>
-            </div>
-        </div>
-    </body>
-</html>
-"""
+            <html>
+                <head>
+                    <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                            background-color: #f4f4f4;
+                            margin: 0;
+                            padding: 0;
+                            color: #333;
+                            text-align: center;
+                        }}
+                        .container {{
+                            max-width: 600px;
+                            width: 90%;
+                            margin: 0 auto;
+                            background-color: #fff;
+                            padding: 15px;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                            text-align: center;
+                        }}
+                        h1 {{
+                            color: #6c55f9;
+                            font-size: 22px;
+                            margin-bottom: 20px;
+                        }}
+                        h2 {{
+                            color: #333;
+                            font-size: 16px;
+                            margin-bottom: 20px;
+                            line-height: 1.5;
+                        }}
+                        p {{
+                            color: #555;
+                            font-size: 14px;
+                            line-height: 1.5;
+                            margin-top: 20px;
+                        }}
+                        a {{
+                            color: #6c55f9;
+                            text-decoration: none;
+                            font-weight: bold;
+                        }}
+                        .code {{
+                            font-size: 20px;
+                            color: #6c55f9;
+                            background-color: #f4f4f4;
+                            padding: 10px;
+                            border-radius: 5px;
+                            border: 1px solid #6c55f9;
+                            display: inline-block;
+                            margin-top: 20px;
+                            user-select: text; 
+                        }}
+                        .footer {{
+                            margin-top: 30px;
+                            font-size: 12px;
+                            color: #777;
+                        }}
+                        @media (max-width: 600px) {{
+                            h1 {{font-size: 20px;}}
+                            h2 {{font-size: 14px;}}
+                            .code {{
+                                font-size: 18px;
+                                padding: 8px;
+                            }}
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Confirmación de cuenta</h1>
+                        <h2>Hola <strong>{user['username']}</strong>,</h2>
+                        <h2>¡Gracias por registrarte en nuestra plataforma! Por favor, confirma tu correo electrónico copiando y pegando el siguiente código:</h2>
+                        <div class="code">{code}</div>
+                        <h2>O haz clic en el enlace a continuación para confirmar directamente:</h2>
+                        <h1><a href="https://xxacrvxx.ydns.eu/EmailConfirm?token={token}">Confirmar mi cuenta</a></h1>
+                        <p>Este código será válido durante 30 minutos. Si no solicitaste este registro, ignora este correo.</p>
+                        <div class="footer">
+                            <p>Saludos,<br>El equipo de xXACRVXx</p>
+                        </div>
+                    </div>
+                </body>
+            </html>
+            """
 
             SEND_MAIL(email, subject, message)
-            log.info(
-                f"[{ip_client}] [/EmailSend ] Usuario [{user['username']}] envio correo a [{email}] para confirmar su cuenta")
+            log.info(f"[{ip_client}] [/EmailSend ] Usuario [{user['username']}] envio correo a [{email}] para confirmar su cuenta")
             return redirect(url_for("EmailConfirm", email=email))
         except Exception as e:
-            log.error(
-                f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
+            log.error(f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
             flash(f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde", 'error')
             return render_template("auth/EmailSend.html")
     else:

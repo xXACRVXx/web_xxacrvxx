@@ -48,7 +48,6 @@ try:
 except Exception as e:
     log.error(f'[CONNECTION] [ERROR] {e}')
     traceback.print_exc()
-
 def recon():
     try:
         global con
@@ -61,14 +60,9 @@ def recon():
 
 
 def CONNECTION_TEST():
-    global con
-    global cur
     "CONNECTION_TEST: This function is used to test the connection to the database"
     try:
-        con_test = psycopg.connect(DB_PATH)
-        cur_test = con_test.cursor()
-        cur_test.execute('SELECT * FROM blogpg')
-        con_test.close()
+        cur.execute('SELECT * FROM blogpg')
         log.info("CONNECTION_TEST: OK (psycopg3) ")
         return f'\nCONECTADO CORRECTAMENTE A PostgreSQL\n'
     except Exception as e:
@@ -86,20 +80,16 @@ def CONNECTION_TEST():
 def CREATE_TABLE():    
     EXECREATE = 'CREATE TABLE IF NOT EXISTS blogpg (id SERIAL PRIMARY KEY, title text, descript text, content text, creat_id integer, tags text, category text, image text, count_view integer, permission text, extra text, time text)'
     try:
-        recon()    
         cur.execute(EXECREATE)
         con.commit()
-        con.close()
         log.info(f"[CREATE_TABLE:] [OK]")
         return f'TABLA DE DATOS CREADA'
     except Exception as e:
         ERROR = f"ERROR AL CREAR LA TABLA:\n{e}"
         if ERROR.__contains__("Unknown database"):
             try:
-                recon()
                 cur.execute(f'CREATE DATABASE {DB_NAME}')
                 cur.execute(EXECREATE)
-                con.close()
                 log.info(f"[CREATE_TABLE:] [OK]")
                 CONNECTION_TEST()
                 return f'TABLA DE DATOS CREADA'
@@ -117,18 +107,12 @@ def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=No
         comp1 = GET_BL('title', TITLE)
         if comp1 == None:
             TIME = datetime.datetime.now()
-            recon()
-            cur.execute(
-                'INSERT INTO blogpg (title, descript, content, creat_id, image, count_view, tags, category, time)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, COUNT_VIEW, TAGS, CATEGORY, str(TIME)))
+            cur.execute('INSERT INTO blogpg (title, descript, content, creat_id, image, count_view, tags, category, time)  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)', (TITLE, DESCRIP, CONTENT, CREAT_ID, IMAGE, COUNT_VIEW, TAGS, CATEGORY, str(TIME)))
             con.commit()
-            con.close
-            log.info(
-                f"[INSERT_DB:] [OK] (Title: {TITLE}, Content: {CONTENT}, Create_by: {CREAT_ID}, TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
+            log.info(f"[INSERT_DB:] [OK] (Title: {TITLE}, Content: {CONTENT}, Create_by: {CREAT_ID}, TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
             return f'ENTRADA {TITLE} CREADA CORRECTAMENTE'
-
         else:
-            log.debug(
-                f"[INSERT_DB:] [ERROR] TITLE EXIST (Title: {TITLE}, Content: {CONTENT}, Create_by: {CREAT_ID},  TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
+            log.debug(f"[INSERT_DB:] [ERROR] TITLE EXIST (Title: {TITLE}, Content: {CONTENT}, Create_by: {CREAT_ID},  TAGS: {TAGS}, DESCRIPTION: {DESCRIP})")
             return f'EL TITULO {TITLE} YA EXISTE'
     except Exception as e:
         ERROR = f"ERROR AL INCERTAR EN LA TABLA:\n{e}"
@@ -140,7 +124,6 @@ def INSERT_BL(TITLE='', DESCRIP='', CONTENT='', CREAT_ID='', IMAGE=None, TAGS=No
 
 def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False, TAGS=True):
     try:
-        recon()
         TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "count_view", "permission", "extra"]
         users = GET_USER('all')
         if TYPE in TIPOS:
@@ -167,7 +150,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 resp.append(row)
             log.debug(
                 f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            con.close()
             if len(resp) == 0:
                 return None
             return resp  
@@ -190,7 +172,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                         row['creat_id'] = 'unknown'
                 if row['time'].__contains__(DATA_SEARCH):
                     resp.append(row)
-            con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             if len(resp) == 0:
                 return None
@@ -214,7 +195,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                         row['creat_id'] = 'unknown'  
                 if DATA_SEARCH in row['tags']:
                     resp.append(row)
-            con.close
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             if len(resp) == 0:
                 return None
@@ -236,7 +216,6 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                     except:
                         row['creat_id'] = 'unknown'
                 resp.append(row)
-            con.close
             if len(resp) == 0:
                 return None
             return resp
@@ -254,10 +233,8 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
 def DELETE_BL(B_ID):
     try:
         if GET_BL('id', B_ID) != None:
-            recon()
             cur.execute('DELETE FROM blogpg WHERE id= %s',(B_ID,))
             con.commit()
-            con.close()
             log.info(f'[DELETEBL:] [OK] (ID: {B_ID})')
             return True
         else:
@@ -274,11 +251,9 @@ def EDIT_BL(TYPE='title', B_ID='', NEWD=''):
         if not GET_BL('id', B_ID) == None:
             TIPOS = ["id", "descript", "title", "content", "creat_id", "tags", "category", "image", "count_view", "permission", "extra", "time"]
             if TYPE in TIPOS:
-                recon()
                 cur.execute(
                     f'UPDATE blogpg SET {TYPE}=%s WHERE id=%s', (NEWD, B_ID))
                 con.commit()
-                con.close()
                 log.info(
                     f'[EDITARBL:] [OK] (type: {TYPE}, id: {B_ID}, data: {NEWD})')
                 return True
@@ -300,12 +275,10 @@ def EDIT_BL(TYPE='title', B_ID='', NEWD=''):
 def COMMANDSQL(text):
     try:
         lista = []
-        recon()
         for row in cur.execute(text):
             ALL = row
             lista.append(ALL)
         con.commit()
-        con.close
         log.debug(f"[COMMANDSQL:] [{text}] [OK]")
         return lista
     except Exception as e:

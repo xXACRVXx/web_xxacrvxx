@@ -58,14 +58,9 @@ def recon():
 
 
 def CONNECTION_TEST():
-    global con
-    global cur
     "CONNECTION_TEST: This function is used to test the connection to the database"
     try:
-        con_test = psycopg.connect(DB_PATH)
-        cur_test = con_test.cursor()
-        cur_test.execute('SELECT * FROM usernamedb')
-        con_test.close()
+        cur.execute('SELECT * FROM usernamedb')
         log.info("CONNECTION_TEST: OK (psycopg3) ")
         return f'\nCONECTADO CORRECTAMENTE A PostgreSQL\n'
     except Exception as e:
@@ -183,21 +178,20 @@ def DESENCRIPT(datos, secretkey):
 
 def CREATE_TABLE():    
     EXECREATE = 'CREATE TABLE IF NOT EXISTS usernamedb (id SERIAL PRIMARY KEY, username text, email text, passw text, email_confirm text, random text, data_auth text, image text, count_view integer, permission integer, extra text, time text)'
-    try:
-        recon()    
+    try:         
         cur.execute(EXECREATE)
         con.commit()
-        con.close()
+         
         log.info(f"[CREATE_TABLE:] [OK]")
         return f'TABLA DE DATOS CREADA'
     except Exception as e:
         ERROR = f"ERROR AL CREAR LA TABLA:\n{e}"
         if ERROR.__contains__("Unknown database"):
             try:
-                recon()
+                 
                 cur.execute(f'CREATE DATABASE {DB_NAME}')
                 cur.execute(EXECREATE)
-                con.close()
+                 
                 log.info(f"[CREATE_TABLE:] [OK]")
                 CONNECTION_TEST()
                 return f'TABLA DE DATOS CREADA'
@@ -230,10 +224,10 @@ def INSERT_USER(USER='', EMAIL='', PASSW='', PERMISSION=0):
             comp2 = GET_USER('email', EMAIL)
             if comp2 == None:
                 TIME = datetime.datetime.now()
-                recon()
+                 
                 cur.execute('INSERT INTO usernamedb (username, email, passw, permission, time)  VALUES (%s,%s,%s,%s,%s)', (USER, EMAIL, PASSW, PERMISSION, str(TIME)))
                 con.commit()
-                con.close
+                 
                 log.info(
                     f"[INSERT_DB:] [OK] (username: {USER}, email: {EMAIL}, passw: {PASSW})")
                 return f'Usuaro {USER} creado correctamente'
@@ -267,7 +261,7 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
     return: [1, 'username', 'email', 'passw', 'email_confirm', 'random', 'data_auth', 'image', 'count_view', 'permission', 'extra', 'time']
     """
     try:
-        recon()
+         
         TIPOS = ['id', 'username', 'email', 'passw', 'email_confirm', 'random', 'data_auth', 'image', 'count_view', 'permission', 'extra']
         if TYPE in TIPOS:
             cur.execute(f'SELECT * FROM usernamedb WHERE {TYPE}= %s', (DATA_SEARCH,))
@@ -275,7 +269,7 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
             for row in cur.fetchall():
                 row = dict(row)
                 resp = row
-            con.close()
+             
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             if len(resp) == 0:
                 return None
@@ -288,7 +282,7 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
                 row = dict(row)
                 if row["time"].__contains__(DATA_SEARCH):
                     resp.append(row)
-            con.close
+             
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             if len(resp) == 0:
                 return None
@@ -299,7 +293,7 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
             for row in cur.fetchall():
                 row = dict(row)
                 resp.append(row)
-            con.close
+             
             log.debug(f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
             if len(resp) == 0:
                 return None
@@ -328,10 +322,10 @@ def DELETE(UID):
     """
     try:
         if GET_USER('id', UID) != None:
-            recon()
+             
             cur.execute('DELETE FROM usernamedb WHERE id= %s',(UID,))
             con.commit()
-            con.close()
+             
             log.info(f'[DELETEBL:] [OK] (ID: {UID})')
             return True
         else:
@@ -360,11 +354,11 @@ def EDITAR(TYPE='username', USER='', NEWD=''):
         if not GET_USER('username', USER) == None:
             TIPOS = ['id', 'username', 'email', 'passw', 'email_confirm', 'random', 'data_auth', 'image', 'count_view', 'permission', 'extra', 'time']
             if TYPE in TIPOS:
-                recon()
+                 
                 cur.execute(
                     f'UPDATE usernamedb SET {TYPE}=%s WHERE username=%s', (NEWD, USER))
                 con.commit()
-                con.close()
+                 
                 log.info(
                     f'[EDITAR:] [OK] (type: {TYPE}, username: {USER}, data: {NEWD})')
                 return 'EDITADO'
@@ -390,15 +384,15 @@ def C_EMAIL_VAL(USER="", VERIFIC=False):
 
         DTU = GET_USER('username', USER)
 
-        if VERIFIC == True and DTU['email_confirm'] == "True":
+        if VERIFIC == True and DTU['email_confirm'] == "true":
             return True
 
         elif not DTU == None:
-            recon()
+             
             cur.execute(
                 f'UPDATE usernamedb SET random=%s WHERE username=%s',(numero, USER))
             con.commit()
-            con.close()
+             
             return numero
 
     except Exception as e:
@@ -417,19 +411,19 @@ def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
                 return True
 
             elif str(COD) == str(DCOD):
-                recon()
+                 
                 cur.execute(
                     f'UPDATE usernamedb SET email_confirm=%s WHERE email=%s', ('true',EMAIL))
                 con.commit()
-                con.close()
+                 
                 return True
 
             else:
-                recon()
+                 
                 cur.execute(
                     f'UPDATE usernamedb SET email_confirm=%s WHERE email=%s', ('false',EMAIL))
                 con.commit()
-                con.close()
+                 
                 return False
         else:
             return False
@@ -442,12 +436,12 @@ def EMAIL_VAL(EMAIL="", COD="", VERIFIC=False):
 def COMMANDSQL(text):
     try:
         lista = []
-        recon()
+         
         for row in cur.execute(text):
             ALL = row
             lista.append(ALL)
         con.commit()
-        con.close
+         
         log.debug(f"[COMMANDSQL:] [{text}] [OK]")
         return lista
     except Exception as e:
