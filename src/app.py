@@ -4,25 +4,31 @@ import bcrypt
 import signal
 import traceback
 import requests
-import json
-from werkzeug.utils import secure_filename
-from Modules.SENDMAIL import SEND_MAIL
-from Modules import USERPG
-from Modules import BLOGPG
-from flask import (Flask, request, render_template, redirect, url_for, jsonify,
-    Response, flash, session, send_file, send_from_directory, make_response,
-)
-from flask_socketio import SocketIO, emit, send
-#from flask_cors import CORS, cross_origin
-from Modules import CONFIG
 import jwt
 import datetime
 import time
 import sys
-from dotenv import load_dotenv
-from termcolor import colored
+import json
 import logging
 import Modules.LOGGER
+
+from Modules import USERPG
+from Modules import BLOGPG
+from Modules import CONFIG
+from dotenv import load_dotenv
+from Modules.SENDMAIL import SEND_MAIL
+
+from werkzeug.utils import secure_filename
+from flask_socketio import SocketIO, emit, send
+from flask import (Flask, request, render_template, redirect, url_for, jsonify,
+    Response, flash, session, send_file, send_from_directory, make_response,
+)
+#from termcolor import colored
+#from flask_cors import CORS, cross_origin
+
+
+
+
 
 
 datosmsg = []
@@ -35,7 +41,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.80.1b"
+VERSION = "v0.80.2b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
