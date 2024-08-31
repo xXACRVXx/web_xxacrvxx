@@ -1,0 +1,58 @@
+
+{% extends 'auth/layout_auth.html' %}
+
+
+    <!-- Website Title -->
+{% block title %}ConfirmMail{% endblock %}   
+
+{% block header %}   
+   <a class="btn-outline-sm" href="{{url_for('login')}}">Iniciar Sesion</a>
+{% endblock %}
+
+
+{% block content %}
+    <!-- Header -->
+    <header id="header" class="ex-2-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1>Recuperar Cuenta</h1>
+                
+                    {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <p><b>{{message}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+                        {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <p><b>{{message}}</b></p>
+                        {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% with messages = get_flashed_messages(category_filter=["info"]) %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <p><b>{{message}}</b></p>
+                        {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    {% with messages = get_flashed_messages(category_filter=["success"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                    {% endwith %}
+                </div> <!-- end of col -->
+            </div> <!-- end of row -->
+        </div> <!-- end of container -->
+    </header> <!-- end of ex-header -->
+    <!-- end of header -->
+
+{% endblock %}

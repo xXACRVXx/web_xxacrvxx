@@ -16,8 +16,8 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1>Confirmar direccion de correo</h1>
-                   <p>¿No tiene un codigo para confimar su correo? de click en <a class="white" href="{{url_for('EmailSend')}}">Enviar correo</a></p>
+                    <h1>Recuperar Cuenta</h1>
+                   <p>Cambiar la contraseña de {{user}}</p>
 						  
 						<div>
                             {% with messages = get_flashed_messages(category_filter=["warning"]) %}
@@ -43,6 +43,14 @@
                                 {% endfor %}
                               {% endif %}
                             {% endwith %}
+
+                            {% with messages = get_flashed_messages(category_filter=["success"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 						</div>
 						
 				
@@ -50,11 +58,16 @@
 				   
                     <!-- Sign Up Form -->
                     <div class="form-container">
-                        <form action="EmailConfirm" method="post" id="log" data-focus="false">
+                        <form method="post" id="log" data-focus="false">
                          
                             <div class="form-group">
                                 <input type="passw" class="form-control-input" name="passw" required>
                                 <label class="label-control" for="lemail">Nueva contraseña</label>
+                                <div class="help-block with-errors"></div>
+                            </div>
+                            <div class="form-group">
+                                <input type="passw" class="form-control-input" name="passw2" required>
+                                <label class="label-control" for="lemail">Repetir contraseña</label>
                                 <div class="help-block with-errors"></div>
                             </div>
                             <input type="hidden" id="postId" name="token" value= "{{token}}" />

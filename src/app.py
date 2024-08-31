@@ -23,16 +23,10 @@ from flask_socketio import SocketIO, emit, send
 from flask import (Flask, request, render_template, redirect, url_for, jsonify,
     Response, flash, session, send_file, send_from_directory, make_response,
 )
-#from termcolor import colored
 #from flask_cors import CORS, cross_origin
 
 
 
-
-
-
-datosmsg = []
-datosmsg_all = []
 
 app = Flask(__name__, template_folder="web")
 app.secret_key = CONFIG.SECRECT
@@ -41,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.80.2b"
+VERSION = "v0.90.1b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -96,6 +90,7 @@ def login():
             email = request.form.get("email")
             passw = request.form.get("passw")
             redirect_for = request.form.get("redirect_for")
+            checkbox = request.form.get("remember-me")
             re_mail = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
             if re.match(re_mail, email):
                 TheUser = USERPG.GET_USER("email", email)
@@ -105,12 +100,13 @@ def login():
                 flash("Usuario o contraseña  incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
             elif bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
-                flash("Usuario o contraseña  incorrecta, si no recuerda su contraseña click", "warning")
+                flash("Usuario o contraseña incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
             else:
                 data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
                 thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
-                session.permanent = True
+                if checkbox != None:
+                    session.permanent = True
                 session["user"] = TheUser['id']
                 session["token"] = thetoken
                 if TheUser['email_confirm'] != "true":
@@ -143,22 +139,28 @@ def regist():
             re_mail = r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
             if re.match(re_mail,username):
                 flash("El usuario no puede ser un correo", "error")
-                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [@]")
+                log.debug(f"[{ip_client}] [/regist ] Usuario [El usuario no puede ser un correo]")
                 return render_template("auth/sign-up_layout.html")
             elif passw.__len__() < 8:
                 flash("La contraseña no puede tener menos de 8 dijitos", "error")
-                log.debug(f"[{ip_client}] [/regist ] Usuario/Correo/Contraseña incorrectos [comillas]")
+                log.debug(f"[{ip_client}] [/regist ] Contraseña incorrecta [menor a 8 dijitos]")
                 return render_template("auth/sign-up_layout.html")
             elif re.match(re_mail, email):
                 EPASSW = bcrypt.hashpw(passw.encode('utf-8'), bcrypt.gensalt())
                 response = USERPG.INSERT_USER(username, email, EPASSW.decode('utf-8'))
                 if response == f"Usuaro {username} creado correctamente":
+                    TheUser = USERPG.GET_USER("username", username)
+                    data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+                    thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
+                    session.permanent = True
+                    session["user"] = TheUser['id']
+                    session["token"] = thetoken
                     flash(response, "info")
                     log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
                     flash(response, "warning")
-                    log.debug(f"[{ip_client}] [/regist ] Usuario {username} no creado {response}")
+                    log.debug(f"[{ip_client}] [/regist ] Usuario {username} no creado [{response}]")
                     return render_template("auth/sign-up_layout.html")
             else:
                 flash("El correo electronico no es valido", "error")
@@ -186,19 +188,65 @@ def logout():
 @app.route("/resetpassw", methods=["POST", "GET"])
 def resetpassw():
     ip_client = request.headers.get("X-Real-IP")
-    
+    if request.method == "POST":
+        try:
+            password = request.form.get("passw")
+            password2 = request.form.get("passw2")
+            token = request.form.get("token")
+            try:
+                verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
+                user = USERPG.GET_USER("username", verific['user'])
+                if int(user['random']) == int(verific['code']):
+                    if password.__len__() < 8:
+                        flash("La contraseña no puede tener menos de 8 dijitos", "error")
+                        log.debug(f"[{ip_client}] [/resetpassw ] Contraseña incorrecta [menor a 8 dijitos]")
+                        return render_template("auth/RPassw.html", token=token, user=user['username'])
+                    elif password != password2:
+                        flash("Las contraseñas no coinciden", "error")
+                        log.debug(f"[{ip_client}] [/resetpassw ] Contraseña incorrecta [no coinciden]")
+                        return render_template("auth/RPassw.html", token=token, user=user['username'])
+                    EPASSW = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                    USERPG.EDITAR('passw',user['username'], EPASSW.decode('utf-8'))
+                    USERPG.C_EMAIL_VAL(user['username'])
+                    flash("Contraseña actualizada correctamente", "success")
+                    log.info(f"[{ip_client}] [/resetpassw ] Usuario [{user['username']}] cambio su contraseña")
+                    return redirect(url_for("login"))
+                else:
+                    flash("Autorizacion invalida", "error")
+                    log.debug(f"[{ip_client}] [/resetpassw ] Usuario [{user['username']}] ")
+                    return redirect(url_for("resetpassw"))
+            except jwt.ExpiredSignatureError:
+                flash("Token expirado", "error")
+                log.debug(f"[{ip_client}] [/resetpassw ] Token expirado")
+                return redirect(url_for("resetpassw"))
+            except jwt.InvalidTokenError:
+                flash("Token invalido", "error")
+                log.debug(f"[{ip_client}] [/resetpassw ] Token invalido")
+                return render_template("auth/RCPassw.html")
+        except Exception as e:
+            flash("Ups algo salio mal, intentalo de nuevo mas tarde", "error")
+            log.error(f"[{ip_client}] [/resetpassw ] ERROR[0004]: {e} [{traceback.format_exc()}]")
+            return render_template("auth/RCPassw.html")
     if request.args.get("token"):
         token = request.args.get("token")
         try:
             verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
-            log.info(f"[{ip_client}] [/resetpassw ] Token valido [{verific['user']}]")
-            return render_template("auth/ResetPassword.html", token=token)
+            user = USERPG.GET_USER("username", verific['user'])
+            if int(user['random']) == int(verific['code']):
+                log.info(f"[{ip_client}] [/resetpassw ] Token valido [{verific['user']}]")
+                return render_template("auth/RPassw.html", token=token, user=verific['user'])
+            else:
+                flash("Autorizacion invalida", "error")
+                log.debug(f"[{ip_client}] [/resetpassw ] Usuario [{user['username']}] ")
+                return render_template("auth/RCPassw.html")
         except jwt.ExpiredSignatureError:
+            flash("Token expirado", "error")
             log.debug(f"[{ip_client}] [/resetpassw ] Token expirado")
-            return redirect(url_for("index"))
+            return redirect(url_for("resetpassw"))
         except jwt.InvalidTokenError:
+            flash("Token invalido", "error")
             log.debug(f"[{ip_client}] [/resetpassw ] Token invalido")
-            return redirect(url_for("index"))
+            return render_template("auth/RCPassw.html")
     if request.args.get("email"):
         email = request.args.get("email")
         try:
@@ -206,9 +254,9 @@ def resetpassw():
             if user == None:
                 flash(f'No se a registrado una cuenta con el correo electronico "{email}" en nuestros servidores, si no tiene una cuenta creela', 'warning')
                 log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] no existe")
-                return render_template("auth/EmailSend.html")
+                return render_template("auth/REPassw.html")
             code = USERPG.C_EMAIL_VAL(user['username'])
-            datos_send_token = {"user": user['username'], "email": email, "code": code}
+            datos_send_token = {"user": user['username'], "code": code, "exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(minutes=30, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
             token = jwt.encode(datos_send_token, app.config.get("SECRET_KEY"), algorithm="HS256")
 
             subject = f"Recuperecion de cuenta"
@@ -286,8 +334,8 @@ def resetpassw():
                     <div class="container">
                         <h1>Recuperacion de cuenta</h1>
                         <h2>Hola <strong>{user['username']}</strong>,</h2>
-                        <h2>Por favor haz clic en el enlace a continuación para recuperar tu contrasena</h2>
-                        <h1><a href="https://xxacrvxx.ydns.eu/resetpassw?token={token}">Confirmar mi cuenta</a></h1>
+                        <h2>Por favor haz clic en el enlace a continuación para cambiar tu contraseña</h2>
+                        <h1><a href="https://xxacrvxx.ydns.eu/resetpassw?token={token}">Cambiar contraseña</a></h1>
                         <p>Este enlace será válido durante 30 minutos. Si no solicitaste esto, ignora este correo.</p>
                         <div class="footer">
                             <p>Saludos,<br>El equipo de xXACRVXx</p>
@@ -298,14 +346,15 @@ def resetpassw():
             """
 
             SEND_MAIL(email, subject, message)
+            flash(f"Se envio un correo a [{email}] para recuperar su cuenta, por favor haga click en el enlace de el correo", 'info')
             log.info(f"[{ip_client}] [/EmailSend ] Usuario [{user['username']}] envio correo a [{email}] para confirmar su cuenta")
-            return render_template("auth/EmailSend.html", email=email)
+            return render_template("auth/RCPassw.html", email=email)
         except Exception as e:
             log.error(f"[{ip_client}] [/EmailSend ] ERROR[0004]: {e} [{traceback.format_exc()}]")
             flash(f"Ups estamos teniendo problemas para enviar el correo, por favor intentelo mas tarde", 'error')
-            return render_template("auth/EmailSend.html")
+            return render_template("auth/RCPassw.html")
     else:
-        return render_template("auth/EmailSend.html")
+        return render_template("auth/REPassw.html")
 
 
 @app.route("/confirm")
@@ -1517,6 +1566,9 @@ def dev5():
 
 
 ################### API/v1 #######################
+
+datosmsg = []
+datosmsg_all = []
 
 @app.route("/api/auth", methods=["POST", "GET"])
 def apiauth_v1():

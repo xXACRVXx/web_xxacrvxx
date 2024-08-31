@@ -65,10 +65,10 @@
 
   <link rel="stylesheet" href="{{url_for('static', filename='vendor/owl-carousel/css/owl.carousel.css')}}">
 
-{% if cookie == 'true' %}
-  <link rel="stylesheet" href="/static/css/theme-dark.css" id="theme-link">
-{% else %}
+{% if cookie == 'false' %}
   <link rel="stylesheet" href="/static/css/theme.css" id="theme-link">
+{% else %}
+  <link rel="stylesheet" href="/static/css/theme-dark.css" id="theme-link">
 {% endif %}
 
   <script>
@@ -95,11 +95,11 @@
         let themeLink = document.getElementById('theme-link');
         let darkMode = getCookie('dark-mode');
 
-        if (darkMode === "true") {
-            themeLink.setAttribute('href', '/static/css/theme-dark.css');
+        if (darkMode === "false") {
+            themeLink.setAttribute('href', '/static/css/theme.css');
         } else if (darkMode === undefined) {
             // Si la cookie no existe, crearla con el valor false
-            setCookie('dark-mode', 'false', 7); // La cookie durará 7 días
+            setCookie('dark-mode', 'true', 7); // La cookie durará 7 días
         }
 
         // Alternar entre temas y actualizar la cookie cuando se hace clic en el botón
@@ -113,7 +113,7 @@
             }
         });
     });
-</script>
+  </script>
 
 </head>
 

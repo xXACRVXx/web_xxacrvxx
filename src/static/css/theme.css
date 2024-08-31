@@ -1706,8 +1706,30 @@ a.text-dark:hover, a.text-dark:focus {
 }
 
 
+@keyframes rotateShadow {
+  0% {
+      box-shadow: 0 0 2px 1px #6b55f9bb, 0 0 4px 2px #6f00ff80, 0 0 6px 3px #0000ff80;
+  }
+  20% {
+      box-shadow: 0 0 2px 1px #6f00ff80, 0 0 4px 2px #0000ff80, 0 0 6px 3px #6c55f9bb;
+  }
+  40% {
+      box-shadow: 0 0 2px 1px #0000ff80, 0 0 4px 2px #6c55f9bb, 0 0 6px 3px #6f00ff80;
+  }
+  60% {
+      box-shadow: 0 0 2px 1px #6c55f9bb, 0 0 4px 2px #6f00ff80, 0 0 6px 3px #0000ff80;
+  }
+  80% {
+      box-shadow: 0 0 2px 1px #6f00ff80, 0 0 4px 2px #0000ff80, 0 0 6px 3px #6c55f9bb;
+  }
+  100% {
+      box-shadow: 0 0 2px 1px #6f00ff80, 0 0 4px 2px #6c55f980, 0 0 6px 3px #0000ff80;
+  }
+}
 
 .card-blog {
+  animation: rotateShadow 7s infinite linear;
+  transition: box-shadow 1s ease-in-out;
   position: relative;
   display: block;
   margin: 0 auto;
@@ -1715,9 +1737,10 @@ a.text-dark:hover, a.text-dark:focus {
   max-width: 500px;
   min-height: 270px;
   border-radius: 6px;
-  box-shadow: 0 3px 9px rgba(8, 8, 8, 0.16);
   height: 100%;
+   /*box-shadow: 0 3px 9px rgba(255, 255, 255, 0.16);*/
 }
+
 
 .card-blog .header {
   margin-bottom: 16px;

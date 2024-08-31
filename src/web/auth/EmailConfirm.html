@@ -43,6 +43,14 @@
                                 {% endfor %}
                               {% endif %}
                             {% endwith %}
+
+                            {% with messages = get_flashed_messages(category_filter=["success"]) %}
+                              {% if messages %}
+                               {% for message in messages %}
+                                <p><b>{{message}}</b></p>
+                                {% endfor %}
+                              {% endif %}
+                            {% endwith %}
 						</div>
 						
 				

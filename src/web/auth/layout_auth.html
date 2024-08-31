@@ -34,7 +34,12 @@
   <link href="{{url_for('static', filename='css/fontawesome-all.css') }}" rel="stylesheet">
   <link href="{{url_for('static', filename='css/swiper.css') }}" rel="stylesheet">
 	<link href="{{url_for('static', filename='css/magnific-popup.css') }}" rel="stylesheet">
-	<link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet" id="theme-link">
+  {% if cookie == 'false' %}
+  <link href="{{url_for('static', filename='css/styles.css') }}" rel="stylesheet" id="theme-link">
+  {% else %}
+  <link href="{{url_for('static', filename='css/styles-dark.css') }}" rel="stylesheet" id="theme-link">
+  {% endif %}
+
 
   <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -60,11 +65,11 @@
         let themeLink = document.getElementById('theme-link');
         let darkMode = getCookie('dark-mode');
 
-        if (darkMode === "true") {
-            themeLink.setAttribute('href', '/static/css/styles-dark.css');
+        if (darkMode === "false") {
+            themeLink.setAttribute('href', '/static/css/styles.css');
         } else if (darkMode === undefined) {
             // Si la cookie no existe, crearla con el valor false
-            setCookie('dark-mode', 'false', 7); // La cookie durará 7 días
+            setCookie('dark-mode', 'true', 7); // La cookie durará 7 días
         }
 
         // Alternar entre temas y actualizar la cookie cuando se hace clic en el botón

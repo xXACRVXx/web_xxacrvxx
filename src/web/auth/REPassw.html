@@ -6,7 +6,7 @@
 {% block title %}ConfirmMail{% endblock %}   
 
 {% block header %}   
-   <a class="btn-outline-sm" href="{{url_for('login')}}">INICIAR SESION</a>
+   <a class="btn-outline-sm" href="{{url_for('login')}}">Iniciar Sesion</a>
 {% endblock %}
 
 
@@ -16,43 +16,43 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1>Enviar Correo</h1>
+                    <h1>Recuperar Cuenta</h1>
                    <p>Escriba la direccion de correo para confirmar su cuenta</a></p> 
                         
 						  
-                <div>
-                {% with messages = get_flashed_messages(category_filter=["warning"]) %}
-                    {% if messages %}
-                     {% for message in messages %}
-                      <p><b>{{message}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
-                      {% endfor %}
-                    {% endif %}
-                  {% endwith %}
+                    <div>
+                    {% with messages = get_flashed_messages(category_filter=["warning"]) %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <p><b>{{message}} <a class=white href="{{url_for('regist')}}">AQUI</a></b></p>
+                        {% endfor %}
+                        {% endif %}
+                    {% endwith %}
 
-                {% with messages = get_flashed_messages(category_filter=["error"]) %}
-                    {% if messages %}
-                     {% for message in messages %}
-                      <p><b>{{message}}</b></p>
-                      {% endfor %}
-                    {% endif %}
-                {% endwith %}
+                    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+                        {% if messages %}
+                        {% for message in messages %}
+                        <p><b>{{message}}</b></p>
+                        {% endfor %}
+                        {% endif %}
+                    {% endwith %}
 
-                {% with messages = get_flashed_messages(category_filter=["success"]) %}
+                    {% with messages = get_flashed_messages(category_filter=["success"]) %}
                               {% if messages %}
                                {% for message in messages %}
                                 <p><b>{{message}}</b></p>
                                 {% endfor %}
                               {% endif %}
-                {% endwith %}
-                </div>
+                    {% endwith %}
+                    </div>
                 
                     
                    <!-- Sign Up Form -->
                     <div class="form-container">
-                        <form action="confirm" method="get"  id="sing"  data-focus="false">
+                        <form method="get"  id="sing"  data-focus="false">
                             <div class="form-group">
                                 <input type="email" class="form-control-input" name="email" required>
-                                <label class="label-control" for="semail">Email</label>
+                                <label class="label-control" for="semail">Correo</label>
                                 <div class="help-block with-errors"></div>
                             </div>
                             <div class="form-group checkbox">
