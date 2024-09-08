@@ -207,17 +207,19 @@ a.white {
 	display: inline-block;
 	padding: 1.375rem 2.625rem 1.375rem 2.625rem;
 	border: 0.125rem solid #5f4dee;
+	width: 100%;
+	height: 3.125rem;
 	border-radius: 2rem;
-	background-color: transparent;
-	color: #5f4dee;
+	background-color: #1f1f1f;
+	color: #ffffff;
 	font: 700 0.875rem/0 "Open Sans", sans-serif;
 	text-decoration: none;
 	transition: all 0.2s;
 }
 
 .btn-outline-lg:hover {
-	background-color: #5f4dee;
-	color: #fff;
+	background-color: #171717;
+	color: #5f4dee;
 	text-decoration: none;
 }
 
@@ -1589,7 +1591,10 @@ a:hover.back-to-top {
 	min-height: 100vh;
 }
 
-.ex-2-header h1,
+.ex-2-header h1 {
+	color: #6c55f9;
+}
+
 .ex-2-header p {
 	color: #fff;
 }
@@ -1606,7 +1611,7 @@ a:hover.back-to-top {
 	margin-right: auto;
 	margin-left: auto;
 	padding: 2.25rem 1.25rem 1.25rem 1.25rem;
-	border-radius: 0.5rem;
+	border-radius: 2rem;
 	background-color: #171717;
 }
 

@@ -35,7 +35,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.90.1b"
+VERSION = "v0.91.3b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -551,6 +551,28 @@ def EmailConfirm():
                 f"[{ip_client}] [/EmailConfirm ] ERROR[0007]: {e} [{traceback.format_exc()}]")
             flash(f"Ups estamos teniendo problemas para activar su cuenta, por favor intentelo mas tarde", 'error')
             return render_template("auth/EmailConfirm.html")
+
+
+@app.route("/options")
+def options():
+    dark_mode = request.cookies.get('dark-mode', 'true')
+    ip_client = request.headers.get("X-Real-IP")
+    try:
+        try:
+            uid = session["user"]
+            suid = USERPG.GET_USER("id", uid)
+            uss = suid['username']
+            sessions = True
+        except:
+            uss = None
+            sessions = False
+        if sessions == True:
+            return render_template("auth/Options.html", cookie=dark_mode)
+        else:
+            redirect(url_for("login"))
+    except Exception as e:
+        log.error(f"[{ip_client}] [/details ] ERROR[0013]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
 
 
 @app.route("/cloud")
@@ -1509,6 +1531,7 @@ def getcookie():
     name = request.cookies.get("userID")
     return name
 
+@app.route("/d")
 @app.route("/doxear", methods=["POST", "GET"])
 def doxear():
     client_ip = request.headers.get("X-Real-IP")
