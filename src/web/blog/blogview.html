@@ -29,7 +29,7 @@
               <h1 id="post-title" class="post-title">{{ post['title']}}</h1>
               <p id="post-descript" >{{ post['descript']}}</p>
               <div class="post-meta">
-                <div id="post-date" class="post-date">
+                <div id="post-date" class="post-date ml-2">
                   <span class="icon">
                     <span class="mai-time-outline"></span>
                   </span> <a href="{{ url_for('blog', time=post['time'][:10]) }}">{{ post['time'][:10]}}</a>
