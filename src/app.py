@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.93.0b"
+VERSION = "v0.93.1b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -102,7 +102,7 @@ def login():
                 flash("Usuario o contraseña incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
             else:
-                data_token = {"create_time": datetime.datetime.now(datetime.UTC)}
+                data_token = {"text": "You shouldn't be reading this"}
                 thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
                 if checkbox != None:
                     session.permanent = True
@@ -149,7 +149,7 @@ def regist():
                 response = USERPG.INSERT_USER(username, email, EPASSW.decode('utf-8'))
                 if response == f"Usuaro {username} creado correctamente":
                     TheUser = USERPG.GET_USER("username", username)
-                    data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+                    data_token = {"text": "You shouldn't be reading this"}
                     thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
                     session.permanent = True
                     session["user"] = TheUser['id']
