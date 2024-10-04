@@ -134,7 +134,7 @@ a:hover {
 }
 
 a.white {
-	color: #fff;
+	/*color: #fff;*/
 }
 
 .decorative-line {
@@ -1591,7 +1591,7 @@ a:hover.back-to-top {
 
 .ex-2-header h1,
 .ex-2-header p {
-	color: #fff;
+	/*color: #fff;*/
 }
 
 .ex-2-header p {
@@ -1709,6 +1709,10 @@ a:hover.back-to-top {
 	.ex-2-header {
 		padding-top: 11rem;
 	}
+
+  .ex-paddin6 {
+    padding-top: 6rem;
+  }
 
 	.ex-2-header .form-container {
 		padding: 2.25rem 1.75rem 1.25rem 1.75rem;

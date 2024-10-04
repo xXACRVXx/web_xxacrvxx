@@ -1715,6 +1715,10 @@ a:hover.back-to-top {
 		padding-top: 11rem;
 	}
 
+  .ex-paddin6 {
+    padding-top: 6rem;
+  }
+
 	.ex-2-header .form-container {
 		padding: 2.25rem 1.75rem 1.25rem 1.75rem;
 	}

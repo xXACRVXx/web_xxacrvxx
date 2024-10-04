@@ -35,11 +35,26 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.91.4b"
+VERSION = "v0.92.0b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
 
+
+# Verificar si hay una sesión activa
+def if_session(session):
+    try:
+        uid = session["user"]
+        suid = USERPG.GET_USER("id", uid)
+        uss = suid['username']
+        token = session["token"]
+        sessions = True
+    except:
+        uid = None
+        uss = None
+        token = None
+        sessions = False
+    return sessions, token, uss, uid
 
 ######################## WEB ########################
 
@@ -49,17 +64,9 @@ def index():
     ip_client = request.headers.get("X-Real-IP")
     dark_mode = request.cookies.get('dark-mode', 'true')
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
-
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
+        
         posts = BLOGPG.GET_BL('all')       
         posts.sort(key=lambda x: x['id'], reverse=True) 
         recent = posts[:4]
@@ -374,7 +381,7 @@ def EmailSend():
                 log.info(f"[{ip_client}] [/EmailSend ] Correo [{email}] ya fue confirmado anteriormente")
                 return render_template("auth/EmailSend.html")
 
-            datos_send_token = {"user": user['username'], "email": email, "code": code}
+            datos_send_token = {"user": user['username'], "email": email, "code": code, "exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(minutes=30, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
             token = jwt.encode(datos_send_token, app.config.get("SECRET_KEY"), algorithm="HS256")
 
             subject = f"Confirmación de cuenta [{code}]"
@@ -558,14 +565,9 @@ def options():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            sessions = True
-        except:
-            uss = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
+        
         if sessions == True:
             return render_template("auth/Options.html", cookie=dark_mode)
         else:
@@ -580,16 +582,9 @@ def cloud():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
+        
         if sessions == True:
             return render_template("files/cloud.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -606,16 +601,9 @@ def download():
     ip_client = request.headers.get("X-Real-IP")
     if request.args.get("file"):
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
+            
             if sessions == True:
                 try:
                     verific = jwt.decode(
@@ -707,16 +695,9 @@ def download():
             return redirect(url_for("download"))
     else:
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
+            
             if sessions == True:
                 try:
                     verific = jwt.decode(
@@ -787,16 +768,8 @@ def upload():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
             if sessions == True:
                 try:
                     verific = jwt.decode(
@@ -837,16 +810,8 @@ def upload():
             return redirect(url_for("login"))
     else:
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
             if sessions == True:
                 try:
                     verific = jwt.decode(
@@ -871,7 +836,7 @@ def upload():
                     return redirect(url_for("login"))
             else:
                 log.debug(
-                    f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
+                    f"[{ip_client}] [/upload ] Usuario no logueado")
                 return redirect(url_for("login"))
         except Exception as e:
             log.error(
@@ -923,16 +888,9 @@ def blog():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
+        
         if request.args.get('tags'):
             posts = BLOGPG.GET_BL('tags',request.args.get('tags'))
         elif request.args.get('autor'):
@@ -975,15 +933,9 @@ def blogview(name):
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:      
-        log.info(f"Name: {name}")
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            sessions = True
-        except:
-            uss = None
-            sessions = False     
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session) 
+        
         posts = BLOGPG.GET_BL('all')
         posts.sort(key=lambda x: x['id'], reverse=True)
         recent = posts[:3]
@@ -1007,14 +959,8 @@ def blogpost():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            sessions = True
-        except:
-            uss = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             if request.method == "POST":
                 CREAT_ID = uid
@@ -1040,14 +986,8 @@ def blogedit(post_id):
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            sessions = True
-        except:
-            uss = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             if BLOGPG.GET_BL('id', post_id):
                 post = BLOGPG.GET_BL('id', post_id, MARKDOWN=False, UID=False, TAGS=False)[0]
@@ -1091,14 +1031,8 @@ def blogdelete(post_id):
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            sessions = True
-        except:
-            uss = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             if BLOGPG.GET_BL('id', post_id):
                 post = BLOGPG.GET_BL('id', post_id, UID=False)[0]
@@ -1142,16 +1076,8 @@ def detalles():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             return render_template('details.html', user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -1167,16 +1093,8 @@ def servicios():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             return render_template("services.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -1194,16 +1112,8 @@ def contactar():
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
             
             nowtime = datetime.datetime.now()
             email_user = request.form.get("email")
@@ -1240,16 +1150,8 @@ def contactar():
             return redirect(url_for("index"))
     else:
         try:
-            try:
-                uid = session["user"]
-                suid = USERPG.GET_USER("id", uid)
-                uss = suid['username']
-                token = session["token"]
-                sessions = True
-            except:
-                uss = None
-                token = None
-                sessions = False
+            # Verificar si hay una sesión activa
+            sessions, token, uss, uid = if_session(session)
             if sessions == True:
                 return render_template("contact.html", user=uss, cookie=dark_mode, version=VERSION)
             else:
@@ -1265,16 +1167,8 @@ def ter_y_co():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             return render_template("privacy.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -1290,16 +1184,8 @@ def privacy():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             return render_template("privacy.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -1413,16 +1299,8 @@ def status_server():
 def getlogger():
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             # implementar revicion if
             log.info(f"[{ip_client}] [/logger ] [{uss} a revisado los logs]")
@@ -1462,16 +1340,8 @@ def layout():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     try:
-        try:
-            uid = session["user"]
-            suid = USERPG.GET_USER("id", uid)
-            uss = suid['username']
-            token = session["token"]
-            sessions = True
-        except:
-            uss = None
-            token = None
-            sessions = False
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == True:
             return render_template("layout.html", user=uss, cookie=dark_mode, version=VERSION)
         else:

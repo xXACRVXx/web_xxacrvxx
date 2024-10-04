@@ -1,5 +1,11 @@
 {% extends 'layout.html' %}
 
+{% block head %}
+{% for post in the_post %}
+<link rel="canonical" href="https://xxacrvxx.ydns.eu/blog/{{post['title']}}" />
+{% endfor %}          
+{% endblock %}
+
 {% block title %}
 {% for post in the_post %}
 {{post['title']}}
