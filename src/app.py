@@ -27,7 +27,6 @@ from flask import (Flask, request, render_template, redirect, url_for, jsonify,
 
 
 
-
 app = Flask(__name__, template_folder="web")
 app.secret_key = CONFIG.SECRECT
 app.config["UPLOAD_FOLDER"] = CONFIG.RUTE
@@ -35,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.92.0b"
+VERSION = "v0.93.0b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -48,6 +47,7 @@ def if_session(session):
         suid = USERPG.GET_USER("id", uid)
         uss = suid['username']
         token = session["token"]
+        jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
         sessions = True
     except:
         uid = None
@@ -64,26 +64,18 @@ def index():
     ip_client = request.headers.get("X-Real-IP")
     dark_mode = request.cookies.get('dark-mode', 'true')
     try:
-        # Verificar si hay una sesión activa
-        sessions, token, uss, uid = if_session(session)
-        
         posts = BLOGPG.GET_BL('all')       
         posts.sort(key=lambda x: x['id'], reverse=True) 
         recent = posts[:4]
+        
+        # Verificar si hay una sesión activa
+        sessions, token, uss, uid = if_session(session)
         if sessions == False:
             log.debug(f"[{ip_client}] [/ ] No hay usuario en sesion")
             return render_template("index.html", recent=recent, cookie=dark_mode, version=VERSION)
-        else:
-            try:
-                verific = jwt.decode(jwt=str(token), key=str(app.config.get("SECRET_KEY")), algorithms=["HS256"])
-                log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
-                return render_template("app/index.html", recent=recent, user=uss, cookie=dark_mode, version=VERSION)
-            except jwt.ExpiredSignatureError:
-                log.debug(f"[{ip_client}] [/ ] Token expirado")
-                return redirect(url_for("login"))
-            except jwt.InvalidTokenError:
-                log.debug(f"[{ip_client}] [/ ] Token invalido")
-                return redirect(url_for("login"))
+        else:    
+            log.info(f"[{ip_client}] [/ ] Token valido [{uss}]")
+            return render_template("app/index.html", recent=recent, user=uss, cookie=dark_mode, version=VERSION)
     except Exception as e:
         log.error(f"[{ip_client}] [/ ] ERROR[0001]: {e} [{traceback.format_exc()}]")
         return render_template("index.html", cookie=dark_mode, version=VERSION)
@@ -110,7 +102,7 @@ def login():
                 flash("Usuario o contraseña incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
             else:
-                data_token = {"exp": datetime.datetime.now(datetime.UTC)+ datetime.timedelta(days=128, minutes=0, seconds=0),"iat": datetime.datetime.now(datetime.UTC)}
+                data_token = {"create_time": datetime.datetime.now(datetime.UTC)}
                 thetoken = jwt.encode(data_token, app.config.get("SECRET_KEY"), algorithm="HS256")
                 if checkbox != None:
                     session.permanent = True
@@ -566,8 +558,7 @@ def options():
     ip_client = request.headers.get("X-Real-IP")
     try:
         # Verificar si hay una sesión activa
-        sessions, token, uss, uid = if_session(session)
-        
+        sessions, token, uss, uid = if_session(session) 
         if sessions == True:
             return render_template("auth/Options.html", cookie=dark_mode)
         else:
@@ -584,7 +575,6 @@ def cloud():
     try:
         # Verificar si hay una sesión activa
         sessions, token, uss, uid = if_session(session)
-        
         if sessions == True:
             return render_template("files/cloud.html", user=uss, cookie=dark_mode, version=VERSION)
         else:
@@ -602,13 +592,9 @@ def download():
     if request.args.get("file"):
         try:
             # Verificar si hay una sesión activa
-            sessions, token, uss, uid = if_session(session)
-            
+            sessions, token, uss, uid = if_session(session)        
             if sessions == True:
                 try:
-                    verific = jwt.decode(
-                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-                    )
                     archive = request.args.get("file")
                     the_path = os.path.join(app.config.get("UPLOAD_FOLDER"),str(uid))
                     log.info(
@@ -617,14 +603,6 @@ def download():
                     if os.path.isfile(os.path.join(the_path, archive)) == False:
                         return Response(status=404)
                     return send_from_directory(the_path, archive, as_attachment=False)
-                except jwt.ExpiredSignatureError:
-                    log.debug(
-                        f"[{ip_client}] [/download ] Usuario [{uss}] expirón token [{token}]")
-                    return redirect(url_for("login"))
-                except jwt.InvalidTokenError:
-                    log.debug(
-                        f"[{ip_client}] [/download ] Usuario [{uss}] token invalido [{token}]")
-                    return redirect(url_for("login"))
                 except Exception as e:
                     log.error(
                         f"[{ip_client}] [/download ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
@@ -697,65 +675,48 @@ def download():
         try:
             # Verificar si hay una sesión activa
             sessions, token, uss, uid = if_session(session)
-            
             if sessions == True:
-                try:
-                    verific = jwt.decode(
-                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
+                dir = os.path.join(app.config.get("UPLOAD_FOLDER"),str(uid))
+                if os.path.isdir(dir) == False:
+                    os.mkdir(dir)            
+                archives = os.listdir(dir)
+                file = []
+                S_KEY = app.config.get("SECRET_KEY")
+                USER_ENCRIPT = str(uid)
+                for archive in archives:
+                    file_size = CONFIG.SPACE_FILE(str(uid), archive)
+                    datos_send_token = {
+                        "user": USER_ENCRIPT,
+                        "archive": archive,
+                    }
+                    the_token = jwt.encode(
+                        datos_send_token,
+                        app.config.get("SECRET_KEY"),
+                        algorithm="HS256",
                     )
-                    dir = os.path.join(app.config.get("UPLOAD_FOLDER"),str(uid))
-                    if os.path.isdir(dir) == False:
-                        os.mkdir(dir)            
-                    archives = os.listdir(dir)
-                    file = []
-                    S_KEY = app.config.get("SECRET_KEY")
-                    USER_ENCRIPT = str(uid)
-                    for archive in archives:
-                        file_size = CONFIG.SPACE_FILE(str(uid), archive)
-                        datos_send_token = {
-                            "user": USER_ENCRIPT,
-                            "archive": archive,
-                        }
-                        the_token = jwt.encode(
-                            datos_send_token,
-                            app.config.get("SECRET_KEY"),
-                            algorithm="HS256",
-                        )
-                        file.append([archive, the_token, file_size])
-                    sorted_file = sorted(file, key=lambda x: x[0])
-                    
-                    page = request.args.get('page', 1, type=int)
-                    per_page = 15
-                    total_posts = len(sorted_file)
-                    total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
-                    start = (page - 1) * per_page
-                    end = start + per_page
-                    paginated_posts = sorted_file[start:end]
-                    log.debug(f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
-                    return render_template(
-                        "files/download.html",
-                        user=uss,
-                        url=dir,
-                        files=paginated_posts,
-                        space=CONFIG.Free_Space(),
-                        page=page,
-                        total_pages=total_pages,
-                        cookie=dark_mode, version=VERSION
-                    )
-
-                except jwt.ExpiredSignatureError:
-                    log.debug(
-                        f"[{ip_client}] [/download ] Usuario [{uss}] expirón token")
-                    return redirect(url_for("login"))
-                except jwt.InvalidTokenError:
-                    log.debug(
-                        f"[{ip_client}] [/download ] Usuario [{uss}] token invalido")
-                    return redirect(url_for("login"))
-
+                    file.append([archive, the_token, file_size])
+                sorted_file = sorted(file, key=lambda x: x[0])    
+                page = request.args.get('page', 1, type=int)
+                per_page = 15
+                total_posts = len(sorted_file)
+                total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
+                start = (page - 1) * per_page
+                end = start + per_page
+                paginated_posts = sorted_file[start:end]
+                log.debug(f"[{ip_client}] [/download ] [method GET] Usuario {uss}")
+                return render_template(
+                    "files/download.html",
+                    user=uss,
+                    url=dir,
+                    files=paginated_posts,
+                    space=CONFIG.Free_Space(),
+                    page=page,
+                    total_pages=total_pages,
+                    cookie=dark_mode, version=VERSION
+                )
             else:
                 log.debug(f"[{ip_client}] [/download ] Usuario no logueado")
                 return redirect(url_for("login" , redirect='download'))
-
         except Exception as e:
             log.error(
                 f"[{ip_client}] [/download ] ERROR[0009]: {e} [{traceback.format_exc()}]")
@@ -772,9 +733,6 @@ def upload():
             sessions, token, uss, uid = if_session(session)
             if sessions == True:
                 try:
-                    verific = jwt.decode(
-                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-                    )
                     if request.files["file"]:
                         file = request.files["file"]
                     else:
@@ -788,25 +746,14 @@ def upload():
                     file.save(file_path)
                     log.info(f"[{ip_client}] [/upload ] Usuario [{uss}] subión archivo [{filename}]")
                     return jsonify({"nombre": filename})
-                except jwt.ExpiredSignatureError:
-                    log.debug(
-                        f"[{ip_client}] [/upload ] Usuario [{uss}]  expirón token")
-                    return redirect(url_for("login"))
-                except jwt.InvalidTokenError:
-                    log.debug(
-                        f"[{ip_client}] [/upload ] Usuario [{uss}]  token invalido")
-                    return redirect(url_for("login"))
                 except Exception as e:
-                    log.error(
-                        f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                    log.error(f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
                     return redirect(url_for("login"))
             else:
-                log.debug(
-                    f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
+                log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
                 return redirect(url_for("login"))
         except Exception as e:
-            log.error(
-                f"[{ip_client}] [/upload] ERROR[0010]: {e} [{traceback.format_exc()}]")
+            log.error(f"[{ip_client}] [/upload] ERROR[0010]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
     else:
         try:
@@ -814,23 +761,8 @@ def upload():
             sessions, token, uss, uid = if_session(session)
             if sessions == True:
                 try:
-                    verific = jwt.decode(
-                        token, app.config.get("SECRET_KEY"), algorithms=["HS256"]
-                    )
-                    log.debug(
-                        f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
-                    return render_template(
-                        "files/upload.html", user=uss, space=CONFIG.Free_Space(), cookie=dark_mode, version=VERSION
-                    )
-
-                except jwt.ExpiredSignatureError:
-                    log.debug(
-                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] expirón token")
-                    return redirect(url_for("login"))
-                except jwt.InvalidTokenError:
-                    log.debug(
-                        f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] token invalido")
-                    return redirect(url_for("login"))
+                    log.debug(f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
+                    return render_template("files/upload.html", user=uss, space=CONFIG.Free_Space(), cookie=dark_mode, version=VERSION)
                 except Exception as e:
                     log.warning(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
                     return redirect(url_for("login"))
