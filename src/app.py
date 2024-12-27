@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.93.1b"
+VERSION = "v0.93.2b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -1196,7 +1196,13 @@ def sitemap2_xml():
 
 @app.route("/healthcheck")
 def healthcheck():
-    return "ok"
+    DB_STATUS = USERPG.CONNECTION_TEST()
+    if DB_STATUS == "\nCONECTADO CORRECTAMENTE A PostgreSQL\n":
+        log.debug("[/healthcheck ] [OK]")
+        return "[Webapp: ok] [Database: ok]"
+    else:
+        log.error("[/healthcheck ] [ERROR]")
+        return "[Webapp: ok] [Database: error]"
     
 
 
@@ -1209,13 +1215,15 @@ def status_server():
         total_time_hour = int(total_time // 3600)
         total_time_min = int((total_time % 3600) // 60)
         total_time_sec = int(total_time % 60)
-        
+        db_status = (lambda x: "OK" if x == "\nCONECTADO CORRECTAMENTE A PostgreSQL\n" else "ERROR")(USERPG.CONNECTION_TEST())
         html=f"""
         <html>
         <head> <title>Server Status</title></head>
         <body>
         <h1>Server Status</h1>
         </body>
+        <p><strong>WebAPP</strong>: OK</p>
+        <p><strong>Database: </strong>{db_status}</p>
         <p><strong>Server Time:</strong> {total_time_hour} hours {total_time_min} min {total_time_sec} sec active :)</p>
         </html>
         """ 
