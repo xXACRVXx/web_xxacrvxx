@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.93.2b"
+VERSION = "v0.98.1b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -864,27 +864,100 @@ def blog():
 def blogview(name):
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
-    try:      
-        # Verificar si hay una sesión activa
-        sessions, token, uss, uid = if_session(session) 
-        
-        posts = BLOGPG.GET_BL('all')
-        posts.sort(key=lambda x: x['id'], reverse=True)
-        recent = posts[:3]
-        the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=True)
-        if the_posts == None:
-            return redirect(url_for("blog"))
-        for edit_post in the_posts:
-            BLOGPG.EDIT_BL('count_view', edit_post['id'], edit_post['count_view'])
-        if sessions == True:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, uid=uid, user=uss, cookie=dark_mode, version=VERSION)
-        else:
-            return render_template("blog/blogview.html",the_post=the_posts, recent=recent, cookie=dark_mode, version=VERSION)    
-    except Exception as e:
-        log.error(
-            f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
-        return redirect(url_for("index"))
+    error_message = None
+    delete_error_message = None
+    edit_error_message = None
+    comment_to_edit = None
+    comment_name_default = ""  # Default values for comment form
+    comment_email_default = ""
 
+    def add_comment(blog_id, name, email, message):
+        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+        if not blog_data: return False
+        comments = json.loads(blog_data[0]['extra']) if blog_data[0]['extra'] else []
+        new_comment = {"name": name, "email": email, "message": message, "date": datetime.datetime.now().isoformat()}
+        comments.append(new_comment)
+        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
+
+    def get_comments(blog_id):
+        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+        if not blog_data or not blog_data[0]['extra']: return []
+        try: return json.loads(blog_data[0]['extra'])
+        except json.JSONDecodeError: return []
+
+    def delete_comment(blog_id, index):
+        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+        if not blog_data or not blog_data[0]['extra']: return False
+        comments = json.loads(blog_data[0]['extra'])
+        if not 0 <= index < len(comments): return False
+        comments.pop(index)
+        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
+
+    def get_comment_edit(blog_id, index):
+        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+        if not blog_data or not blog_data[0]['extra']: return None
+        comments = json.loads(blog_data[0]['extra'])
+        return comments[index] if 0 <= index < len(comments) else None
+
+    def edit_comment(blog_id, index, name, email, message):
+        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+        if not blog_data or not blog_data[0]['extra']: return False
+        comments = json.loads(blog_data[0]['extra'])
+        if not 0 <= index < len(comments): return False
+        comment = comments[index]
+        comment.update({"name": name, "email": email, "message": message, "date": datetime.datetime.now().isoformat()})
+        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
+
+    try:
+        sessions, token, uss, uid = if_session(session)
+        if sessions:
+            user_data = USERPG.GET_USER('id', uid)
+            if user_data:
+                comment_name_default = user_data['username'] # Set default name to username
+                comment_email_default = user_data['email'] # Set default email to user's email
+
+        the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=True)
+        if not the_posts: return redirect(url_for("blog"))
+        BLOGPG.EDIT_BL('count_view', the_posts[0]['id'], the_posts[0]['count_view'])
+        current_post = the_posts[0]
+        recent_posts = sorted(BLOGPG.GET_BL('all') or [], key=lambda x: x['id'], reverse=True)[:3]
+        comments = get_comments(current_post['id'])
+
+        if request.method == "POST":
+            data = request.form
+            if 'comment_submit' in data:
+                if all(k in data and data[k] for k in ('name', 'email', 'message')):
+                    if data.get('comment_index_edit'):
+                        if not edit_comment(current_post['id'], int(data['comment_index_edit']), data['name'], data['email'], data['message']):
+                            edit_error_message = "Error editing comment."
+                    elif not add_comment(current_post['id'], data['name'], data['email'], data['message']):
+                        error_message = "Error adding comment."
+                    return redirect(url_for("blogview", name=name))
+                else:
+                    error_message = "Please fill in all required fields."
+            elif 'delete_comment' in data and data['delete_comment'].isdigit():
+                if not delete_comment(current_post['id'], int(data['delete_comment'])):
+                    delete_error_message = "Error deleting comment."
+                return redirect(url_for("blogview", name=name))
+            elif 'edit_comment' in data and data['edit_comment'].isdigit():
+                comment_to_edit = get_comment_edit(current_post['id'], int(data['edit_comment']))
+                if not comment_to_edit:
+                    edit_error_message = "Error loading comment for edit."
+
+        template_params = dict(
+            the_post=the_posts, recent=recent_posts, cookie=dark_mode, version=VERSION,
+            comments=comments, error=error_message, delete_error=delete_error_message,
+            edit_error=edit_error_message, comment_to_edit=comment_to_edit,
+            comment_name_default=comment_name_default, comment_email_default=comment_email_default
+        )
+        
+        if sessions: template_params.update(dict(uid=uid, user=uss))
+        return render_template("blog/blogview.html", **template_params)
+
+    except Exception as e:
+        log.error(f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
+        return redirect(url_for("index"))
+    
 
 @app.route("/blogpost", methods=["POST", "GET"])
 def blogpost():
