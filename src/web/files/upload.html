@@ -2,169 +2,224 @@
 
 {% block title %}Subir Archivos{% endblock %}
 
-
 {% block content %}
 
+<style>
+    /* Custom styles for the upload area */
+    #drag-drop-area {
+      border: 2px dashed #b4b2c5;
+      padding: 70px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-<div class="container">
-  <div class="row align-items-center">
-    <div class="col-md-6 py-15">
-      <h1 class="mb-4">Subir archivos</h1>
-      <p class="text-lg mb-5">
-        Aqui podras ver, descargar y compartir tus archivos con amigos
-      </p>
-      <div>
-        <form id="formulario" method=post enctype=multipart/form-data>
-          Seleciona o arrastra un archivo para subir
-          <div>
-            <input id="archivo" type=file style="height:150px; width:330px" class="btn btn-outline border text-secondary text-center" name=file >
-          </div>
-          <div>
-            <input id="boton" type=button class="btn btn-outline border text-primary" value=Subir>
-            <a href="{{url_for('download')}}" class="btn btn-outline border text-secondary">descargar archivos</a>
-          </div>
-        </form>
-        <br>
-        <div id="notificacion" class="alert"></div>
-        <div id="barraDeCarga" class="border text-primary" style="width: 0%; height: 20px; background-color: #4938b6 !important;"></div>
+    #drag-drop-area.highlight {
+      border-color: #6C55F9;
+      background-color: #f6f5fc;
+    }
+
+    #fileUpload {
+      display: none;
+    }
+
+    #notificacion {
+      margin-bottom: 10px;
+    }
+
+    #barraDeCarga {
+      background-color: #6C55F9 !important;
+      height: 20px;
+      width: 0%;
+      margin-bottom: 15px;
+      transition: width 0.3s ease;
+    }
+
+    .page-banner.home-banner.upload-banner {
+      height: auto;
+      padding-top: 60px;
+      padding-bottom: 40px;
+    }
+
+    .page-banner.home-banner.upload-banner h1 {
+      font-size: 2.5rem;
+    }
+
+    .page-banner.home-banner.upload-banner .text-lg {
+      font-size: 1.1rem;
+    }
+</style>
+
+<div class="page-banner home-banner upload-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      <div class="col-lg-6 py-2 wow fadeInUp">
+        <h1 class="mb-4">Subir Archivos</h1>
+        <p class="text-lg mb-5">
+          Arrastra y suelta tus archivos aqui o haz clic para seleccionar.
+        </p>
       </div>
-      <div>
-        <div class="col-lg-8 py-4">
-          <h4>
-            Espacio libre: {{space}}
-          </h4>
-        </div>
-      </div>      
     </div>
-    <div class="col-md-6 py-3 wow zoomIn text-center">
-      <div class="img-place">
-        <img src="{{url_for('static', filename='img/upload.png')}}" alt="" class="img-fluid rounded">
-      </div>
-    </div> 
   </div>
 </div>
 
 <main>
   <div class="page-section features">
     <div class="container">
-      <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
-          <div class="d-flex flex-row">
-            <div>
+      <h1 class="mb-4">Subir Archivos a la Nube</h1>
 
-              {% if error %}
+      {% if not user %}
+      <h3><a class="btn btn-primary rounded-pill" href="{{url_for('login', redirect='upload')}}" >Necesita iniciar su cuenta para continuar</a></h3>
+      {% else %}
 
-              <h1 class="mb-4">error</h1>
-
-              {% endif %}
-              
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{category}} alert-dismissable  wow fadeInRight">
+              <button type="button" class="close" data-dismiss="alert">&times;</button>
+              <strong>{{ message }}</strong>
             </div>
-          </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form id="formulario" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="wow fadeInUp">
+        <div id="drag-drop-area" class="form-group">
+          <label for="fileUpload" class="d-block">
+            Arrastra tus archivos aquí o <span class="text-primary">haz clic para seleccionar archivos</span>
+          </label>
+          <input type="file" class="custom-file-input" id="fileUpload" name="file" multiple>
         </div>
+
+        <div id="notificacion" class="alert alert-info text-center hidden" role="alert"></div>
+        <div id="barraDeCarga" class="barraDeCarga"></div>
+
+        <button id="boton" type="button" class="btn btn-primary rounded-pill">Subir Archivos</button>
+        <a href="{{url_for('download')}}" class="btn btn-outline border text-secondary">Descargar archivos</a>
+      </form>
+
+      <div class="col-lg-8 py-4">
+        <h4>
+          Espacio libre: {{space}}
+        </h4>
       </div>
+      {% endif %}
+
     </div>
   </div>
 </main>
 
-<!--script>
-  // Obtener los elementos del formulario
-var formulario = document.getElementById("formulario");
-var archivo = document.getElementById("archivo");
-var boton = document.getElementById("boton");
-var notificacion = document.getElementById("notificacion");
-
-// Agregar un evento al botón para enviar el archivo con fetch
-boton.addEventListener("click", function() {
-  // Crear un objeto FormData
-  var formData = new FormData();
-
-  // Agregar el archivo al campo "archivo" del formulario
-  formData.append("file", archivo.files[0]);
-
-  // Enviar la solicitud con fetch
-  fetch("/upload", {
-    method: "post",
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Mostrar un mensaje de éxito con el nombre del archivo y la clase "alert-success"
-    notificacion.innerHTML = "El archivo " + data.nombre + " se ha enviado correctamente." + "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>";
-    notificacion.className = "alert alert-success";
-    // Limpiar el campo del archivo
-    // Reemplazar el valor del campo "file" por un archivo vacío
-    formData.set("file", new File([], ""));
-
-  })
-  .catch(error => {
-    // Mostrar un mensaje de error con el código y el mensaje del error y la clase "alert-danger"
-    notificacion.innerHTML = "Ha ocurrido un error al enviar el archivo: " + error.code + " - " + error.message;
-    notificacion.className = "alert alert-danger";
-  });
-});
-</script-->
-
 <script>
-  // Obtener los elementos del formulario
-  var formulario = document.getElementById("formulario");
-  var archivo = document.getElementById("archivo");
-  var boton = document.getElementById("boton");
-  var notificacion = document.getElementById("notificacion");
-  var barraDeCarga = document.getElementById("barraDeCarga");
+    document.addEventListener('DOMContentLoaded', () => {
+      const formulario = document.getElementById("formulario");
+      const archivoInput = document.getElementById("fileUpload");
+      const boton = document.getElementById("boton");
+      const notificacion = document.getElementById("notificacion");
+      const barraDeCarga = document.getElementById("barraDeCarga");
+      const dragDropArea = document.getElementById('drag-drop-area');
 
-  // Agregar un evento al botón para enviar el archivo con fetch
-  boton.addEventListener("click", function() {
-    // Crear un objeto FormData
-    var formData = new FormData();
+      // Drag and Drop Handling
+      dragDropArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dragDropArea.classList.add('highlight');
+      });
 
-    // Agregar el archivo al campo "archivo" del formulario
-    formData.append("file", archivo.files[0]);
+      dragDropArea.addEventListener('dragleave', () => {
+        dragDropArea.classList.remove('highlight');
+      });
 
-    // Preparar la solicitud con fetch
-    var request = new Request("/upload", {
-      method: "post",
-      body: formData
-    });
+      dragDropArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragDropArea.classList.remove('highlight');
+        archivoInput.files = e.dataTransfer.files;
+        updateFileNameLabel();
+      });
 
-    // Escuchar el evento de progreso de la carga
-    fetch(request).then(response => {
-      if (response.ok) {
-        return response.json();
+      dragDropArea.addEventListener('click', () => {
+        archivoInput.click();
+      });
+
+      // Update file name label
+      function updateFileNameLabel() {
+        if (archivoInput.files && archivoInput.files.length > 0) {
+          let fileNames = Array.from(archivoInput.files).map(file => file.name).join(', ');
+          const label = dragDropArea.querySelector('label');
+          label.textContent = `Archivos seleccionados: ${fileNames}`;
+        } else {
+          const label = dragDropArea.querySelector('label');
+          label.innerHTML = 'Arrastra tus archivos aqui o <span class="text-primary">haz clic para seleccionar archivos</span>';
+        }
       }
-      throw new Error('La respuesta de la red no fue ok.');
-    })
-    .then(data => {
-      // Mostrar un mensaje de éxito con el nombre del archivo y la clase "alert-success"
-      notificacion.innerHTML = "El archivo " + data.nombre + " se ha enviado correctamente." + "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>";
-      notificacion.className = "alert alert-success";
-      // Limpiar el campo del archivo
-      archivo.value = ""; // Limpiar el campo de archivo después de la carga
-    })
-    .catch(error => {
-      // Mostrar un mensaje de error con el código y el mensaje del error y la clase "alert-danger"
-      notificacion.innerHTML = "Ha ocurrido un error al enviar el archivo: " + error.message;
-      notificacion.className = "alert alert-danger";
-    });
 
-    // Escuchar el evento de progreso de la carga
-    fetch(request).then(response => response.json())
-    .then(data => {
-      // Actualizar la barra de carga aquí
-      barraDeCarga.style.width = '100%'; // Ajustar esto según la lógica de progreso real
-    });
+      archivoInput.addEventListener('change', updateFileNameLabel);
 
-    // Monitorear el progreso de la carga
-    var xhr = new XMLHttpRequest();
-    xhr.upload.onprogress = function(event) {
-      if (event.lengthComputable) {
-        var porcentajeCompletado = (event.loaded / event.total) * 100;
-        barraDeCarga.style.width = porcentajeCompletado + '%';
+      // Event listener for button click
+      boton.addEventListener("click", function() {
+        const files = archivoInput.files;
+        if (!files || files.length === 0) {
+          showNotification("Por favor, selecciona al menos un archivo.", 'warning');
+          return;
+        }
+
+        hideNotification();
+        barraDeCarga.style.width = '0%';
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append("file", files[i]);
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = function(event) {
+          if (event.lengthComputable) {
+            const porcentajeCompletado = (event.loaded / event.total) * 100;
+            barraDeCarga.style.width = porcentajeCompletado + '%';
+          }
+        };
+
+        xhr.onload = function() {
+          if (xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
+            showNotification(`Archivos subidos correctamente.`, 'success');
+            barraDeCarga.style.width = '100%';
+            archivoInput.value = "";
+            updateFileNameLabel();
+          } else {
+            showNotification("Error al subir los archivos.", 'danger');
+            barraDeCarga.style.width = '0%';
+          }
+        };
+
+        xhr.onerror = function() {
+          showNotification("Error de red al subir archivos.", 'danger');
+          barraDeCarga.style.width = '0%';
+        };
+
+        xhr.open('POST', '{{ url_for("upload") }}');
+        xhr.send(formData);
+      });
+
+       // Notification functions (for auto-dismiss)
+      function showNotification(message, type) {
+        notificacion.textContent = message;
+        notificacion.className = `alert alert-${type} text-center`;
+        notificacion.classList.remove('hidden');
+        // Auto-dismiss after 20 seconds
+        setTimeout(() => {
+          hideNotification();
+        }, 20000);
       }
-    };
-    xhr.open('POST', '/upload', true);
-    xhr.send(formData);
-  });
-</script>
 
+      function hideNotification() {
+        notificacion.classList.add('hidden');
+      }
+
+    });
+  </script>
 
 {% endblock %}

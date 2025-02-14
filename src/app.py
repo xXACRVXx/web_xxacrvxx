@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.98.1b"
+VERSION = "v0.99.0b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -723,8 +723,8 @@ def download():
             return redirect(url_for("login"))
 
 
-@app.route("/upload", methods=["POST", "GET"])
-def upload():
+@app.route("/upload_2", methods=["POST", "GET"])
+def upload_2():
     dark_mode = request.cookies.get('dark-mode', 'true')
     ip_client = request.headers.get("X-Real-IP")
     if request.method == "POST":
@@ -775,6 +775,63 @@ def upload():
                 f"[{ip_client}] [/upload ] ERROR[0011]: {e} [{traceback.format_exc()}]")
             return redirect(url_for("login"))
 
+
+@app.route("/upload", methods=["POST", "GET"])
+def upload():
+    dark_mode = request.cookies.get('dark-mode', 'true')
+    ip_client = request.headers.get("X-Real-IP")
+    if request.method == "POST":
+        try:
+            # Verificar si hay una sesi�n activa
+            sessions, token, uss, uid = if_session(session)
+            if sessions == True:
+                try:
+                    uploaded_files = request.files.getlist("file") # Get a list of files
+                    if not uploaded_files or not uploaded_files[0].filename: # Check if list is not empty and at least one file has a filename
+                        return redirect(url_for("upload"))
+
+                    DIR = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid))
+                    if not os.path.isdir(DIR): # Use not os.path.isdir for clarity
+                        os.makedirs(DIR, exist_ok=True) # Use makedirs with exist_ok for safe directory creation
+
+                    uploaded_filenames = [] # List to store uploaded filenames
+                    for file in uploaded_files: # Iterate through each file in the list
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(DIR, filename)
+                        file.save(file_path)
+                        uploaded_filenames.append(filename) # Add filename to the list
+
+                    log.info(f"[{ip_client}] [/upload ] Usuario [{uss}] subi� archivos [{', '.join(uploaded_filenames)}]") # Log all filenames
+                    return jsonify({"filenames": uploaded_filenames}) # Return list of filenames in JSON
+
+                except Exception as e:
+                    log.error(f"[{ip_client}] [/upload ] Usuario [{uss}] error {e} [{traceback.format_exc()}]")
+                    return redirect(url_for("login"))
+            else:
+                log.debug(f"[{ip_client}] [/upload ] Usuario [{uss}] no logueado")
+                return redirect(url_for("login"))
+        except Exception as e:
+            log.error(f"[{ip_client}] [/upload] ERROR[0010]: {e} [{traceback.format_exc()}]")
+            return redirect(url_for("login"))
+    else:
+        try:
+            # Verificar si hay una sesi�n activa
+            sessions, token, uss, uid = if_session(session)
+            if sessions == True:
+                try:
+                    log.debug(f"[{ip_client}] [/upload ] [method GET] Usuario {uss} logueado")
+                    return render_template("files/upload.html", user=uss, space=CONFIG.Free_Space(), cookie=dark_mode, version=VERSION)
+                except Exception as e:
+                    log.warning(f"[{ip_client}] [/upload ] [method GET] Usuario [{uss}] error {e}")
+                    return redirect(url_for("login"))
+            else:
+                log.debug(
+                    f"[{ip_client}] [/upload ] Usuario no logueado")
+                return redirect(url_for("login"))
+        except Exception as e:
+            log.error(
+                f"[{ip_client}] [/upload ] ERROR[0011]: {e} [{traceback.format_exc()}]")
+            return redirect(url_for("login"))
 
 @app.route("/delete")
 def delete():
