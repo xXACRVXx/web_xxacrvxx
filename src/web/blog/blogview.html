@@ -1,122 +1,135 @@
 {% extends 'layout.html' %}
 
 {% block head %}
-{% for post in the_post %}
-<link rel="canonical" href="https://xxacrvxx.ydns.eu/blog/{{post['title']}}" />
-{% endfor %}
+  {% for post in the_post %}
+    <link rel="canonical" href="https://xxacrvxx.ydns.eu/blog/{{ post['title'] }}" />
+  {% endfor %}
 {% endblock %}
 
 {% block title %}
-{% for post in the_post %}
-{{post['title']}}
-{% endfor %}
+  {% for post in the_post %}
+    {{ post['title'] }}
+  {% endfor %}
 {% endblock %}
 
-
 {% block content %}
+<main>
+  {% for post in the_post %}
+  <div class="page-section pt-5">
+    <div class="container">
+      <nav aria-label="Breadcrumb">
+        <ul class="breadcrumb p-0 mb-0 bg-transparent">
+          <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
+          <li class="breadcrumb-item"><a href="{{ url_for('blog') }}">Blog</a></li>
+          <li class="breadcrumb-item active">{{ post['title'] }}</li>
+        </ul>
+      </nav>
 
-  <main>
-    {% for post in the_post %}
-    <div class="page-section pt-5">
-      <div class="container">
-        <nav aria-label="Breadcrumb">
-          <ul class="breadcrumb p-0 mb-0 bg-transparent">
-            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Inicio</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('blog') }}">Blog</a></li>
-            <li class="breadcrumb-item active">{{post['title']}}</li>
-          </ul>
-        </nav>
+      <div class="row">
+        <!-- Contenido principal -->
+        <div class="col-lg-8">
+          <article class="blog-single-wrap">
+            <h1 id="post-title" class="post-title">{{ post['title'] }}</h1>
+            <p id="post-descript">{{ post['descript'] }}</p>
+            <div class="post-meta">
+              <div id="post-date" class="post-date ml-2">
+                <span class="icon"><span class="mai-time-outline"></span></span>
+                <a href="{{ url_for('blog', time=post['time'][:10]) }}">{{ post['time'][:10] }}</a>
+              </div>
+              <div id="post-author" class="post-comment-count ml-2">
+                <span class="icon"><span class="mai-person-outline"></span></span>
+                Por: <a href="{{ url_for('blog', author=post['creat_id']) }}">{{ post['creat_id'] }}</a>
+              </div>
+              <div id="post-view" class="post-comment-count ml-2">
+                <span class="icon"><span class="mai-eye-outline"></span></span>
+                Visto: {{ post['count_view'] }} veces
+              </div>
+            </div>
+            <div id="post-content" class="post-content">
+              {{ post['content'] | safe }}
+            </div>
+          </article>
 
-        <div class="row">
-          <div class="col-lg-8">
-            <article class="blog-single-wrap">
-              <h1 id="post-title" class="post-title">{{ post['title']}}</h1>
-              <p id="post-descript" >{{ post['descript']}}</p>
-              <div class="post-meta">
-                <div id="post-date" class="post-date ml-2">
-                  <span class="icon">
-                    <span class="mai-time-outline"></span>
-                  </span> <a href="{{ url_for('blog', time=post['time'][:10]) }}">{{ post['time'][:10]}}</a>
-                </div>
-                <div id="post-author" class="post-comment-count ml-2">
-                  <span class="icon">
-                    <span class="mai-person-outline"></span>
-                  </span> Por: <a href="{{ url_for('blog', author=post['creat_id']) }}">{{ post['creat_id'] }}</a>
-                </div>
-                <div id="post-view" class="post-comment-count ml-2">
-                  <span class="icon">
-                    <span class="mai-eye-outline"></span>
-                  </span> Visto: {{ post['count_view'] }} veces
-                </div>
-              </div>
-              <div id="post-content" class="post-content">
-                {{ post['content'] | safe }}
-              </div>
-            </article>
-
-            <div class="comment-form-wrap pt-5">
-              <h2 class="mb-5">{% if comment_to_edit %}Editar comentario{% else %}Enviar comentario{% endif %}</h2>
-              {% if error %}
-              <div class="alert alert-danger" role="alert">
-                {{ error }}
-              </div>
+          <!-- Formulario de Comentarios -->
+          <div class="comment-form-wrap pt-5">
+            <h2 class="mb-5">
+              {% if comment_to_edit %}
+                Editar comentario
+              {% else %}
+                Enviar comentario
               {% endif %}
-              {% if edit_error %}
-              <div class="alert alert-danger" role="alert">
-                {{ edit_error }}
-              </div>
-              {% endif %}
-              <form method="POST" action="{{ url_for('blogview', name=post['title']) }}" class="">
-                <div class="form-row form-group"> {# Kept form-row form-group div here #}
-                  {% if not sessions %} {# Conditional rendering INSIDE form-row form-group #}
+            </h2>
+            {% if error %}
+              <div class="alert alert-danger" role="alert">{{ error }}</div>
+            {% endif %}
+            {% if edit_error %}
+              <div class="alert alert-danger" role="alert">{{ edit_error }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('blogview', name=post['title']) }}">
+              <div class="form-row form-group">
+                {% if not sessions %}
+                  <!-- Campos solo para usuarios no logueados -->
                   <div class="col-md-6">
                     <label for="name">Nombre *</label>
-                    <input type="text" class="form-control" id="name" name="name" required value="{{ comment_to_edit.name if comment_to_edit else comment_name_default }}">
+                    <input type="text" class="form-control" id="name" name="name" required
+                           value="{{ comment_to_edit.name if comment_to_edit else comment_name_default }}">
                   </div>
                   <div class="col-md-6">
                     <label for="email">Correo *</label>
-                      <input type="email" class="form-control" id="email" name="email" required value="{{ comment_to_edit.email if comment_to_edit else comment_email_default }}">
-                    </div>
-                  {% endif %} {# Closing if block here #}
-                </div> {# Closing form-row form-group div here #}
-                <div class="form-group">
-                  <label for="message">Mensage</label>
-                  <textarea name="message" id="message" cols="30" rows="8" class="form-control" required>{{ comment_to_edit.message if comment_to_edit }}</textarea>
-                </div>                      
-                <div class="form-group">
-                  <input type="submit" value="{% if comment_to_edit %}Actualizar comentario{% else %}Post Comment{% endif %}" class="btn btn-primary" name="comment_submit">
-                  {% if comment_to_edit %}
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ cancel_edit_url }}'">Cancelar Edición</button>
-                  {% endif %}
-                </div>
-                {% if comment_to_edit %}
-                  <input type="hidden" name="comment_index_edit" value="{{ request.form.edit_comment }}">
+                    <input type="email" class="form-control" id="email" name="email" required
+                           value="{{ comment_to_edit.email if comment_to_edit else comment_email_default }}">
+                  </div>
                 {% endif %}
-              </form>
-            </div>
-
-            <div class="pt-5">
-              <h2 class="mb-5">Comentarios Recientes</h2>
-              {% if delete_error %}
-              <div class="alert alert-danger" role="alert">
-                {{ delete_error }}
               </div>
+
+              <div class="form-group">
+                <label for="message">Mensaje</label>
+                <textarea name="message" id="message" cols="30" rows="8" class="form-control" required>{% if comment_to_edit %}{{ comment_to_edit.message }}{% endif %}</textarea>
+              </div>
+
+              <div class="form-group">
+                <input type="submit"
+                       value="{% if comment_to_edit %}Actualizar comentario{% else %}Post Comment{% endif %}"
+                       class="btn btn-primary"
+                       name="comment_submit">
+                {% if comment_to_edit %}
+                  <button type="button" class="btn btn-secondary"
+                          data-url="{{ url_for('blogview', name=post['title']) }}"
+                          onclick="window.location.href=this.getAttribute('data-url')">
+                    Cancelar Edición
+                  </button>
+                {% endif %}
+              </div>
+
+              {% if comment_to_edit %}
+                <input type="hidden" name="comment_index_edit" value="{{ request.form.edit_comment }}">
               {% endif %}
-              <div class="wow fadeInRight"> <div class="divider"></div>
-                {% for comment in comments %}
+            </form>
+          </div>
+
+          <!-- Listado de Comentarios -->
+          <div class="pt-5">
+            <h2 class="mb-5">Comentarios Recientes</h2>
+            {% if delete_error %}
+              <div class="alert alert-danger" role="alert">{{ delete_error }}</div>
+            {% endif %}
+            <div class="wow fadeInRight">
+              <div class="divider"></div>
+              {% for comment in comments %}
                 {% set comment_index = loop.index0 %}
                 <div class="blog-item" style="display: flex; justify-content: space-between; align-items: baseline;">
-                    <div class="content">
-                      <h6 class="post-title">
-                        <strong>{{ comment['name'] }}</strong>
-                        <span class="meta" style="white-space: nowrap;">
-                          <span class="mai-mail"></span> {{ comment['email'] }}
-                          <span class="mai-time"></span> {{ comment['date'][:10] }}
-                        </span>
-                      </h6>
-                      <p>{{ comment['message'] }}</p>
-                    </div>
-                    {% if user == post['creat_id'] %}
+                  <div class="content">
+                    <h6 class="post-title">
+                      <strong>{{ comment['name'] }}</strong>
+                      <span class="meta" style="white-space: nowrap;">
+                        <span class="mai-mail"></span> {{ comment['email'] }}
+                        <span class="mai-time"></span> {{ comment['date'][:10] }}
+                      </span>
+                    </h6>
+                    <p>{{ comment['message'] }}</p>
+                  </div>
+                  {% if (user == post['creat_id']) or (current_user_owner and comment['owner'] == current_user_owner) %}
                     <div style="display: flex; gap: 5px;">
                       <form method="POST" action="{{ url_for('blogview', name=post['title']) }}" class="d-inline">
                         <input type="hidden" name="edit_comment" value="{{ comment_index }}">
@@ -127,71 +140,68 @@
                         <button type="submit" class="btn btn-danger btn-sm">Borrar</button>
                       </form>
                     </div>
-                    {% endif %}
+                  {% endif %}
                 </div>
-                {% else %}
+              {% else %}
                 <p>No hay comentarios aún. Sé el primero en comentar.</p>
-                {% endfor %}
-              </div>
-            </div>
-
-          </div>
-          <div class="col-lg-4">
-            <div class="widget">
-              {% if user == post['creat_id'] %}
-                <!-- Widget edit -->
-                <div class="widget-box wow fadeInRight">
-                  <a href="{{ url_for('blogedit', post_id=post['id'])}}" class="btn btn-primary btn-block">Editar Post</a>
-                  <a href="{{ url_for('blogdelete', post_id=post['id'])}}" class="btn btn-danger btn-block">Borrar Post</a>
-                  </form>
-                </div>
-              {% endif %}
-              <!-- Widget search -->
-              <div class="widget-box wow fadeInRight">
-                <form action="{{ url_for('blog')}}" class="search-widget">
-                  <input type="text" class="form-control" placeholder="Buscar" name="search">
-                  <button type="submit" class="btn btn-primary btn-block">Buscar</button>
-                </form>
-              </div>
-              <!-- Widget recent post -->
-              <div class="widget-box wow fadeInRight">
-                <h4 class="widget-title">Post Recientes</h4>
-                <div class="divider"></div>
-                {% for rpost in recent %}
-                <div class="blog-item">
-                    <a class="post-thumb" href="{{ url_for('blogview', name=rpost['title']) }}">
-                      <img src="{{rpost['image']}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
-                    </a>
-                    <div class="content">
-                      <h6 class="post-title"><a href="{{ url_for('blogview', name=rpost['title']) }}">{{ rpost['title'] }}</a></h6>
-                      <div class="meta">
-                        <a href="{{ url_for('blog', time=post['time'][:10]) }}"><span class="mai-calendar"></span> {{ rpost['time'][:10]}}</a>
-                        <a href="{{ url_for('blog', author=post['creat_id']) }}"><span class="mai-person"></span> {{ rpost['creat_id'] }}</a>
-                      </div>
-                    </div>
-                </div>
-                {% endfor %}
-              </div>
-
-              <!-- Widget Tag Cloud -->
-              <div class="widget-box wow fadeInRight">
-                <h4 class="widget-title">Tags</h4>
-                <div class="divider"></div>
-                <div class="tag-clouds">
-                  {% for tags in post["tags"]%}
-                  <a href="{{ url_for('blog', tags=tags) }}" class="tag-cloud-link">{{ tags }}</a>
-                  {% endfor %}
-                </div>
-
-              </div>
-
+              {% endfor %}
             </div>
           </div>
         </div>
 
+        <!-- Columna lateral -->
+        <div class="col-lg-4">
+          <div class="widget">
+            {% if user == post['creat_id'] %}
+              <div class="widget-box wow fadeInRight">
+                <a href="{{ url_for('blogedit', post_id=post['id']) }}" class="btn btn-primary btn-block">Editar Post</a>
+                <a href="{{ url_for('blogdelete', post_id=post['id']) }}" class="btn btn-danger btn-block">Borrar Post</a>
+              </div>
+            {% endif %}
+            <div class="widget-box wow fadeInRight">
+              <form action="{{ url_for('blog') }}" class="search-widget">
+                <input type="text" class="form-control" placeholder="Buscar" name="search">
+                <button type="submit" class="btn btn-primary btn-block">Buscar</button>
+              </form>
+            </div>
+            <div class="widget-box wow fadeInRight">
+              <h4 class="widget-title">Post Recientes</h4>
+              <div class="divider"></div>
+              {% for rpost in recent %}
+                <div class="blog-item">
+                  <a class="post-thumb" href="{{ url_for('blogview', name=rpost['title']) }}">
+                    <img src="{{ rpost['image'] }}"
+                         alt=""
+                         data-fallback="{{ url_for('static', filename='blog/default.png') }}"
+                         onerror="this.onerror=null; this.src=this.getAttribute('data-fallback')">
+                  </a>
+                  <div class="content">
+                    <h6 class="post-title">
+                      <a href="{{ url_for('blogview', name=rpost['title']) }}">{{ rpost['title'] }}</a>
+                    </h6>
+                    <div class="meta">
+                      <a href="{{ url_for('blog', time=rpost['time'][:10]) }}"><span class="mai-calendar"></span> {{ rpost['time'][:10] }}</a>
+                      <a href="{{ url_for('blog', author=rpost['creat_id']) }}"><span class="mai-person"></span> {{ rpost['creat_id'] }}</a>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="widget-box wow fadeInRight">
+              <h4 class="widget-title">Tags</h4>
+              <div class="divider"></div>
+              <div class="tag-clouds">
+                {% for tag in post["tags"] %}
+                  <a href="{{ url_for('blog', tags=tag) }}" class="tag-cloud-link">{{ tag }}</a>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Fin columna lateral -->
       </div>
-    {% endfor %}
     </div>
-  </main>
-
+  </div>
+  {% endfor %}
+</main>
 {% endblock %}

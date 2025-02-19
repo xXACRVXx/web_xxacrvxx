@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.99.0b"
+VERSION = "v0.99.5b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -925,96 +925,220 @@ def blogview(name):
     delete_error_message = None
     edit_error_message = None
     comment_to_edit = None
-    comment_name_default = ""  # Default values for comment form
+
+    # Valores por defecto (solo usados si NO estás logueado)
+    comment_name_default = ""
     comment_email_default = ""
 
-    def add_comment(blog_id, name, email, message):
-        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
-        if not blog_data: return False
-        comments = json.loads(blog_data[0]['extra']) if blog_data[0]['extra'] else []
-        new_comment = {"name": name, "email": email, "message": message, "date": datetime.datetime.now().isoformat()}
-        comments.append(new_comment)
-        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
-
-    def get_comments(blog_id):
-        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
-        if not blog_data or not blog_data[0]['extra']: return []
-        try: return json.loads(blog_data[0]['extra'])
-        except json.JSONDecodeError: return []
-
-    def delete_comment(blog_id, index):
-        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
-        if not blog_data or not blog_data[0]['extra']: return False
-        comments = json.loads(blog_data[0]['extra'])
-        if not 0 <= index < len(comments): return False
-        comments.pop(index)
-        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
-
-    def get_comment_edit(blog_id, index):
-        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
-        if not blog_data or not blog_data[0]['extra']: return None
-        comments = json.loads(blog_data[0]['extra'])
-        return comments[index] if 0 <= index < len(comments) else None
-
-    def edit_comment(blog_id, index, name, email, message):
-        blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
-        if not blog_data or not blog_data[0]['extra']: return False
-        comments = json.loads(blog_data[0]['extra'])
-        if not 0 <= index < len(comments): return False
-        comment = comments[index]
-        comment.update({"name": name, "email": email, "message": message, "date": datetime.datetime.now().isoformat()})
-        return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments))
-
     try:
+        # Verificar sesión: (sessions=True/False, token=?, uss=USERNAME, uid=ID)
         sessions, token, uss, uid = if_session(session)
+        
+        # Si hay sesión, cargar username y email del usuario
         if sessions:
             user_data = USERPG.GET_USER('id', uid)
             if user_data:
-                comment_name_default = user_data['username'] # Set default name to username
-                comment_email_default = user_data['email'] # Set default email to user's email
+                comment_name_default = user_data['username']
+                comment_email_default = user_data['email']
 
+        # Obtener el post actual por título
         the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=True)
-        if not the_posts: return redirect(url_for("blog"))
-        BLOGPG.EDIT_BL('count_view', the_posts[0]['id'], the_posts[0]['count_view'])
+        if not the_posts:
+            return redirect(url_for("blog"))
         current_post = the_posts[0]
+
+        # Sumar la vista
+        BLOGPG.EDIT_BL('count_view', current_post['id'], current_post['count_view'])
+
+        # Obtener 3 posts recientes
         recent_posts = sorted(BLOGPG.GET_BL('all') or [], key=lambda x: x['id'], reverse=True)[:3]
+
+        # --- Funciones auxiliares para comentarios ---
+
+        def get_comments(blog_id):
+            blog_data = BLOGPG.GET_BL('id', blog_id, MARKDOWN=False, UID=False, TAGS=False)
+            if not blog_data or not blog_data[0]['extra']:
+                return []
+            try:
+                return json.loads(blog_data[0]['extra'])
+            except json.JSONDecodeError:
+                return []
+
+        def save_comments(blog_id, comments_list):
+            return BLOGPG.EDIT_BL('extra', blog_id, json.dumps(comments_list))
+
+        def add_comment(blog_id, name, email, message):
+            comments_list = get_comments(blog_id)
+            # Determinar dueño del comentario
+            if sessions:
+                owner = uss  # Se asume que post['creat_id'] es un username
+            else:
+                if not session.get('comment_token'):
+                    session['comment_token'] = os.urandom(16).hex()
+                owner = session['comment_token']
+
+            new_comment = {
+                "name": name,
+                "email": email,
+                "message": message,
+                "date": datetime.datetime.now().isoformat(),
+                "owner": owner
+            }
+            comments_list.append(new_comment)
+            return save_comments(blog_id, comments_list)
+
+        def find_comment(blog_id, index):
+            # Retorna (comentario, lista_completa)
+            comments_list = get_comments(blog_id)
+            if 0 <= index < len(comments_list):
+                return comments_list[index], comments_list
+            return None, comments_list
+
+        # Verifica si el usuario actual (creador del post o autor del comentario) puede editar/borrar
+        def can_edit_or_delete(comment_owner, post_creator):
+            """
+            Se asume que 'post_creator' y 'comment_owner' son usernames.
+            Si tu base de datos almacena IDs numéricos para 'creat_id',
+            ajusta la comparación con uid en vez de uss.
+            """
+            if sessions:
+                # Si el usuario logueado es el creador del post
+                if uss == post_creator:
+                    return True
+                # O si es el dueño del comentario
+                if uss == comment_owner:
+                    return True
+            else:
+                # Usuario anónimo: compara el token
+                if session.get('comment_token') == comment_owner:
+                    return True
+            return False
+
+        def edit_comment(blog_id, index, new_name, new_email, new_message):
+            comment, comments_list = find_comment(blog_id, index)
+            if not comment:
+                return False
+
+            # ¿Tiene permisos para editar?
+            if not can_edit_or_delete(comment['owner'], current_post['creat_id']):
+                return False
+
+            # Determinar si el editor es el dueño original del comentario
+            is_comment_owner = False
+            if sessions:
+                # Si el usuario logueado es el autor
+                if uss == comment["owner"]:
+                    is_comment_owner = True
+            else:
+                # Usuario anónimo
+                if session.get('comment_token') == comment["owner"]:
+                    is_comment_owner = True
+
+            # Actualizar siempre el mensaje y la fecha
+            comment["message"] = new_message
+            comment["date"] = datetime.datetime.now().isoformat()
+
+            # Solo si el editor es el dueño original, actualizar name y email
+            if is_comment_owner:
+                comment["name"] = new_name
+                comment["email"] = new_email
+
+            return save_comments(blog_id, comments_list)
+
+        def delete_comment(blog_id, index):
+            comment, comments_list = find_comment(blog_id, index)
+            if not comment:
+                return False
+            # Verificar permisos
+            if not can_edit_or_delete(comment['owner'], current_post['creat_id']):
+                return False
+            comments_list.pop(index)
+            return save_comments(blog_id, comments_list)
+
+        # Cargar lista de comentarios inicial
         comments = get_comments(current_post['id'])
 
+        # --- Manejo de formularios ---
         if request.method == "POST":
             data = request.form
+
+            # 1) Añadir o actualizar comentario
             if 'comment_submit' in data:
-                if all(k in data and data[k] for k in ('name', 'email', 'message')):
-                    if data.get('comment_index_edit'):
-                        if not edit_comment(current_post['id'], int(data['comment_index_edit']), data['name'], data['email'], data['message']):
-                            edit_error_message = "Error editing comment."
-                    elif not add_comment(current_post['id'], data['name'], data['email'], data['message']):
-                        error_message = "Error adding comment."
-                    return redirect(url_for("blogview", name=name))
+                # Si el usuario está logueado, forzamos sus datos de name/email
+                if sessions:
+                    name_val = comment_name_default
+                    email_val = comment_email_default
                 else:
+                    name_val = data.get('name', '').strip()
+                    email_val = data.get('email', '').strip()
+
+                message_val = data.get('message', '').strip()
+                if not message_val:
                     error_message = "Please fill in all required fields."
+                else:
+                    # ¿Es edición o nuevo comentario?
+                    if data.get('comment_index_edit'):
+                        index_edit = int(data['comment_index_edit'])
+                        if not edit_comment(current_post['id'], index_edit, name_val, email_val, message_val):
+                            edit_error_message = "Error editing comment."
+                    else:
+                        # Crear nuevo comentario
+                        if not add_comment(current_post['id'], name_val, email_val, message_val):
+                            error_message = "Error adding comment."
+
+                return redirect(url_for("blogview", name=name))
+
+            # 2) Borrar comentario
             elif 'delete_comment' in data and data['delete_comment'].isdigit():
-                if not delete_comment(current_post['id'], int(data['delete_comment'])):
+                index_del = int(data['delete_comment'])
+                if not delete_comment(current_post['id'], index_del):
                     delete_error_message = "Error deleting comment."
                 return redirect(url_for("blogview", name=name))
+
+            # 3) Preparar edición (cargar datos en el formulario)
             elif 'edit_comment' in data and data['edit_comment'].isdigit():
-                comment_to_edit = get_comment_edit(current_post['id'], int(data['edit_comment']))
-                if not comment_to_edit:
+                index_edit = int(data['edit_comment'])
+                comment_found, _ = find_comment(current_post['id'], index_edit)
+                if comment_found and can_edit_or_delete(comment_found['owner'], current_post['creat_id']):
+                    comment_to_edit = comment_found
+                    # Si el editor NO está logueado, rellenar name/email en el form
+                    if not sessions:
+                        comment_name_default = comment_to_edit['name']
+                        comment_email_default = comment_to_edit['email']
+                else:
                     edit_error_message = "Error loading comment for edit."
 
+        # Determinar "owner" actual para mostrar los botones de edición en la plantilla
+        if sessions:
+            current_user_owner = uss
+        else:
+            current_user_owner = session.get('comment_token')
+
+        # Render de la plantilla
         template_params = dict(
-            the_post=the_posts, recent=recent_posts, cookie=dark_mode, version=VERSION,
-            comments=comments, error=error_message, delete_error=delete_error_message,
-            edit_error=edit_error_message, comment_to_edit=comment_to_edit,
-            comment_name_default=comment_name_default, comment_email_default=comment_email_default
+            the_post=the_posts,
+            recent=recent_posts,
+            cookie=dark_mode,
+            comments=comments,
+            error=error_message,
+            delete_error=delete_error_message,
+            edit_error=edit_error_message,
+            comment_to_edit=comment_to_edit,
+            comment_name_default=comment_name_default,
+            comment_email_default=comment_email_default,
+            current_user_owner=current_user_owner,
+            sessions=sessions
         )
-        
-        if sessions: template_params.update(dict(uid=uid, user=uss))
+        if sessions:
+            template_params.update(dict(uid=uid, user=uss))
+
         return render_template("blog/blogview.html", **template_params)
 
     except Exception as e:
         log.error(f"[{ip_client}] [/blogview ] ERROR[-1]: {e} [{traceback.format_exc()}]")
         return redirect(url_for("index"))
     
+
 
 @app.route("/blogpost", methods=["POST", "GET"])
 def blogpost():
