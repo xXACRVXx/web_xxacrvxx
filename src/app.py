@@ -34,7 +34,7 @@ log = logging.getLogger("WEB")
 load_dotenv("config.env")
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
-VERSION = "v0.99.5b"
+VERSION = "v0.99.6b"
 START_SERVER_TIME = time.time()
 log.info(f"SERVIDOR INICIADO EN: [{CONFIG.MY_OS}] [{VERSION}]")
 USERPG.CONNECTION_TEST()
@@ -98,6 +98,9 @@ def login():
             if TheUser == None:
                 flash("Usuario o contraseña  incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
+            elif  passw.__len__() > 38:
+                flash("Usuario o contraseña incorrecta, si no recuerda su contraseña click", "warning")
+                return render_template("auth/log-in_layout.html")
             elif bcrypt.checkpw(passw.encode("utf-8"), TheUser['passw'].encode("utf-8")) == False:
                 flash("Usuario o contraseña incorrecta, si no recuerda su contraseña click", "warning")
                 return render_template("auth/log-in_layout.html")
@@ -144,6 +147,10 @@ def regist():
                 flash("La contraseña no puede tener menos de 8 dijitos", "error")
                 log.debug(f"[{ip_client}] [/regist ] Contraseña incorrecta [menor a 8 dijitos]")
                 return render_template("auth/sign-up_layout.html")
+            elif passw.__len__() > 38:
+                flash("La contraseña no puede tener mas de 38 dijitos", "error")
+                log.debug(f"[{ip_client}] [/regist ] Contraseña incorrecta [mayor a 38 dijitos]")
+                return render_template("auth/sign-up_layout.html")
             elif re.match(re_mail, email):
                 EPASSW = bcrypt.hashpw(passw.encode('utf-8'), bcrypt.gensalt())
                 response = USERPG.INSERT_USER(username, email, EPASSW.decode('utf-8'))
@@ -154,7 +161,7 @@ def regist():
                     session.permanent = True
                     session["user"] = TheUser['id']
                     session["token"] = thetoken
-                    flash(response, "info")
+                    flash(f"{response}, Revise su correo electronico", "info")
                     log.info(f"[{ip_client}] [/regist ] Usuario {username} creado correctamente")
                     return redirect(url_for("EmailSend", email=email))
                 else:
@@ -1323,8 +1330,11 @@ def contactar():
                 </body>
                 </html>"""
 
-            SEND_MAIL(email_to_send, subject, message)
-            resp = "Mensaje enviado, espere nuestra respuesta en su correo"
+            sendMail = SEND_MAIL(email_to_send, subject, message)
+            if sendMail == False:
+                resp = "Oups... Ocurrio un error al enviar el correo, intente mas tarde"
+            else:
+                resp = "Mensaje enviado, espere nuestra respuesta en su correo"
 
             if sessions == True:
                 return render_template("contact.html", user=uss, response=resp, cookie=dark_mode, version=VERSION)
@@ -1527,6 +1537,12 @@ def testchat2():
 @app.route("/tchat3")
 def testchat3():
     return render_template("chat/chat3.html")
+
+
+@app.route("/tchat4")
+def testchat4():
+    return render_template("chat/chat3.0.html")
+
 
 
 @app.route("/layout")

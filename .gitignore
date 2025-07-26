@@ -20,9 +20,8 @@ run.sh
 
 src/static/test/*
 
-src/web/chat/chat1.html
-src/web/chat/chat2.html
-src/web/chat/chat3.html
+src/web/chat
+
 
 src/Modules/_test/*
 Python-3.13.0rc1/*
