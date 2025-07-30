@@ -1,5 +1,5 @@
 CERT/*
-src/Downloads/*
+src/uploads/*
 src/logs/*
 src/config.env
 src/__pycache__
@@ -22,6 +22,6 @@ src/static/test/*
 
 src/web/chat
 
-
+.venv/*
 src/Modules/_test/*
 Python-3.13.0rc1/*

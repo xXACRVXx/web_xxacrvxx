@@ -158,6 +158,21 @@
     <script src="{{url_for('static', filename='js/jquery.magnific-popup.js')}}"></script> <!-- Magnific Popup for lightboxes -->
     <script src="{{url_for('static', filename='js/validator.min.js')}}"></script> <!-- Validator.js - Bootstrap plugin that validates forms -->
     <script src="{{url_for('static', filename='js/scripts.js')}}"></script> <!-- Custom scripts -->
+    
+    <script>
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const toggle = document.getElementById(fieldId + '-toggle');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            toggle.textContent = 'ocultar';
+        } else {
+            field.type = 'password';
+            toggle.textContent = 'mostrar';
+        }
+    }
+    </script>
   
 </body>
 </html>

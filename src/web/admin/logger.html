@@ -1,0 +1,177 @@
+{% extends 'layout.html' %}
+
+{% block title %}Logs del Sistema{% endblock %}
+
+{% block content %}
+
+<style>
+.log-container {
+  height: 600px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  background: var(--log-bg, #1e1e1e);
+  color: var(--log-text, #00ff00);
+  border: 1px solid var(--border-color, rgba(108, 85, 249, 0.2));
+}
+
+.log-container pre {
+  padding: 15px;
+  margin: 0;
+  white-space: pre-wrap;
+  background: transparent;
+  color: inherit;
+  border: none;
+}
+
+/* Variables CSS para modo oscuro (por defecto) */
+:root {
+  --log-bg: #1e1e1e;
+  --log-text: #00ff00;
+}
+
+/* Detectar modo claro basado en el CSS cargado */
+body {
+  --log-bg: #1e1e1e;
+  --log-text: #00ff00;
+}
+
+/* Cuando se carga theme.css (modo claro) */
+.light-mode {
+  --log-bg: #f8f9fa;
+  --log-text: #333333;
+}
+</style>
+
+<div class="page-banner home-banner" style="height:300px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2 wow fadeInUp">
+        <h1 class="mb-3">📋 Logs del Sistema</h1>
+        <p class="text-lg mb-4">
+          Monitoreo y análisis de la actividad del servidor en tiempo real.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">📊 Registro de Actividad</h5>
+                <a href="/admin/dashboard" class="btn btn-sm btn-secondary">← Volver al Dashboard</a>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <label for="logLevel" class="mr-2">Filtrar por nivel:</label>
+                  <select id="logLevel" class="form-control form-control-sm d-inline-block" style="width: auto;" onchange="filterLogs()">
+                    <option value="all" {{ 'selected' if current_level == 'all' else '' }}>Todos</option>
+                    <option value="error" {{ 'selected' if current_level == 'error' else '' }}>🔴 Errores</option>
+                    <option value="warning" {{ 'selected' if current_level == 'warning' else '' }}>🟡 Advertencias</option>
+                    <option value="info" {{ 'selected' if current_level == 'info' else '' }}>🔵 Información</option>
+                    <option value="debug" {{ 'selected' if current_level == 'debug' else '' }}>🟢 Debug</option>
+                  </select>
+                </div>
+                <div>
+                  <button onclick="refreshLogs()" class="btn btn-sm btn-primary">🔄 Actualizar</button>
+                  <a href="/admin/logger?download=true" class="btn btn-sm btn-success">💾 Descargar</a>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="log-container">
+                <pre id="log-content">{{ logs }}</pre>
+              </div>
+            </div>
+            <div class="card-footer text-muted">
+              <small>📍 Última actualización: <span id="last-update">{{ timestamp }}</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+function refreshLogs() {
+  const level = document.getElementById('logLevel').value;
+  const url = level === 'all' ? '/admin/logger?ajax=true' : `/admin/logger?ajax=true&level=${level}`;
+  
+  fetch(url)
+    .then(response => response.json())
+    .then(data => {
+      const logContent = document.getElementById('log-content');
+      logContent.innerHTML = colorizeLog(data.logs);
+      document.getElementById('last-update').textContent = data.timestamp;
+      
+      // Auto-scroll al final
+      const container = document.querySelector('.log-container');
+      container.scrollTop = container.scrollHeight;
+    })
+    .catch(error => {
+      console.error('Error al actualizar logs:', error);
+    });
+}
+
+function filterLogs() {
+  const level = document.getElementById('logLevel').value;
+  window.location.href = level === 'all' ? '/admin/logger' : `/admin/logger?level=${level}`;
+}
+
+function colorizeLog(logText) {
+  return logText
+    .replace(/(ERROR.*)/g, '<span style="color: #ff4444; font-weight: bold;">$1</span>')
+    .replace(/(WARNING.*)/g, '<span style="color: #ffaa00; font-weight: bold;">$1</span>')
+    .replace(/(INFO.*)/g, '<span style="color: #44aaff;">$1</span>')
+    .replace(/(DEBUG.*)/g, '<span style="color: #888888;">$1</span>');
+}
+
+// Auto-refresh cada 30 segundos
+setInterval(refreshLogs, 30000);
+
+// Auto-scroll al final al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  // Colorizar logs iniciales
+  const logContent = document.getElementById('log-content');
+  logContent.innerHTML = colorizeLog(logContent.textContent);
+  
+  const container = document.querySelector('.log-container');
+  container.scrollTop = container.scrollHeight;
+  
+  // Detectar tema actual y aplicar variables CSS
+  function updateLogTheme() {
+    const themeLink = document.getElementById('theme-link');
+    const body = document.body;
+    
+    if (themeLink && themeLink.getAttribute('href').includes('theme.css')) {
+      // Modo claro
+      body.style.setProperty('--log-bg', '#f8f9fa');
+      body.style.setProperty('--log-text', '#333333');
+    } else {
+      // Modo oscuro
+      body.style.setProperty('--log-bg', '#1e1e1e');
+      body.style.setProperty('--log-text', '#00ff00');
+    }
+  }
+  
+  // Aplicar tema inicial
+  updateLogTheme();
+  
+  // Observar cambios en el botón de tema
+  const toggleButton = document.getElementById('toggle-style');
+  if (toggleButton) {
+    toggleButton.addEventListener('click', function() {
+      setTimeout(updateLogTheme, 100); // Pequeño delay para que el CSS se cargue
+    });
+  }
+});
+</script>
+
+{% endblock %}

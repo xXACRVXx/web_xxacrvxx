@@ -1,0 +1,664 @@
+{% extends 'layout.html' %}
+
+{% block title %}Configuración del Sistema{% endblock %}
+
+{% block content %}
+
+<style>
+.form-control {
+  background-color: var(--input-bg, #ffffff);
+  border-color: var(--border-color, #ced4da);
+  color: var(--text-color, #495057);
+}
+
+.form-control:focus {
+  background-color: var(--input-bg, #ffffff);
+  border-color: #6C55F9;
+  color: var(--text-color, #495057);
+}
+
+.system-metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color, #dee2e6);
+}
+
+.system-metric:last-child {
+  border-bottom: none;
+}
+
+.metric-value {
+  font-weight: bold;
+  color: var(--primary-color, #6C55F9);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+.status-online {
+  background-color: #28a745;
+}
+
+.status-offline {
+  background-color: #dc3545;
+}
+
+.table {
+  color: var(--text-color, #495057);
+}
+
+.table th,
+.table td {
+  color: var(--text-color, #495057);
+  border-color: var(--border-color, #dee2e6);
+}
+
+.modal-content {
+  background-color: var(--modal-bg, #ffffff);
+  color: var(--text-color, #495057);
+}
+
+.modal-header {
+  border-bottom-color: var(--border-color, #dee2e6);
+}
+
+.modal-footer {
+  border-top-color: var(--border-color, #dee2e6);
+}
+
+.form-check-label {
+  color: var(--text-color, #495057);
+}
+
+.env-var-row {
+  border: 1px solid var(--border-color, #dee2e6);
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: var(--card-bg, #ffffff);
+}
+
+.env-var-name {
+  font-weight: bold;
+  color: var(--primary-color, #6C55F9);
+}
+
+.env-var-value {
+  font-family: monospace;
+  background-color: var(--code-bg, #f8f9fa);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--code-color, #e83e8c);
+}
+</style>
+
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2">
+        <h1 class="mb-3">⚙️ Configuración del Sistema</h1>
+        <p class="text-lg mb-4">Configuración de la aplicación web</p>
+        <a href="/admin/dashboard" class="btn btn-outline-primary">← Volver al Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Prueba de Email -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>📧 Prueba de Email</h5>
+            </div>
+            <div class="card-body">
+              <p class="text-muted">Envía un email de prueba para verificar la configuración SMTP</p>
+              <button type="button" class="btn btn-info" onclick="testEmail()">📧 Enviar Email de Prueba</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <!-- Configuración del Servidor -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>⚙️ Configuración del Servidor</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="section" value="server"/>
+                
+                <div class="form-group">
+                  <label>Modo Debug</label>
+                  <select class="form-control" name="debug_mode" onchange="updateConfigInstant('debug_mode', this.value)">
+                    <option value="False" {{ 'selected' if not config.debug_mode else '' }}>Desactivado</option>
+                    <option value="True" {{ 'selected' if config.debug_mode else '' }}>Activado</option>
+                  </select>
+                  <small class="text-muted">Se aplica inmediatamente</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Verificación de Email</label>
+                  <select class="form-control" name="email_verification_mode" onchange="updateConfigInstant('email_verification_mode', this.value)">
+                    <option value="0" {{ 'selected' if config.email_verification_mode == 0 else '' }}>No requerida</option>
+                    <option value="1" {{ 'selected' if config.email_verification_mode == 1 else '' }}>Requerida (se puede saltar)</option>
+                    <option value="2" {{ 'selected' if config.email_verification_mode == 2 else '' }}>Forzada (obligatoria)</option>
+                  </select>
+                  <small class="text-muted">Se aplica inmediatamente</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Modo Mantenimiento</label>
+                  <select class="form-control" name="maintenance_mode">
+                    <option value="False" {{ 'selected' if not config.maintenance_mode else '' }}>Desactivado</option>
+                    <option value="True" {{ 'selected' if config.maintenance_mode else '' }}>Activado</option>
+                  </select>
+                  <small class="text-muted">Bloquea el acceso a usuarios normales</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Registro de Usuarios</label>
+                  <select class="form-control" name="registration_enabled">
+                    <option value="True" {{ 'selected' if config.registration_enabled else '' }}>Habilitado</option>
+                    <option value="False" {{ 'selected' if not config.registration_enabled else '' }}>Deshabilitado</option>
+                  </select>
+                  <small class="text-muted">Permite o bloquea nuevos registros</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">💾 Guardar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Configuración de Email -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>📧 Configuración de Email</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="section" value="email"/>
+                
+                <div class="form-group">
+                  <label>Email del Webmaster</label>
+                  <input type="email" class="form-control" name="admin_email" 
+                         value="{{ config.admin_email }}" required>
+                  <small class="text-muted">Recibe notificaciones del sistema</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Usuario SMTP</label>
+                  <input type="email" class="form-control" name="smtp_user" 
+                         value="{{ config.smtp_user }}">
+                  <small class="text-muted">Cuenta para envío de emails</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">💾 Guardar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      
+      <div class="row">
+        <!-- Configuración de la Aplicación -->
+        <div class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>🌐 Configuración de la Aplicación</h5>
+            </div>
+            <div class="card-body">
+              <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="section" value="app"/>
+                
+                <div class="form-group">
+                  <label>URL Base</label>
+                  <input type="url" class="form-control" name="base_url" 
+                         value="{{ config.base_url }}" required>
+                  <small class="text-muted">URL principal del sitio (para emails)</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Tamaño Máximo de Archivo (GB)</label>
+                  <input type="number" class="form-control" name="max_file_size" 
+                         value="{{ config.max_file_size }}" min="1" max="10">
+                  <small class="text-muted">Límite para subida de archivos (requiere reinicio)</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Máximo Intentos de Login</label>
+                  <input type="number" class="form-control" name="max_login_attempts" 
+                         value="{{ config.max_login_attempts }}" min="3" max="20">
+                  <small class="text-muted">Intentos fallidos antes de bloqueo temporal</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Duración "Recuérdame"</label>
+                  <select class="form-control" name="remember_me_days">
+                    <option value="15" {{ 'selected' if config.remember_me_days == 15 else '' }}>15 días</option>
+                    <option value="30" {{ 'selected' if config.remember_me_days == 30 else '' }}>30 días (1 mes)</option>
+                    <option value="180" {{ 'selected' if config.remember_me_days == 180 else '' }}>6 meses</option>
+                    <option value="365" {{ 'selected' if config.remember_me_days == 365 else '' }}>1 año</option>
+                    <option value="36500" {{ 'selected' if config.remember_me_days == 36500 else '' }}>Permanente</option>
+                  </select>
+                  <small class="text-muted">Tiempo que dura la sesión cuando se marca "Recuérdame"</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Timeout de Descarga (segundos)</label>
+                  <input type="number" class="form-control" name="download_timeout" 
+                         value="{{ config.download_timeout }}" min="30" max="1800">
+                  <small class="text-muted">Tiempo máximo para descargar archivos desde URL (30s - 30min)</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Timeout de Sesión (horas)</label>
+                  <input type="number" class="form-control" name="session_timeout" 
+                         value="{{ config.session_timeout_hours }}" min="1" max="168">
+                  <small class="text-muted">Duración máxima de sesiones normales (1h - 7 días)</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Backup Automático</label>
+                  <select class="form-control" name="auto_backup">
+                    <option value="False" {{ 'selected' if not config.auto_backup_enabled else '' }}>Desactivado</option>
+                    <option value="True" {{ 'selected' if config.auto_backup_enabled else '' }}>Activado</option>
+                  </select>
+                  <small class="text-muted">Crear backups automáticos diarios</small>
+                </div>
+                
+                <div class="form-group">
+                  <label>Calidad de Miniaturas (%)</label>
+                  <input type="number" class="form-control" name="thumbnail_quality" 
+                         value="{{ config.thumbnail_quality }}" min="50" max="100">
+                  <small class="text-muted">Calidad de compresión para miniaturas de imágenes</small>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">💾 Guardar Configuración</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variables de Entorno Editables -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between">
+              <h5>🔧 Variables de Entorno</h5>
+              <button class="btn btn-sm btn-success" onclick="addEnvVar()">➕ Añadir Variable</button>
+            </div>
+            <div class="card-body">
+              {% if missing_vars %}
+              <div class="alert alert-warning">
+                <strong>⚠️ Atención:</strong> Variables críticas faltantes: {{ missing_vars|join(', ') }}
+              </div>
+              {% endif %}
+              <div id="env-vars-container">
+                {% for var in env_vars %}
+                <div class="env-var-row" data-var="{{ var.name }}" {% if var.name in ['SECRET_KEY', 'EMAIL_WEBMASTER'] and not var.set %}style="border-left: 4px solid #dc3545;"{% endif %}>
+                  <div class="row align-items-center">
+                    <div class="col-md-3">
+                      <span class="env-var-name">{{ var.name }}</span>
+                      {% if var.name in ['SECRET_KEY', 'EMAIL_WEBMASTER'] %}
+                      <span class="badge badge-warning badge-sm ml-1">CRÍTICA</span>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                      {% if var.sensitive %}
+                      <span class="env-var-value">••••••••</span>
+                      {% else %}
+                      <span class="env-var-value">{{ var.value or 'No configurada' }}</span>
+                      {% endif %}
+                    </div>
+                    <div class="col-md-2">
+                      <span class="badge badge-{{ 'success' if var.set else 'danger' }}">
+                        {{ 'Configurada' if var.set else 'Faltante' }}
+                      </span>
+                    </div>
+                    <div class="col-md-1">
+                      <button class="btn btn-sm btn-warning" onclick="editEnvVar('{{ var.name }}', '{{ var.value if not var.sensitive else '' }}', {{ 'true' if var.sensitive else 'false' }})">✏️</button>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado del Sistema -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Estado del Sistema</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="system-metric">
+                    <span>Base de Datos</span>
+                    <span>
+                      <span class="status-indicator {{ 'status-online' if db_status else 'status-offline' }}"></span>
+                      {{ 'Conectada' if db_status else 'Error' }}
+                    </span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Host BD</span>
+                    <span class="metric-value">{{ config.db_host }}</span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Puerto BD</span>
+                    <span class="metric-value">{{ config.db_port }}</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="system-metric">
+                    <span>Sistema Operativo</span>
+                    <span class="metric-value">{{ system_stats.os_name }}</span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Python</span>
+                    <span class="metric-value">{{ system_stats.python_version }}</span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Hostname</span>
+                    <span class="metric-value">{{ system_stats.hostname }}</span>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="system-metric">
+                    <span>Tiempo Activo</span>
+                    <span class="metric-value">{{ system_stats.uptime }}</span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Uso de Disco</span>
+                    <span class="metric-value">{{ system_stats.disk_usage }}%</span>
+                  </div>
+                  <div class="system-metric">
+                    <span>Uso de Memoria</span>
+                    <span class="metric-value">{{ system_stats.memory_usage }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Modal para Editar Variable de Entorno -->
+<div class="modal fade" id="editEnvModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">✏️ Editar Variable de Entorno</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editEnvForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="form-group">
+            <label>Nombre de la Variable</label>
+            <input type="text" class="form-control" id="envVarName" readonly>
+          </div>
+          <div class="form-group">
+            <label>Valor</label>
+            <input type="text" class="form-control" id="envVarValue" placeholder="Nuevo valor...">
+            <small class="text-muted">Deja vacío para eliminar la variable</small>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="envVarSensitive">
+            <label class="form-check-label">Variable sensible (ocultar valor)</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveEnvVar()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Añadir Variable -->
+<div class="modal fade" id="addEnvModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">➕ Añadir Variable de Entorno</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addEnvForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="form-group">
+            <label>Nombre de la Variable</label>
+            <input type="text" class="form-control" id="newEnvVarName" placeholder="NUEVA_VARIABLE">
+          </div>
+          <div class="form-group">
+            <label>Valor</label>
+            <input type="text" class="form-control" id="newEnvVarValue" placeholder="valor">
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="newEnvVarSensitive">
+            <label class="form-check-label">Variable sensible (ocultar valor)</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" onclick="saveNewEnvVar()">Añadir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function testEmail() {
+  const btn = event.target;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Enviando...';
+  
+  fetch('/admin/system/test-email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({csrf_token: '{{ csrf_token() }}'})
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.success ? '✅ Email de prueba enviado' : '❌ Error: ' + data.error);
+    btn.disabled = false;
+    btn.innerHTML = '📧 Enviar Email de Prueba';
+  })
+  .catch(error => {
+    alert('❌ Error de conexión');
+    btn.disabled = false;
+    btn.innerHTML = '📧 Enviar Email de Prueba';
+  });
+}
+
+function editEnvVar(name, value, sensitive) {
+  document.getElementById('envVarName').value = name;
+  document.getElementById('envVarValue').value = sensitive === 'true' ? '' : value;
+  document.getElementById('envVarSensitive').checked = sensitive === 'true';
+  $('#editEnvModal').modal('show');
+}
+
+function saveEnvVar() {
+  const name = document.getElementById('envVarName').value;
+  const value = document.getElementById('envVarValue').value;
+  
+  fetch('/admin/system/env-var', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      name: name,
+      value: value,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('✅ Variable actualizada. Reinicia el servidor para aplicar cambios.');
+      $('#editEnvModal').modal('hide');
+      location.reload();
+    } else {
+      alert('❌ Error: ' + data.error);
+    }
+  });
+}
+
+function addEnvVar() {
+  document.getElementById('newEnvVarName').value = '';
+  document.getElementById('newEnvVarValue').value = '';
+  document.getElementById('newEnvVarSensitive').checked = false;
+  $('#addEnvModal').modal('show');
+}
+
+function saveNewEnvVar() {
+  const name = document.getElementById('newEnvVarName').value.trim();
+  const value = document.getElementById('newEnvVarValue').value;
+  
+  if (!name) {
+    alert('❌ El nombre de la variable es requerido');
+    return;
+  }
+  
+  fetch('/admin/system/env-var', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      name: name,
+      value: value,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('✅ Variable añadida. Reinicia el servidor para aplicar cambios.');
+      $('#addEnvModal').modal('hide');
+      location.reload();
+    } else {
+      alert('❌ Error: ' + data.error);
+    }
+  });
+}
+
+function updateConfigInstant(configName, value) {
+  fetch('/admin/system/instant-update', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      config_name: configName,
+      value: value,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Mostrar notificación temporal
+      showNotification('✅ Configuración actualizada', 'success');
+    } else {
+      showNotification('❌ Error: ' + data.error, 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    showNotification('❌ Error de conexión', 'error');
+  });
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.zIndex = '9999';
+  notification.style.minWidth = '300px';
+  notification.innerHTML = message;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+}
+function restartNow() {
+  if (confirm('¿Estás seguro de que deseas reiniciar el servidor ahora?')) {
+    showNotification('🔄 Reiniciando servidor...', 'info');
+    setTimeout(() => {
+      window.location.href = '/reboot';
+    }, 1000);
+  }
+}
+
+
+
+{% if show_restart_modal %}
+$(document).ready(function() {
+  $('#restartModal').modal('show');
+});
+{% endif %}
+</script>
+
+<!-- Modal de Reinicio -->
+<div class="modal fade" id="restartModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🔄 Reinicio Requerido</h5>
+      </div>
+      <div class="modal-body">
+        <p>Los cambios realizados requieren reiniciar el servidor para aplicarse correctamente.</p>
+        <p><strong>¿Deseas reiniciar ahora?</strong></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Más tarde</button>
+        <button type="button" class="btn btn-warning" onclick="restartNow()">🔄 Reiniciar ahora</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

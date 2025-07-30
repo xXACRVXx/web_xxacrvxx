@@ -1,0 +1,97 @@
+{% extends 'layout.html' %}
+
+{% block title %}Mantenimiento del Sistema{% endblock %}
+
+{% block content %}
+
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2">
+        <h1 class="mb-3">🔧 Mantenimiento del Sistema</h1>
+        <p class="text-lg mb-4">Herramientas de mantenimiento y limpieza</p>
+        <a href="/admin/dashboard" class="btn btn-outline-primary">← Volver al Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>🧹 Limpieza de Archivos</h5>
+            </div>
+            <div class="card-body text-center">
+              <p>Eliminar archivos temporales y cache</p>
+              <button class="btn btn-warning" onclick="performCleanup()">🗑️ Limpiar Sistema</button>
+              <div id="cleanupResult" class="mt-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>💾 Crear Backup</h5>
+            </div>
+            <div class="card-body text-center">
+              <p>Generar copia de seguridad del sistema</p>
+              <button class="btn btn-success" onclick="createBackup()">📦 Crear Backup</button>
+              <div id="backupResult" class="mt-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>🔄 Reiniciar Servidor</h5>
+            </div>
+            <div class="card-body text-center">
+              <p>Reiniciar la aplicación</p>
+              <a href="/reboot" class="btn btn-danger">🔄 Reiniciar</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+function performCleanup() {
+  document.getElementById('cleanupResult').innerHTML = '<small class="text-info">Limpiando...</small>';
+  fetch('/admin/dashboard/cleanup', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('cleanupResult').innerHTML = 
+        `<small class="text-success">✅ ${data.message}</small>`;
+    })
+    .catch(() => {
+      document.getElementById('cleanupResult').innerHTML = 
+        '<small class="text-danger">❌ Error</small>';
+    });
+}
+
+function createBackup() {
+  document.getElementById('backupResult').innerHTML = '<small class="text-info">Creando backup...</small>';
+  fetch('/admin/dashboard/backup', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('backupResult').innerHTML = 
+        `<small class="text-success">✅ ${data.message}</small>`;
+    })
+    .catch(() => {
+      document.getElementById('backupResult').innerHTML = 
+        '<small class="text-danger">❌ Error</small>';
+    });
+}
+</script>
+
+{% endblock %}

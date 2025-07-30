@@ -235,7 +235,7 @@ a.text-dark:hover, a.text-dark:focus {
 
 
 .border {
-  border-color: #e9e8f5 !important;
+  border-color: #6c55f9 !important;
 }
 
 .border-top {
@@ -2301,4 +2301,40 @@ a.text-dark:hover, a.text-dark:focus {
 
 .owl-carousel button.owl-dot.active {
   background-color: #6C55F9;
+}
+
+/* Cards en modo oscuro */
+.card {
+  background-color: #2a2a2a !important;
+  border: 1px solid #6c55f9 !important;
+  color: #ffffff !important;
+}
+
+.card-header {
+  background-color: #2a2a2a !important;
+  border-bottom: 1px solid #6c55f9 !important;
+  color: #ffffff !important;
+}
+
+.card-header h5 {
+  color: #ffffff !important;
+}
+
+.card-footer {
+  background-color: #2a2a2a !important;
+  border-top: 1px solid #6c55f9 !important;
+  color: #cccccc !important;
+}
+
+.text-muted {
+  color: #cccccc !important;
+}
+
+/* Variables para modales y formularios */
+:root {
+  --modal-bg: #2a2a2a;
+  --input-bg: #333333;
+  --text-color: #ffffff;
+  --border-color: #6c55f9;
+  --card-header-bg: #333333;
 }

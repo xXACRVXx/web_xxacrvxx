@@ -9,7 +9,7 @@ load_dotenv("config.env")
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSW = os.getenv("EMAIL_PASSW")
 
-def SEND_MAIL(To="",Subject="",Message="",Subtype="html"):
+def SEND_MAIL(To="",Subject="",Message="",Subtype="html",reply_to=None):
     try:
         try:
             smtpObj = smtplib.SMTP('smtp.gmail.com', 587)
@@ -26,6 +26,8 @@ def SEND_MAIL(To="",Subject="",Message="",Subtype="html"):
         email["From"] = EMAIL_USER
         email["To"] = To
         email["Subject"] = Subject
+        if reply_to:
+            email["Reply-To"] = reply_to
         email.set_content(Message, subtype=Subtype)
         email.set_charset('utf-8')
 

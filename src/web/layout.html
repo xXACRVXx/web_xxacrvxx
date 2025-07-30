@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
   <meta name="have-i-been-pwned-verification" value="dweb_269gcyoqvvhljl8th954lhmf">
   <meta name="google-adsense-account" content="ca-pub-1138276378418543">
   <meta name="google-site-verification" content="0EJz3NQhyR1UmBwAk9_EklAevx8mY5qbRL400HMTqNY" />
@@ -26,7 +26,7 @@
   {% for tags in post["tags"] %}
   <meta property="article:tag" content="{{tags}}" />
   {% endfor %}
-  <meta prperty="article:published_time" content="{{post['time']}}" />
+  <meta property="article:published_time" content="{{post['time']}}" />
   <meta name="twitter:image:src" content="{{post['image']}}" />
   <meta name="twitter:site" content="@xXACRVXx" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -100,20 +100,32 @@
 
         if (darkMode === "false") {
             themeLink.setAttribute('href', '/static/css/theme.css');
-        } else if (darkMode === undefined) {
-            // Si la cookie no existe, crearla con el valor false
-            setCookie('dark-mode', 'true', 7); // La cookie durará 7 días
-        }
-
-        // Alternar entre temas y actualizar la cookie cuando se hace clic en el botón
-        document.getElementById('toggle-style').addEventListener('click', function() {
-            if (themeLink.getAttribute('href') === '/static/css/theme-dark.css') {
-                themeLink.setAttribute('href', '/static/css/theme.css');
-                setCookie('dark-mode', 'false', 7);
-            } else {
-                themeLink.setAttribute('href', '/static/css/theme-dark.css');
+            document.documentElement.setAttribute('data-bs-theme', 'light');
+        } else {
+            if (darkMode === undefined) {
                 setCookie('dark-mode', 'true', 7);
             }
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+        }
+
+        // Alternar entre temas con animación mejorada
+        document.getElementById('toggle-style').addEventListener('click', function() {
+            const icon = this.querySelector('.theme-icon');
+            icon.style.transform = 'rotate(180deg) scale(0.8)';
+            
+            setTimeout(() => {
+                const isDark = themeLink.getAttribute('href') === '/static/css/theme-dark.css';
+                if (isDark) {
+                    themeLink.setAttribute('href', '/static/css/theme.css');
+                    setCookie('dark-mode', 'false', 7);
+                    document.documentElement.setAttribute('data-bs-theme', 'light');
+                } else {
+                    themeLink.setAttribute('href', '/static/css/theme-dark.css');
+                    setCookie('dark-mode', 'true', 7);
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                }
+                icon.style.transform = 'rotate(0deg) scale(1)';
+            }, 200);
         });
     });
   </script>
@@ -132,9 +144,9 @@
 </script>
 
 <!--script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1138276378418543"
-     crossorigin="anonymous"></script>
+     crossorigin="anonymous"></script-->
 
-<body-->
+<body>
 
   <!-- Back to top button -->
   <div class="back-to-top"></div>
@@ -144,7 +156,7 @@
       <div class="container">
         <a href="{{url_for('index')}}" class="navbar-brand">xX<span class="text-primary">ACRV</span>Xx</a>
 
-        <button class="navbar-toggler" style="border: 2px solid white;" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -168,22 +180,47 @@
 
         </ul>
 
-          <div class="ml-auto">
+          <div class="ml-auto d-flex flex-column flex-lg-row align-items-center navbar-buttons">
             {% if user %}
-            <a href="{{url_for('options')}}" class="btn btn-outline rounded-pill">{{user}}</a>
-            <a href="{{url_for('logout')}}" class="btn btn-outline rounded-pill">Cerrar Sesion</a>
+            <div class="d-flex align-items-center mb-2 mb-lg-0">
+              <div class="user-avatar mr-2">
+                <span>{{user[0].upper()}}</span>
+              </div>
+              <div class="dropdown">
+                <button class="btn btn-user dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown">
+                  {{user}}
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                  <h6 class="dropdown-header">Mi Cuenta</h6>
+                  <a class="dropdown-item" href="{{url_for('settings')}}">
+                    <i class="mai-settings"></i> Configuración
+                  </a>
+                  <a class="dropdown-item" href="{{url_for('login')}}">
+                    <i class="mai-repeat"></i> Cambiar Cuenta
+                  </a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item text-danger" href="{{url_for('logout')}}">
+                    <i class="mai-power"></i> Cerrar Sesión
+                  </a>
+                </div>
+              </div>
+            </div>
             {% else %}
-            <a href="{{url_for('login')}}" class="btn btn-outline rounded-pill">Iniciar sesion</a>
-            <a href="{{url_for('regist')}}" class="btn btn-outline rounded-pill">Registrarse</a>
+            <div class="d-flex flex-column flex-lg-row align-items-center mb-2 mb-lg-0">
+              <a href="{{url_for('login')}}" class="btn btn-auth btn-login mb-2 mb-lg-0 mr-lg-2">
+                <i class="mai-lock"></i> Iniciar Sesión
+              </a>
+              <a href="{{url_for('regist')}}" class="btn btn-auth btn-register mb-2 mb-lg-0 mr-lg-2">
+                <i class="mai-person-add"></i> Registrarse
+              </a>
+            </div>
             {% endif %}
             {% block header %}{% endblock %}
-                
-              <button class="btn btn-circle btn-outline-secondary rounded-circle" id="toggle-style">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sun" viewBox="0 2 16 16">
-                  <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
-                </svg>
-              </button>
-    
+            <button class="btn-theme-toggle" id="toggle-style" title="Cambiar tema">
+              <svg class="theme-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -191,8 +228,10 @@
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
        {% for category, message in messages %}
-          <div class="alert alert-{{category}} alert-dismissable  wow fadeInRight">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
+          <div class="alert alert-{{category}} alert-dismissible fade show wow fadeInRight" data-auto-dismiss="5000">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
             <strong>{{ message }}</strong> 
           </div>    
        {% endfor %}
@@ -229,10 +268,10 @@
         <div class="col-lg-3 py-3">
           <h5>Quienes somos</h5>
           <ul class="footer-menu">
-            <li><a href="#">Sobre nosotros</a></li>
-            <li><a href="#">Trabajos</a></li>
-            <li><a href="#">Nuestro equipo</a></li>
-            <li><a href="#">Noticias y Prensa</a></li>
+            <li><a href="{{url_for('about')}}">Sobre nosotros</a></li>
+            <li><a href="{{url_for('portfolio')}}">Portfolio</a></li>
+            <li><a href="{{url_for('team')}}">Nuestro equipo</a></li>
+            <li><a href="{{url_for('status_server')}}">Estado del Sistema</a></li>
           </ul>
         </div>
         <div class="col-lg-3 py-3">
@@ -252,10 +291,10 @@
 
       <div class="row">
         <div class="col-sm-6 py-2">
-          <p id="copyright">&copy; 2024 <a href="{{url_for('index')}}">xXACRVXx</a>. bajo la licencia <a href="https://creativecommons.org/licenses/by/4.0/">CC BY-SA 4.0</a></p>
+          <p id="copyright">&copy; 2025 <a href="{{url_for('index')}}">xXACRVXx</a>. bajo la licencia <a href="https://creativecommons.org/licenses/by/4.0/">CC BY-SA 4.0</a></p>
           
         </div>
-        <div class="col-sm-6 py-2 text-right">
+        <div class="col-sm-6 py-2 text-right text-center text-sm-right">
           <div class="d-inline-block px-3">
             <a href="{{url_for('privacy')}}">Privacidad</a>
           </div>
@@ -284,29 +323,422 @@
 
   <script src="{{url_for('static', filename='js/theme.js')}}"></script>
 
+  <style>
+    /* Mejoras de compatibilidad móvil */
+    @media (max-width: 991.98px) {
+      .navbar-nav {
+        text-align: center;
+        padding-top: 1rem;
+      }
+      
+      .navbar-nav .nav-item {
+        margin-bottom: 0.5rem;
+      }
+      
+      .navbar-buttons {
+        width: 100%;
+        justify-content: center;
+        padding: 1rem 0;
+        border-top: 1px solid var(--bs-border-color, rgba(0,0,0,0.125));
+        margin-top: 1rem;
+      }
+      
+      .btn-auth {
+        min-width: 140px;
+        margin: 0.25rem;
+      }
+      
+      .btn-theme-toggle {
+        margin: 0.5rem 0 0 0;
+      }
+      
+      .user-avatar {
+        margin-bottom: 0.5rem;
+      }
+      
+      .navbar-toggler {
+        border: 1px solid rgba(255,255,255,0.3) !important;
+        padding: 0.25rem 0.5rem;
+      }
+      
+      .navbar-brand {
+        font-size: 1.5rem;
+      }
+    }
+    
+    @media (max-width: 575.98px) {
+      .container {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      
+      .alert {
+        margin: 0.5rem;
+        font-size: 0.9rem;
+      }
+      
+      .btn-auth {
+        font-size: 0.9rem;
+        padding: 6px 16px;
+        min-width: 120px;
+      }
+      
+      .btn-theme-toggle {
+        width: 36px;
+        height: 36px;
+      }
+      
+      .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+      
+      .dropdown-menu {
+        min-width: 200px;
+        font-size: 16px;
+      }
+      
+      .dropdown-item {
+        padding: 15px 20px;
+        font-size: 16px;
+      }
+      
+      .dropdown-header {
+        padding: 12px 20px 8px 20px;
+        font-size: 13px;
+      }
+      
+      .navbar-brand {
+        font-size: 1.3rem;
+      }
+      
+      .footer-menu {
+        text-align: center;
+      }
+      
+      .sosmed-button {
+        justify-content: center;
+      }
+    }
+    
+    /* Botones de autenticación mejorados */
+    .btn-auth {
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-weight: 500;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .btn-login {
+      background: transparent;
+      border-color: var(--bs-primary, #6c55f9);
+      color: var(--bs-primary, #6c55f9);
+    }
+    
+    .btn-login:hover {
+      background: var(--bs-primary, #6c55f9);
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(108, 85, 249, 0.3);
+    }
+    
+    .btn-register {
+      background: var(--bs-primary, #6c55f9);
+      border-color: var(--bs-primary, #6c55f9);
+      color: white;
+    }
+    
+    .btn-register:hover {
+      background: transparent;
+      color: var(--bs-primary, #6c55f9);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(108, 85, 249, 0.2);
+    }
+    
+    /* Avatar y dropdown de usuario */
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--bs-primary, #6c55f9), var(--bs-info, #17a2b8));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .btn-user {
+      background: transparent;
+      border: 2px solid var(--bs-primary, #6c55f9);
+      color: var(--bs-primary, #6c55f9);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-user:hover {
+      background: var(--bs-primary, #6c55f9);
+      color: white;
+      transform: translateY(-1px);
+    }
+    
+    .dropdown-menu {
+      border: none;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      padding: 8px 0;
+      margin-top: 8px;
+      background: var(--bs-body-bg, #fff);
+    }
+    
+    .dropdown-header {
+      padding: 8px 20px 4px 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--bs-secondary, #6c757d);
+      letter-spacing: 0.5px;
+    }
+    
+    .dropdown-item {
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      color: var(--bs-body-color, #212529);
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+    }
+    
+    .dropdown-item:focus {
+      outline: none;
+      background: rgba(108, 85, 249, 0.1);
+    }
+    
+    .dropdown-item:hover {
+      background: rgba(108, 85, 249, 0.1);
+      color: var(--bs-body-color, #212529);
+    }
+    
+    .dropdown-item.text-danger {
+      color: #dc3545 !important;
+    }
+    
+    .dropdown-item.text-danger:hover {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545 !important;
+    }
+    
+    /* Dropdown en modo oscuro */
+    .navbar[data-bs-theme="dark"] .dropdown-menu,
+    [data-bs-theme="dark"] .navbar .dropdown-menu {
+      background: #2d3748;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    
+    .navbar[data-bs-theme="dark"] .dropdown-header,
+    [data-bs-theme="dark"] .navbar .dropdown-header {
+      color: #a0aec0;
+    }
+    
+    .navbar[data-bs-theme="dark"] .dropdown-item,
+    [data-bs-theme="dark"] .navbar .dropdown-item {
+      color: #e2e8f0;
+    }
+    
+    .navbar[data-bs-theme="dark"] .dropdown-item:hover,
+    [data-bs-theme="dark"] .navbar .dropdown-item:hover {
+      background: rgba(108, 85, 249, 0.2);
+      color: #e2e8f0;
+    }
+    
+    .navbar[data-bs-theme="dark"] .dropdown-item.text-danger,
+    [data-bs-theme="dark"] .navbar .dropdown-item.text-danger {
+      color: #fc8181 !important;
+    }
+    
+    .navbar[data-bs-theme="dark"] .dropdown-item.text-danger:hover,
+    [data-bs-theme="dark"] .navbar .dropdown-item.text-danger:hover {
+      background: rgba(220, 53, 69, 0.2);
+      color: #fc8181 !important;
+    }
+    
+    /* Botón de tema rediseñado */
+    .btn-theme-toggle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--bs-border-color, rgba(0,0,0,0.125));
+      background: var(--bs-body-bg, #fff);
+      color: var(--bs-body-color, #212529);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-left: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-theme-toggle:hover {
+      background: var(--bs-primary, #6c55f9);
+      border-color: var(--bs-primary, #6c55f9);
+      color: white;
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(108, 85, 249, 0.3);
+    }
+    
+    .btn-theme-toggle:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(108, 85, 249, 0.3);
+    }
+    
+    .theme-icon {
+      transition: transform 0.3s ease;
+    }
+    
+    /* Modo oscuro para botón de tema */
+    .navbar[data-bs-theme="dark"] .btn-theme-toggle,
+    [data-bs-theme="dark"] .navbar .btn-theme-toggle {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .navbar[data-bs-theme="dark"] .btn-theme-toggle:hover,
+    [data-bs-theme="dark"] .navbar .btn-theme-toggle:hover {
+      background: var(--bs-primary, #6c55f9);
+      border-color: var(--bs-primary, #6c55f9);
+      color: white;
+    }
+    
+    /* Mejoras generales */
+    .navbar-toggler:focus {
+      box-shadow: none;
+    }
+    
+    .alert {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      border-radius: 8px;
+      border: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .back-to-top {
+      transition: all 0.3s ease;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    .navbar-brand {
+      transition: color 0.3s ease;
+    }
+    
+    .navbar-brand:hover {
+      text-decoration: none;
+    }
+    
+    /* Footer responsive */
+    @media (max-width: 767.98px) {
+      .page-footer .col-lg-3 {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+      
+      .sosmed-button {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+      }
+    }
+  </style>
+
 <script>
 function actualizarEnlaceActivo() {
-  // Obtiene la URL actual
   const urlActual = window.location.pathname;
-
-  // Elimina la clase "active" de todos los elementos de navegación al principio
   const elementosNav = document.querySelectorAll('.navbar-nav > .nav-item');
+  
   elementosNav.forEach(elementoNav => elementoNav.classList.remove('active'));
-
-  // Encuentra el elemento nav que coincide con la URL actual
-  const elementoNavActivo = document.querySelector('.navbar-nav > .nav-item > a[href="' + urlActual + '"]');
-
-  // Si se encuentra un elemento coincidente, añade la clase "active"
+  
+  // Buscar coincidencia exacta primero
+  let elementoNavActivo = document.querySelector('.navbar-nav > .nav-item > a[href="' + urlActual + '"]');
+  
+  // Si no hay coincidencia exacta, buscar por rutas que contengan la URL
+  if (!elementoNavActivo && urlActual !== '/') {
+    const rutaBase = urlActual.split('/')[1];
+    elementoNavActivo = document.querySelector('.navbar-nav > .nav-item > a[href*="/' + rutaBase + '"]');
+  }
+  
   if (elementoNavActivo) {
     elementoNavActivo.parentNode.classList.add('active');
   }
 }
 
-// Actualiza el enlace activo al cargar la página
+// Actualizar enlace activo
 actualizarEnlaceActivo();
-
-// Actualiza el enlace activo cuando cambia la URL
 window.addEventListener('popstate', actualizarEnlaceActivo);
+
+// Cerrar navbar en móvil al hacer click en un enlace
+document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+  link.addEventListener('click', () => {
+    const navbarCollapse = document.getElementById('navbarContent');
+    if (navbarCollapse.classList.contains('show')) {
+      document.querySelector('.navbar-toggler').click();
+    }
+  });
+});
+
+// Auto-dismiss alerts
+document.querySelectorAll('.alert[data-auto-dismiss]').forEach(alert => {
+  const delay = parseInt(alert.getAttribute('data-auto-dismiss'));
+  setTimeout(() => {
+    if (alert.parentNode) {
+      alert.classList.remove('show');
+      setTimeout(() => alert.remove(), 150);
+    }
+  }, delay);
+});
+
+// Mejorar accesibilidad del botón de tema
+document.getElementById('toggle-style').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    this.click();
+  }
+});
+
+// Aplicar tema a elementos dinámicos
+function applyThemeToElements() {
+  const isDark = document.getElementById('theme-link').getAttribute('href').includes('dark');
+  const theme = isDark ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-bs-theme', theme);
+  document.querySelector('.navbar').setAttribute('data-bs-theme', theme);
+}
+
+// Aplicar tema inicial
+applyThemeToElements();
+
+// Observar cambios de tema
+const themeObserver = new MutationObserver(() => applyThemeToElements());
+themeObserver.observe(document.getElementById('theme-link'), { attributes: true });
 
 </script>
 

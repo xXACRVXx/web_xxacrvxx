@@ -71,7 +71,7 @@
 <main>
   <div class="page-section features">
     <div class="container">
-      <h1 class="mb-4">Subir Archivos a la Nube</h1>
+      <h1 class="mb-4">Subir Archivos{% if request.args.get('folder') %} a "{{ request.args.get('folder') }}"{% endif %}</h1>
 
       {% if not user %}
       <h3><a class="btn btn-primary rounded-pill" href="{{url_for('login', redirect='upload')}}" >Necesita iniciar su cuenta para continuar</a></h3>
@@ -89,24 +89,40 @@
       {% endwith %}
 
       <form id="formulario" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" class="wow fadeInUp">
+        <input type="hidden" name="current_folder" value="{{ request.args.get('folder', '') }}">
+        
+        <!-- Subida de archivos locales -->
         <div id="drag-drop-area" class="form-group">
           <label for="fileUpload" class="d-block">
             Arrastra tus archivos aquí o <span class="text-primary">haz clic para seleccionar archivos</span>
           </label>
           <input type="file" class="custom-file-input" id="fileUpload" name="file" multiple>
         </div>
+        
+        <!-- Descarga desde URL -->
+        <div class="form-group mt-4">
+          <label for="downloadUrl">O descarga desde una URL:</label>
+          <div class="input-group">
+            <input type="url" class="form-control" id="downloadUrl" name="download_url" placeholder="https://ejemplo.com/archivo.zip">
+            <div class="input-group-append">
+              <button id="downloadBtn" type="button" class="btn btn-outline-primary">Descargar</button>
+            </div>
+          </div>
+          <small class="form-text text-muted">Introduce la URL directa del archivo que quieres descargar</small>
+        </div>
 
         <div id="notificacion" class="alert alert-info text-center hidden" role="alert"></div>
         <div id="barraDeCarga" class="barraDeCarga"></div>
 
         <button id="boton" type="button" class="btn btn-primary rounded-pill">Subir Archivos</button>
-        <a href="{{url_for('download')}}" class="btn btn-outline border text-secondary">Descargar archivos</a>
+        <a href="{{url_for('download', folder=request.args.get('folder', ''))}}" class="btn btn-outline border text-secondary">Volver a archivos</a>
       </form>
 
       <div class="col-lg-8 py-4">
-        <h4>
-          Espacio libre: {{space}}
-        </h4>
+        <h4>Espacio libre: {{space}}</h4>
+        <p><small>Todos los tipos de archivo permitidos</small></p>
+        <p><small>Tamaño máximo por archivo: 4GB</small></p>
+        <p><small>Soporta descarga directa desde URLs</small></p>
       </div>
       {% endif %}
 
@@ -158,21 +174,10 @@
 
       archivoInput.addEventListener('change', updateFileNameLabel);
 
-      // Event listener for button click
-      boton.addEventListener("click", function() {
-        const files = archivoInput.files;
-        if (!files || files.length === 0) {
-          showNotification("Por favor, selecciona al menos un archivo.", 'warning');
-          return;
-        }
-
+      // Función para subir archivos
+      function uploadFiles(formData) {
         hideNotification();
         barraDeCarga.style.width = '0%';
-
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-          formData.append("file", files[i]);
-        }
 
         const xhr = new XMLHttpRequest();
         xhr.upload.onprogress = function(event) {
@@ -185,23 +190,76 @@
         xhr.onload = function() {
           if (xhr.status === 200) {
             const data = JSON.parse(xhr.responseText);
-            showNotification(`Archivos subidos correctamente.`, 'success');
+            if (data.filenames && data.filenames.length > 0) {
+              showNotification(`${data.filenames.length} archivo(s) procesado(s) correctamente.`, 'success');
+            } else {
+              showNotification("No se procesaron archivos.", 'warning');
+            }
             barraDeCarga.style.width = '100%';
             archivoInput.value = "";
+            document.getElementById('downloadUrl').value = "";
             updateFileNameLabel();
           } else {
-            showNotification("Error al subir los archivos.", 'danger');
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              showNotification(errorData.error || "Error al procesar archivos.", 'danger');
+            } catch {
+              showNotification("Error al procesar archivos.", 'danger');
+            }
             barraDeCarga.style.width = '0%';
           }
         };
 
         xhr.onerror = function() {
-          showNotification("Error de red al subir archivos.", 'danger');
+          showNotification("Error de red al procesar archivos.", 'danger');
           barraDeCarga.style.width = '0%';
         };
 
         xhr.open('POST', '{{ url_for("upload") }}');
         xhr.send(formData);
+      }
+
+      // Event listener para subir archivos locales
+      boton.addEventListener("click", function() {
+        const files = archivoInput.files;
+        if (!files || files.length === 0) {
+          showNotification("Por favor, selecciona al menos un archivo.", 'warning');
+          return;
+        }
+
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          formData.append("file", files[i]);
+        }
+        
+        // Agregar carpeta actual si existe
+        const currentFolder = document.querySelector('input[name="current_folder"]').value;
+        if (currentFolder) {
+          formData.append("current_folder", currentFolder);
+        }
+
+        uploadFiles(formData);
+      });
+
+      // Event listener para descargar desde URL
+      document.getElementById('downloadBtn').addEventListener('click', function() {
+        const downloadUrl = document.getElementById('downloadUrl').value.trim();
+        if (!downloadUrl) {
+          showNotification("Por favor, introduce una URL válida.", 'warning');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("download_url", downloadUrl);
+        
+        // Agregar carpeta actual si existe
+        const currentFolder = document.querySelector('input[name="current_folder"]').value;
+        if (currentFolder) {
+          formData.append("current_folder", currentFolder);
+        }
+
+        showNotification("Descargando archivo desde URL...", 'info');
+        uploadFiles(formData);
       });
 
        // Notification functions (for auto-dismiss)

@@ -1,0 +1,211 @@
+
+{% extends 'layout.html' %}
+
+{% block title %}Política de Privacidad{% endblock %}
+
+{% block content %}
+
+<div class="page-banner home-banner" style="height:250px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      <div class="col-lg-12 text-center">
+        <h1 class="mb-3">🔒 Política de Privacidad</h1>
+        <p class="text-lg">Información sobre el tratamiento de datos personales en xXACRVXx Web</p>
+        <small class="text-muted">Última actualización: Enero 2025</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          
+          <!-- Información General -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>📋 Información General</h3>
+            </div>
+            <div class="card-body">
+              <p>Esta política de privacidad describe cómo <strong>xXACRVXx Web</strong> recopila, utiliza y protege la información personal de los usuarios de la plataforma.</p>
+              <p><strong>Responsable:</strong> xXACRVXx<br>
+              <strong>Contacto:</strong> xxacrvxx@duck.com<br>
+              <strong>Plataforma:</strong> Aplicación web self-hosted</p>
+            </div>
+          </div>
+
+          <!-- Datos Recopilados -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>📊 Datos que Recopilamos</h3>
+            </div>
+            <div class="card-body">
+              <h5>Datos de Cuenta:</h5>
+              <ul>
+                <li><strong>Nombre de usuario:</strong> Para identificación en la plataforma</li>
+                <li><strong>Correo electrónico:</strong> Para autenticación y comunicaciones</li>
+                <li><strong>Contraseña:</strong> Almacenada con hash bcrypt para seguridad</li>
+                <li><strong>Estado de verificación:</strong> Para confirmar la validez del email</li>
+              </ul>
+              
+              <h5>Datos de Actividad:</h5>
+              <ul>
+                <li><strong>Fecha de registro:</strong> Para estadísticas y gestión</li>
+                <li><strong>Última conexión:</strong> Para monitoreo de actividad</li>
+                <li><strong>Archivos subidos:</strong> Contenido almacenado en el servidor</li>
+                <li><strong>Posts del blog:</strong> Contenido publicado y comentarios</li>
+              </ul>
+              
+              <h5>Datos Técnicos:</h5>
+              <ul>
+                <li><strong>Dirección IP:</strong> Para logs de seguridad y estadísticas</li>
+                <li><strong>Tokens de sesión:</strong> Para mantener la autenticación</li>
+                <li><strong>Preferencias de interfaz:</strong> Modo oscuro/claro</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Uso de Datos -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>🎯 Cómo Utilizamos los Datos</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><strong>Autenticación:</strong> Verificar identidad y mantener sesiones seguras</li>
+                <li><strong>Funcionalidad:</strong> Proporcionar servicios de almacenamiento y blog</li>
+                <li><strong>Comunicación:</strong> Envío de códigos de verificación y recuperación de contraseña</li>
+                <li><strong>Seguridad:</strong> Monitoreo de actividad sospechosa y prevención de abusos</li>
+                <li><strong>Mejoras:</strong> Análisis de uso para optimizar la plataforma</li>
+                <li><strong>Administración:</strong> Gestión de usuarios y moderación de contenido</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Almacenamiento -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>💾 Almacenamiento y Seguridad</h3>
+            </div>
+            <div class="card-body">
+              <h5>Ubicación de Datos:</h5>
+              <ul>
+                <li><strong>Base de datos:</strong> PostgreSQL con datos encriptados</li>
+                <li><strong>Archivos:</strong> Sistema de archivos del servidor con acceso controlado</li>
+                <li><strong>Logs:</strong> Registros de actividad para auditoría</li>
+              </ul>
+              
+              <h5>Medidas de Seguridad:</h5>
+              <ul>
+                <li><strong>Encriptación:</strong> Contraseñas con hash bcrypt + salt</li>
+                <li><strong>Tokens JWT:</strong> Autenticación segura con expiración</li>
+                <li><strong>Protección CSRF:</strong> Prevención de ataques de falsificación</li>
+                <li><strong>Validación de entrada:</strong> Sanitización de todos los datos</li>
+                <li><strong>Acceso controlado:</strong> Permisos granulares por usuario</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Derechos del Usuario -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>⚖️ Tus Derechos</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><strong>Acceso:</strong> Consultar qué datos personales tenemos sobre ti</li>
+                <li><strong>Rectificación:</strong> Corregir datos inexactos o incompletos</li>
+                <li><strong>Eliminación:</strong> Solicitar la eliminación de tu cuenta y datos</li>
+                <li><strong>Portabilidad:</strong> Exportar tus datos en formato JSON</li>
+                <li><strong>Limitación:</strong> Restringir el procesamiento de tus datos</li>
+                <li><strong>Oposición:</strong> Oponerte al procesamiento de datos específicos</li>
+              </ul>
+              <p><strong>Para ejercer estos derechos, contacta:</strong> xxacrvxx@duck.com</p>
+            </div>
+          </div>
+
+          <!-- Compartir Datos -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>🤝 Compartir Información</h3>
+            </div>
+            <div class="card-body">
+              <p><strong>No compartimos datos personales con terceros.</strong> Esta es una plataforma self-hosted donde:</p>
+              <ul>
+                <li>Los datos permanecen en el servidor bajo control del administrador</li>
+                <li>No hay integración con servicios de terceros para análisis</li>
+                <li>No se venden ni monetizan los datos de usuarios</li>
+                <li>Solo se comparten datos si es requerido por ley</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Retención -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>⏰ Retención de Datos</h3>
+            </div>
+            <div class="card-body">
+              <ul>
+                <li><strong>Cuentas activas:</strong> Datos mantenidos mientras la cuenta esté activa</li>
+                <li><strong>Cuentas inactivas:</strong> Revisión periódica de cuentas sin actividad</li>
+                <li><strong>Eliminación de cuenta:</strong> Datos eliminados permanentemente tras solicitud</li>
+                <li><strong>Logs de seguridad:</strong> Mantenidos por tiempo limitado para auditoría</li>
+                <li><strong>Backups:</strong> Incluidos en copias de seguridad del sistema</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Cookies -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>🍪 Cookies y Almacenamiento Local</h3>
+            </div>
+            <div class="card-body">
+              <p>La plataforma utiliza cookies y almacenamiento local para:</p>
+              <ul>
+                <li><strong>Sesión de usuario:</strong> Mantener la autenticación</li>
+                <li><strong>Preferencias:</strong> Recordar modo oscuro/claro</li>
+                <li><strong>Funcionalidad:</strong> Mejorar la experiencia de usuario</li>
+              </ul>
+              <p>Puedes gestionar las cookies desde la configuración de tu navegador.</p>
+            </div>
+          </div>
+
+          <!-- Cambios -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>📝 Cambios en esta Política</h3>
+            </div>
+            <div class="card-body">
+              <p>Esta política puede actualizarse ocasionalmente. Los cambios significativos serán comunicados a través de:</p>
+              <ul>
+                <li>Notificación en la plataforma</li>
+                <li>Correo electrónico a usuarios registrados</li>
+                <li>Actualización de la fecha en esta página</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Contacto -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h3>📧 Contacto</h3>
+            </div>
+            <div class="card-body">
+              <p>Para cualquier consulta sobre esta política de privacidad o el tratamiento de tus datos:</p>
+              <p><strong>Email:</strong> xxacrvxx@duck.com<br>
+              <strong>Telegram:</strong> @xXACRVXx</p>
+              <p>Responderemos a tu consulta en un plazo máximo de 30 días.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% endblock %}

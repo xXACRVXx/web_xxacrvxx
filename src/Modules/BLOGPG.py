@@ -134,8 +134,12 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
                 if TAGS:
-                    row['tags'] = row['tags'].split(',')
-                row['content'] = re.sub(r'(<img\s+)([^>]*)(>)', r'\1class="card-img-top" style="aspect-ratio: 10/8;object-fit: contain;"\2\3', row['content'])
+                    row['tags'] = row['tags'].split(',') if row['tags'] else []
+                # Procesar categoría de forma similar a tags
+                if row.get('category'):
+                    row['category'] = row['category'].split(',') if ',' in str(row['category']) else [row['category']]
+                else:
+                    row['category'] = []
                 if UID:
                     try:
                         for user in users:
@@ -160,7 +164,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row = dict(row)
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
-                row['tags'] = row['tags'].split(',')
+                row['tags'] = row['tags'].split(',') if row['tags'] else []
                 if UID:
                     try:
                         for user in users:
@@ -183,7 +187,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row = dict(row)
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
-                row['tags'] = row['tags'].split(',')
+                row['tags'] = row['tags'].split(',') if row['tags'] else []
                 if UID:
                     try:
                         for user in users:
@@ -205,7 +209,7 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 row = dict(row)
                 if MARKDOWN:
                     row['content'] =  markdown.markdown(row['content'])
-                row['tags'] = row['tags'].split(',')
+                row['tags'] = row['tags'].split(',') if row['tags'] else []
                 if UID:
                     try:
                         for user in users:

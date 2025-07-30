@@ -62,6 +62,12 @@
                             <div class="form-group">
                                 <button type="submit" class="form-control-submit-button">Enviar</button>
                             </div>
+                            {% if can_skip %}
+                            <div class="form-group">
+                                <a href="{{ url_for('skip_email_verification') }}" class="form-control-submit-button" style="background-color: #6c757d; text-decoration: none; display: flex; align-items: center; justify-content: center; margin-top: 10px; line-height: normal;">Saltear verificación (por ahora)</a>
+                                <small class="text-muted" style="display: block; text-align: center; margin-top: 5px;">Puedes verificar tu email más tarde desde configuración</small>
+                            </div>
+                            {% endif %}
                             <div class="form-message">
                                 <div id="smsgSubmit" class="h3 text-center hidden"></div>
                             </div>

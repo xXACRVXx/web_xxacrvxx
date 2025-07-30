@@ -1,0 +1,633 @@
+{% extends 'layout.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+
+<style>
+.table {
+  color: inherit;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(108, 85, 249, 0.1);
+}
+
+.badge-warning {
+  background-color: #FAC14D !important;
+  color: #343531 !important;
+}
+
+.badge-success {
+  background-color: #35bb78 !important;
+}
+
+.badge-primary {
+  background-color: #6C55F9 !important;
+}
+
+.badge-info {
+  background-color: #17a2b8 !important;
+  color: #ffffff !important;
+}
+
+.thead-light {
+  background-color: var(--card-header-bg, #f8f9fa) !important;
+  color: var(--text-color, #2D2B3A) !important;
+}
+
+/* Modal en modo oscuro */
+.modal-content {
+  background-color: var(--modal-bg, #ffffff) !important;
+  color: var(--text-color, #2D2B3A) !important;
+}
+
+.modal-header {
+  border-bottom-color: var(--border-color, #dee2e6) !important;
+}
+
+.modal-footer {
+  border-top-color: var(--border-color, #dee2e6) !important;
+}
+
+.form-control {
+  background-color: var(--input-bg, #ffffff) !important;
+  border-color: var(--border-color, #ced4da) !important;
+  color: var(--text-color, #495057) !important;
+}
+
+.form-control:focus {
+  background-color: var(--input-bg, #ffffff) !important;
+  border-color: #6C55F9 !important;
+  color: var(--text-color, #495057) !important;
+}
+
+.form-check-label {
+  color: var(--text-color, #495057) !important;
+}
+</style>
+
+<div class="page-banner home-banner" style="height:250px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2">
+        <h1 class="mb-3">👥 Gestión de Usuarios</h1>
+        <p class="text-lg mb-4">Administrar cuentas de usuario del sistema</p>
+        <a href="/admin/dashboard" class="btn btn-outline-primary">← Volver al Panel</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Filtros y Búsqueda -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Buscar usuarios..." id="searchUsers" onkeyup="filterUsers()">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="button" onclick="clearSearch()">❌ Limpiar</button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-right">
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="createUser()">➕ Crear Usuario</button>
+            <button class="btn btn-success" onclick="exportUsers()">📊 Exportar</button>
+            <button class="btn btn-info" onclick="refreshUsers()">🔄 Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas Rápidas -->
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-2">
+              <h6 class="text-success mb-1">{{ stats.verified }}</h6>
+              <small>Verificados</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-2">
+              <h6 class="text-warning mb-1">{{ stats.pending }}</h6>
+              <small>Pendientes</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-2">
+              <h6 class="text-info mb-1">{{ stats.active_today }}</h6>
+              <small>Activos Hoy</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body py-2">
+              <h6 class="text-primary mb-1">{{ stats.new_week }}</h6>
+              <small>Nuevos (7 días)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Usuarios -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between">
+          <h5>📋 Lista de Usuarios</h5>
+          <span class="badge badge-primary">Total: <span id="userCount">{{ users|length }}</span></span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th onclick="sortTable(0)" style="cursor: pointer;">ID <span id="sort-0">↕️</span></th>
+                  <th onclick="sortTable(1)" style="cursor: pointer;">Usuario <span id="sort-1">🔽</span></th>
+                  <th onclick="sortTable(2)" style="cursor: pointer;">Email <span id="sort-2">↕️</span></th>
+                  <th onclick="sortTable(3)" style="cursor: pointer;">Estado <span id="sort-3">↕️</span></th>
+                  <th onclick="sortTable(4)" style="cursor: pointer;">Registro <span id="sort-4">↕️</span></th>
+                  <th onclick="sortTable(5)" style="cursor: pointer;">Último Login <span id="sort-5">↕️</span></th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                <tr>
+                  <td>{{ user.id }}</td>
+                  <td>
+                    <strong>{{ user.username }}</strong>
+                    {% if user.permission == 1 %}
+                    <span class="badge badge-warning">Admin</span>
+                    {% endif %}
+                    {% if user.time and user.time[:10] >= week_ago %}
+                    <span class="badge badge-info">Nuevo</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ user.email }}</td>
+                  <td>
+                    {% if user.email_confirm == 'true' %}
+                    <span class="badge badge-success">✅ Verificado</span>
+                    {% elif user.email_confirm.startswith('skipped_') %}
+                    <span class="badge badge-info">⏭️ Salteado</span>
+                    {% else %}
+                    <span class="badge badge-warning">⏳ Pendiente</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ user.time[:10] if user.time else 'Desconocido' }}</td>
+                  <td>{{ user.extra[:16] if user.extra else 'Nunca' }}</td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-info" onclick="viewUser({{ user.id }})">👁️</button>
+                      <button class="btn btn-warning" onclick="editUser({{ user.id }})">✏️</button>
+                      <button class="btn btn-secondary" onclick="resetPassword({{ user.id }})">🔑</button>
+                      {% if user.email_confirm != 'true' %}
+                      <button class="btn btn-success" onclick="verifyUser({{ user.id }})">✅</button>
+                      {% if user.email_confirm.startswith('skipped_') %}
+                      <button class="btn btn-warning" onclick="forceVerify({{ user.id }})">🔄</button>
+                      {% endif %}
+                      {% else %}
+                      <button class="btn btn-warning" onclick="suspendUser({{ user.id }})">⏸️</button>
+                      {% endif %}
+                      <button class="btn btn-danger" onclick="deleteUser({{ user.id }})">🗑️</button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+
+    </div>
+  </div>
+</main>
+
+<!-- Modal para Ver Usuario -->
+<div class="modal fade" id="userModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">👤 Detalles del Usuario</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body" id="userDetails">
+        <!-- Contenido dinámico -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">✏️ Editar Usuario</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editUserForm">
+          <div class="form-group">
+            <label>Nombre de Usuario</label>
+            <input type="text" class="form-control" id="editUsername" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" id="editEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Nueva Contraseña (dejar vacío para no cambiar)</label>
+            <input type="password" class="form-control" id="editPassword" placeholder="Nueva contraseña...">
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="editVerified">
+            <label class="form-check-label">Email Verificado</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="editAdmin">
+            <label class="form-check-label">Permisos de Administrador</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveUserEdit()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function viewUser(userId) {
+  fetch(`/admin/users/${userId}`)
+    .then(response => response.json())
+    .then(user => {
+      document.getElementById('userDetails').innerHTML = `
+        <p><strong>ID:</strong> ${user.id}</p>
+        <p><strong>Usuario:</strong> ${user.username}</p>
+        <p><strong>Email:</strong> ${user.email}</p>
+        <p><strong>Estado:</strong> ${user.email_status === 'verified' ? 'Verificado' : user.email_status.startsWith('skipped_') ? 'Salteado (' + user.email_status.split('_')[1] + ')' : 'Pendiente'}</p>
+        <p><strong>Registro:</strong> ${user.created_at}</p>
+        <p><strong>Archivos:</strong> ${user.file_count || 0}</p>
+        <p><strong>Posts:</strong> ${user.post_count || 0}</p>
+      `;
+      $('#userModal').modal('show');
+    });
+}
+
+let currentEditUserId = null;
+
+function editUser(userId) {
+  currentEditUserId = userId;
+  fetch(`/admin/users/${userId}`)
+    .then(response => response.json())
+    .then(user => {
+      document.getElementById('editUsername').value = user.username;
+      document.getElementById('editEmail').value = user.email;
+      document.getElementById('editPassword').value = ''; // Limpiar contraseña
+      document.getElementById('editVerified').checked = user.email_confirm === 'true';
+      document.getElementById('editAdmin').checked = user.permission === 1;
+      $('#editUserModal').modal('show');
+    });
+}
+
+function saveUserEdit() {
+  if (!currentEditUserId) return;
+  
+  const data = {
+    username: document.getElementById('editUsername').value,
+    email: document.getElementById('editEmail').value,
+    email_confirm: document.getElementById('editVerified').checked,
+    permission: document.getElementById('editAdmin').checked ? 1 : 0,
+    csrf_token: '{{ csrf_token() }}'
+  };
+  
+  // Agregar contraseña si se especifica
+  const newPassword = document.getElementById('editPassword').value;
+  if (newPassword.trim()) {
+    data.password = newPassword;
+  }
+  
+  fetch(`/admin/users/${currentEditUserId}/edit`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      alert('✅ Usuario actualizado');
+      $('#editUserModal').modal('hide');
+      location.reload();
+    } else {
+      alert('❌ Error: ' + result.error);
+    }
+  });
+}
+
+function deleteUser(userId) {
+  if (confirm('¿Estás seguro de eliminar este usuario?')) {
+    fetch(`/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({csrf_token: '{{ csrf_token() }}'})
+    })
+      .then(() => location.reload());
+  }
+}
+
+function exportUsers() {
+  window.location.href = '/admin/users/export';
+}
+
+function verifyUser(userId) {
+  if (confirm('¿Verificar este usuario?')) {
+    fetch(`/admin/users/${userId}/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({csrf_token: '{{ csrf_token() }}'})
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ Usuario verificado');
+          location.reload();
+        } else {
+          alert('❌ Error: ' + data.error);
+        }
+      });
+  }
+}
+
+function refreshUsers() {
+  location.reload();
+}
+
+function createUser() {
+  $('#createUserModal').modal('show');
+}
+
+function saveNewUser() {
+  const password = document.getElementById('createPassword').value;
+  
+  if (!password.trim()) {
+    alert('❌ La contraseña no puede estar vacía');
+    return;
+  }
+  
+  const data = {
+    username: document.getElementById('createUsername').value,
+    email: document.getElementById('createEmail').value,
+    password: password,
+    email_confirm: document.getElementById('createVerified').checked,
+    permission: document.getElementById('createAdmin').checked ? 1 : 0,
+    csrf_token: '{{ csrf_token() }}'
+  };
+  
+  fetch('/admin/users/create', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(result => {
+    if (result.success) {
+      alert('✅ Usuario creado');
+      $('#createUserModal').modal('hide');
+      location.reload();
+    } else {
+      alert('❌ Error: ' + result.error);
+    }
+  });
+}
+
+function filterUsers() {
+  const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+  const rows = document.querySelectorAll('tbody tr');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const username = row.cells[1].textContent.toLowerCase();
+    const email = row.cells[2].textContent.toLowerCase();
+    
+    if (username.includes(searchTerm) || email.includes(searchTerm)) {
+      row.style.display = '';
+      visibleCount++;
+    } else {
+      row.style.display = 'none';
+    }
+  });
+  
+  // Actualizar contador
+  document.getElementById('userCount').textContent = visibleCount;
+}
+
+function clearSearch() {
+  document.getElementById('searchUsers').value = '';
+  filterUsers();
+}
+
+function resetPassword(userId) {
+  const newPassword = prompt('Nueva contraseña para el usuario:');
+  if (newPassword && newPassword.trim()) {
+    fetch(`/admin/users/${userId}/edit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        password: newPassword,
+        csrf_token: '{{ csrf_token() }}'
+      })
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        alert('🔑 Contraseña actualizada');
+      } else {
+        alert('❌ Error: ' + result.error);
+      }
+    });
+  }
+}
+
+function suspendUser(userId) {
+  if (confirm('¿Suspender este usuario? (desverificar email)')) {
+    fetch(`/admin/users/${userId}/edit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email_confirm: false,
+        csrf_token: '{{ csrf_token() }}'
+      })
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        alert('⏸️ Usuario suspendido');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + result.error);
+      }
+    });
+  }
+}
+
+function forceVerify(userId) {
+  if (confirm('¿Forzar verificación de email? El usuario deberá verificar su email nuevamente.')) {
+    fetch(`/admin/users/${userId}/edit`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email_confirm: 'force_verify',
+        csrf_token: '{{ csrf_token() }}'
+      })
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        alert('🔄 Usuario debe verificar email nuevamente');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + result.error);
+      }
+    });
+  }
+}
+
+function exportUsers() {
+  const rows = document.querySelectorAll('tbody tr');
+  let csv = 'ID,Usuario,Email,Estado,Registro,Ultimo_Login,Admin,Nuevo\n';
+  
+  rows.forEach(row => {
+    if (row.style.display !== 'none') {
+      const cells = row.cells;
+      const id = cells[0].textContent.trim();
+      const username = cells[1].textContent.replace(/Admin|Nuevo/g, '').replace(/\s+/g, ' ').trim();
+      const email = cells[2].textContent.trim();
+      const estado = cells[3].textContent.includes('Verificado') ? 'Verificado' : 'Pendiente';
+      const registro = cells[4].textContent.trim();
+      const ultimo = cells[5].textContent.trim();
+      const admin = cells[1].textContent.includes('Admin') ? 'Si' : 'No';
+      const nuevo = cells[1].textContent.includes('Nuevo') ? 'Si' : 'No';
+      
+      csv += `"${id}","${username}","${email}","${estado}","${registro}","${ultimo}","${admin}","${nuevo}"\n`;
+    }
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `usuarios_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+let sortDirection = {};
+
+function sortTable(columnIndex) {
+  const table = document.querySelector('tbody');
+  const rows = Array.from(table.rows);
+  
+  // Alternar dirección de ordenamiento
+  sortDirection[columnIndex] = !sortDirection[columnIndex];
+  const ascending = sortDirection[columnIndex];
+  
+  // Actualizar indicadores visuales
+  for (let i = 0; i <= 5; i++) {
+    const indicator = document.getElementById(`sort-${i}`);
+    if (i === columnIndex) {
+      indicator.textContent = ascending ? '⬆️' : '⬇️';
+    } else {
+      indicator.textContent = i === 1 ? '↕️' : '↕️';
+    }
+  }
+  
+  // Ordenar filas
+  rows.sort((a, b) => {
+    let aVal = a.cells[columnIndex].textContent.trim();
+    let bVal = b.cells[columnIndex].textContent.trim();
+    
+    // Limpiar badges para columna usuario
+    if (columnIndex === 1) {
+      aVal = aVal.replace(/Admin|Nuevo/g, '').trim();
+      bVal = bVal.replace(/Admin|Nuevo/g, '').trim();
+    }
+    
+    // Ordenamiento numérico para ID
+    if (columnIndex === 0) {
+      aVal = parseInt(aVal);
+      bVal = parseInt(bVal);
+    } else {
+      // Convertir a minúsculas para comparación alfabética
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    
+    if (aVal < bVal) return ascending ? -1 : 1;
+    if (aVal > bVal) return ascending ? 1 : -1;
+    return 0;
+  });
+  
+  // Reordenar tabla
+  rows.forEach(row => table.appendChild(row));
+}
+</script>
+
+<!-- Modal para Crear Usuario -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">⭐ Crear Nuevo Usuario</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="createUserForm">
+          <div class="form-group">
+            <label>Nombre de Usuario</label>
+            <input type="text" class="form-control" id="createUsername" required>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" id="createEmail" required>
+          </div>
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" class="form-control" id="createPassword" required>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="createVerified">
+            <label class="form-check-label">Email Verificado</label>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="createAdmin">
+            <label class="form-check-label">Permisos de Administrador</label>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="saveNewUser()">Crear Usuario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

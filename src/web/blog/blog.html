@@ -17,16 +17,24 @@
 </style> 
 
 <div class="container mt-5">
-  <div style="height: 320px;" class="page-banner">
+  <div style="height: 250px;" class="page-banner">
     <div class="row justify-content-center align-items-center h-100">
-      <div class="col-md-6">
+      <div class="col-md-8 text-center">
         <nav aria-label="Breadcrumb">
           <ul class="breadcrumb justify-content-center py-0 bg-transparent">
             <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
             <li class="breadcrumb-item active">Blog</li>
           </ul>
         </nav>
-        <h1 class="text-center">Bienvenido a nuestro Blog</h1>
+        <h1 class="mb-3">📝 Blog de xXACRVXx</h1>
+        <p class="lead mb-3">Conocimientos, experiencias y proyectos en desarrollo de software</p>
+        {% if posts %}
+        <div class="d-flex justify-content-center">
+          <span class="badge badge-primary mr-2">📚 {{posts|length}} posts</span>
+          <span class="badge badge-success mr-2">👁️ {{posts|sum(attribute='count_view')}} vistas</span>
+          <span class="badge badge-info">🏷️ Múltiples categorías</span>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -34,95 +42,180 @@
   <main>
     <div class="page-section">
       <div class="container">
-        <div class="row">
-          <div class="col-lg-5 py-3 wow fadeInLeft">
-            <h2>Publicar <a href="{{url_for('blogpost')}}" class="btn btn-primary">Nuevo post</a></h2> 
-          </div>
-          <div  class="col-lg-3 py-3 wow fadeInUp ">
-            <button id="removeQueryDiv" class="btn btn-outline-danger hidden" onclick="removeQueryParams()" >Quitar Filtros</button>
-          </div>
-          <div class="col-lg-4 py-3 fa-align-left wow fadeInRight">
-            <form class="form-inline mt-2 mt-md-0">
-              <input class="form-control col-lg-8 mr-sm-2" type="text" placeholder="Buscar" aria-label="Buscar" name="search">
-              <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Buscar</button>
-            </form>
+        <div class="row mb-4">
+          <div class="col-lg-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="row align-items-center">
+                  <div class="col-md-4">
+                    {% if user %}
+                    <a href="{{url_for('blogpost')}}" class="btn btn-primary">
+                      <span class="mai-add"></span> Nuevo Post
+                    </a>
+                    {% else %}
+                    <a href="{{url_for('login')}}" class="btn btn-outline-primary">
+                      <span class="mai-person"></span> Iniciar Sesión para Publicar
+                    </a>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-4 text-center">
+                    {% if request.args.get('search') or request.args.get('tags') or request.args.get('autor') or request.args.get('time') %}
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeQueryParams()">
+                      <span class="mai-close"></span> Quitar Filtros
+                    </button>
+                    {% endif %}
+                  </div>
+                  <div class="col-md-4">
+                    <form class="form-inline justify-content-end">
+                      <div class="input-group">
+                        <input class="form-control" type="text" placeholder="Buscar posts..." name="search" value="{{request.args.get('search', '')}}">
+                        <div class="input-group-append">
+                          <button class="btn btn-outline-success" type="submit">
+                            <span class="mai-search"></span>
+                          </button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         {% if posts %}
-        <div class="row ">
+        <div class="row">
         {% for post in posts %}
           <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
-            <div class="card-blog">
-              <div class="header">
-                <div href="{{ url_for('blogview', name=post['title']) }}" class="post-avatar">
-                  <img src="{{post['image']}}" alt=""onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'">
-                </div>
-                <div class="row">
-                  <div class="entry-footer col-lg-8">
-                    <div class="post-author">Por: {{ post['creat_id'] }}</div>
-                    <div class="post-date">visto: {{ post['count_view']}} veces</div>
+            <a href="{{ url_for('blogview', name=post['title']) }}" class="text-decoration-none">
+              <div class="card h-100 shadow-sm border-0" style="transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="position-relative" style="height: 220px; overflow: hidden; border-radius: 0.375rem 0.375rem 0 0;">
+                  <img src="{{ post['image'] if post['image'] else url_for('static', filename='blog/default.png') }}" 
+                       class="w-100 h-100" 
+                       style="object-fit: cover; transition: transform 0.3s;" 
+                       alt="{{post['title']}}" 
+                       onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'" 
+                       onmouseover="this.style.transform='scale(1.05)'" 
+                       onmouseout="this.style.transform='scale(1)'">
+                  <div class="position-absolute" style="top: 10px; right: 10px;">
+                    <span class="badge badge-primary">📖 {{ post['count_view'] }} vistas</span>
                   </div>
-                  <div class="entry-footer col-lg-4">
-                    <a href="{{ url_for('blog', time=post['time'][:10]) }}" class="post-date">{{ post['time'][:10]}}</a>
+                </div>
+                <div class="card-body d-flex flex-column p-4">
+                  <h5 class="card-title mb-3" style="height: 78px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; font-weight: bold; line-height: 1.3; color: inherit; word-break: break-word;">
+                    {{ post['title'] }}
+                  </h5>
+                  <p class="card-text text-muted mb-3 flex-grow-1" style="height: 72px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.5;">{{ post['descript'] }}</p>
+                  <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px; font-size: 14px;">
+                          <span class="text-white font-weight-bold">{{ post['creat_id'][0].upper() }}</span>
+                        </div>
+                        <div class="ml-2">
+                          <small class="text-muted d-block" style="font-size: 11px;">Autor</small>
+                          <small class="font-weight-bold" style="color: var(--bs-body-color); font-size: 13px;">{{ post['creat_id'] }}</small>
+                        </div>
+                      </div>
+                      <div class="text-right">
+                        <small class="text-muted d-block" style="font-size: 11px;">Fecha</small>
+                        <small class="font-weight-medium" style="color: var(--bs-body-color); font-size: 13px;">
+                          📅 {{ post['time'][:10] }}
+                        </small>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <span class="btn btn-primary btn-block font-weight-bold" style="border-radius: 25px; pointer-events: none;">
+                        📖 Leer Artículo Completo
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="body">
-                <div class="post-title"><a href="{{ url_for('blogview', name=post['title']) }}">{{ post['title'] }}</a></div>
-                <div class="post-excerpt">{{ post['descript'] }}</div>
-              </div>
-              <div class="footer">
-                <a href="{{ url_for('blogview', name=post['title']) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
-              </div>
-            </div>
+            </a>
           </div>
         {% endfor %}
         </div>
         {% else %}
-        <div class="text-center wow fadeInUp">
-          <div class="subhead">Busqueda no encontrada</div>
-          <h2 class="title-section">Al parecer el articulo que buscas no existe :(</h2>
-          <div class="divider mx-auto"></div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto text-center py-5">
+            <div class="card">
+              <div class="card-body py-5">
+                <span class="mai-document-text" style="font-size: 64px; color: #ccc;"></span>
+                <h3 class="mt-3 mb-3">No se encontraron posts</h3>
+                {% if request.args.get('search') %}
+                <p class="text-muted mb-4">No hay resultados para "<strong>{{request.args.get('search')}}</strong>"</p>
+                <button class="btn btn-outline-primary" onclick="removeQueryParams()">
+                  <span class="mai-refresh"></span> Ver todos los posts
+                </button>
+                {% else %}
+                <p class="text-muted mb-4">Aún no hay posts publicados en el blog</p>
+                {% if user %}
+                <a href="{{url_for('blogpost')}}" class="btn btn-primary">
+                  <span class="mai-add"></span> Crear el primer post
+                </a>
+                {% else %}
+                <a href="{{url_for('login')}}" class="btn btn-outline-primary">
+                  <span class="mai-person"></span> Iniciar sesión para publicar
+                </a>
+                {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
         {% endif %}
 
+        {% if posts and total_pages > 1 %}
         <div class="col-12 mt-5">
-          <nav aria-label="Page Navigation">
-              <ul class="pagination justify-content-center">
-                  {% if page > 1 %}
+          <div class="card">
+            <div class="card-body">
+              <nav aria-label="Page Navigation">
+                <ul class="pagination justify-content-center mb-0">
+                  {% if current_page > 1 %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('blog', page=current_page-1, search=request.args.get('search'), tags=request.args.get('tags'), autor=request.args.get('autor'), time=request.args.get('time')) }}">
+                        <span class="mai-chevron-back"></span> Anterior
+                      </a>
+                    </li>
+                  {% endif %}
+                  
+                  {% for p in range(1, total_pages + 1) %}
+                    {% if p == current_page %}
+                      <li class="page-item active">
+                        <span class="page-link">{{ p }}</span>
+                      </li>
+                    {% elif p == 1 or p == total_pages or (p >= current_page - 2 and p <= current_page + 2) %}
                       <li class="page-item">
-                          <a class="page-link" href="{{ url_for('blog', page=page-1) }}" tabindex="-1">Anterior</a>
+                        <a class="page-link" href="{{ url_for('blog', page=p, search=request.args.get('search'), tags=request.args.get('tags'), autor=request.args.get('autor'), time=request.args.get('time')) }}">{{ p }}</a>
                       </li>
-                  {% else %}
+                    {% elif p == current_page - 3 or p == current_page + 3 %}
                       <li class="page-item disabled">
-                          <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
+                        <span class="page-link">...</span>
                       </li>
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {% if current_page < total_pages %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('blog', page=current_page+1, search=request.args.get('search'), tags=request.args.get('tags'), autor=request.args.get('autor'), time=request.args.get('time')) }}">
+                        Siguiente <span class="mai-chevron-forward"></span>
+                      </a>
+                    </li>
                   {% endif %}
-      
-                  {% if page > 1 %}
-                      <li class="page-item"><a class="page-link" href="{{ url_for('blog', page=page-1) }}">{{ page-1 }}</a></li>
+                </ul>
+              </nav>
+              <div class="text-center mt-3">
+                <small class="text-muted">
+                  Página {{ current_page }} de {{ total_pages }} • 
+                  {% if posts %}
+                    Mostrando {{ posts|length }} posts
                   {% endif %}
-      
-                  <li class="page-item active" aria-current="page">
-                      <a class="page-link" href="#">{{ page }} <span class="sr-only">(current)</span></a>
-                  </li>
-      
-                  {% if page < total_pages %}
-                      <li class="page-item"><a class="page-link" href="{{ url_for('blog', page=page+1) }}">{{ page+1 }}</a></li>
-                  {% endif %}
-      
-                  {% if page < total_pages %}
-                      <li class="page-item">
-                          <a class="page-link" href="{{ url_for('blog', page=page+1) }}">Siguiente</a>
-                      </li>
-                  {% else %}
-                      <li class="page-item disabled">
-                          <a class="page-link" href="{{url_for('blog')}}" aria-disabled="true">Siguiente</a>
-                      </li>
-                  {% endif %}
-              </ul>
-          </nav>
+                </small>
+              </div>
+            </div>
+          </div>
         </div>
+        {% endif %}
       </div>
     </div>
   </main>
@@ -131,12 +224,8 @@
 <script>
   function removeQueryParams() {
     const url = window.location.origin + window.location.pathname;
-    window.location.href =url;
+    window.location.href = url;
   }
-  
-  if (window.location.search) {
-    document.getElementById('removeQueryDiv').classList.remove('hidden')
-  } 
 </script>
 
 

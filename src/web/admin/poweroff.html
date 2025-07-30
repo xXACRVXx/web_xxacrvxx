@@ -1,0 +1,73 @@
+{% extends 'layout.html' %}
+
+{% block title %}Apagar Servidor{% endblock %}
+
+{% block content %}
+
+<div class="page-banner home-banner" style="height:300px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2 wow fadeInUp">
+        <h1 class="mb-3">⚠️ Apagar Servidor</h1>
+        <p class="text-lg mb-4">
+          Esta acción apagará completamente el servidor. Use con precaución.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body p-4">
+              <h4 class="card-title text-center mb-4">🔐 Confirmación Requerida</h4>
+              
+              {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                  {% for category, message in messages %}
+                    <div class="alert alert-{{category}} alert-dismissible fade show">
+                      <button type="button" class="close" data-dismiss="alert">&times;</button>
+                      <strong>{{ message }}</strong>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              {% endwith %}
+
+              <form method="POST" action="/poweroff">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-group">
+                  <label for="pass">Tu Contraseña ({{ user }}):</label>
+                  <input type="password" class="form-control" id="pass" name="pass" required 
+                         placeholder="Ingrese tu contraseña de administrador">
+                  <small class="form-text text-muted">Se requiere tu contraseña personal para confirmar esta acción crítica</small>
+                </div>
+                
+                <div class="text-center">
+                  <button type="submit" class="btn btn-danger btn-lg">
+                    🔌 Apagar Servidor
+                  </button>
+                  <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg ml-2">
+                    Cancelar
+                  </a>
+                </div>
+              </form>
+              
+              <div class="mt-4 text-center">
+                <small class="text-muted">
+                  ⚠️ El servidor se apagará inmediatamente después de confirmar
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+{% endblock %}

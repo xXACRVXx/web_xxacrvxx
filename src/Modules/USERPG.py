@@ -177,7 +177,7 @@ def DESENCRIPT(datos, secretkey):
         return f'ERROR FOR DESENCRIPT:\n{e}'
 
 def CREATE_TABLE():    
-    EXECREATE = 'CREATE TABLE IF NOT EXISTS usernamedb (id SERIAL PRIMARY KEY, username text, email text, passw text, email_confirm text, random text, data_auth text, image text, count_view integer, permission integer, extra text, time text)'
+    EXECREATE = 'CREATE TABLE IF NOT EXISTS usernamedb (id SERIAL PRIMARY KEY, username text, email text, passw text, email_confirm text, random text, data_auth text, image text, count_view text, permission integer, extra text, time text)'
     try:         
         cur.execute(EXECREATE)
         con.commit()
@@ -264,6 +264,10 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
          
         TIPOS = ['id', 'username', 'email', 'passw', 'email_confirm', 'random', 'data_auth', 'image', 'count_view', 'permission', 'extra']
         if TYPE in TIPOS:
+            # Validar que para búsquedas por ID, el dato sea numérico
+            if TYPE == 'id' and not str(DATA_SEARCH).isdigit():
+                log.debug(f"[SEARCH_DB:] [INVALID ID] (type: {TYPE}, data: {DATA_SEARCH})")
+                return None
             cur.execute(f'SELECT * FROM usernamedb WHERE {TYPE}= %s', (DATA_SEARCH,))
             resp = []
             for row in cur.fetchall():
@@ -304,7 +308,15 @@ def GET_USER(TYPE='all', DATA_SEARCH=''):
     except Exception as e:
         ERROR = f"ERROR AL BUSCAR EN LA TABLA:\n{e}"
         log.error(f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH}) [{traceback.format_exc()}]")
-        return ERROR
+        
+        # Rollback en caso de transacción abortada
+        try:
+            con.rollback()
+            recon()
+        except:
+            pass
+        
+        return None
 
 
 
@@ -354,10 +366,20 @@ def EDITAR(TYPE='username', USER='', NEWD=''):
         if not GET_USER('username', USER) == None:
             TIPOS = ['id', 'username', 'email', 'passw', 'email_confirm', 'random', 'data_auth', 'image', 'count_view', 'permission', 'extra', 'time']
             if TYPE in TIPOS:
-                 
-                cur.execute(
-                    f'UPDATE usernamedb SET {TYPE}=%s WHERE username=%s', (NEWD, USER))
-                con.commit()
+                try:
+                    cur.execute(
+                        f'UPDATE usernamedb SET {TYPE}=%s WHERE username=%s', (NEWD, USER))
+                    con.commit()
+                except Exception as db_error:
+                    # Reconectar en caso de error de transacción
+                    if "transaction is aborted" in str(db_error):
+                        log.warning("Reconectando BD por error de transacción")
+                        recon()
+                        cur.execute(
+                            f'UPDATE usernamedb SET {TYPE}=%s WHERE username=%s', (NEWD, USER))
+                        con.commit()
+                    else:
+                        raise db_error
                  
                 log.info(
                     f'[EDITAR:] [OK] (type: {TYPE}, username: {USER}, data: {NEWD})')
@@ -648,6 +670,47 @@ def main():
                 conv - Valida un código de confirmación de correo
                 """
                 print(respuesta)
+
+def GET_ALL_USERS():
+    """Alias para GET_USER('all') - obtiene todos los usuarios"""
+    return GET_USER('all')
+
+def VALIDAR(USER='', PASSW='', KEY=''):
+    """
+    VALIDAR(USER='', PASSW='', KEY='')
+    USER: The username name or email.
+    PASSW: The username password.
+    KEY: The key to decrypt the data.
+
+    return: True or False.
+
+    Example:
+    VALIDAR('username', 'passw', 'key')
+
+    return: True
+    """
+    try:
+        if USER.__contains__("@"):
+            DTU = GET_USER('email', USER)
+        else:
+            DTU = GET_USER('username', USER)
+        if not DTU == None:
+            if bcrypt.checkpw(PASSW.encode('utf-8'), DTU['passw'].encode('utf-8')):
+                log.info(
+                    f'[VALIDAR:] [OK] (username: {USER}, passw: {PASSW})')
+                return True
+            else:
+                log.debug(
+                    f'[VALIDAR:] [ERROR] (username: {USER}, passw: {PASSW})')
+                return False
+        else:
+            log.debug(
+                f'[VALIDAR:] [None] (username: {USER}, passw: {PASSW})')
+            return False
+    except Exception as e:
+        ERROR = f'ERROR AL VALIDAR\n{e}'
+        log.error(f'[VALIDAR:] [ERROR] (ERROR={ERROR})')
+        return False
 
 if __name__ == '__main__':
     main()

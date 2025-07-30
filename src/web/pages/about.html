@@ -1,0 +1,354 @@
+{% extends 'layout.html' %}
+
+{% block title %}Sobre Nosotros{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+  <div class="page-banner">
+    <div class="row justify-content-center align-items-center h-100">
+      <div class="col-md-6">
+        <nav aria-label="Breadcrumb">
+          <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
+            <li class="breadcrumb-item active">Sobre Nosotros</li>
+          </ul>
+        </nav>
+        <h1 class="text-center">Sobre Nosotros</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contenido Principal -->
+<div class="page-section">
+  <div class="container">
+    
+    <!-- Historia del Proyecto -->
+    <div class="row mb-5">
+      <div class="col-lg-10 mx-auto">
+        <div class="text-center mb-4">
+          <h2 class="title-section">Nuestra <span class="marked">Historia</span></h2>
+          <div class="divider mx-auto"></div>
+        </div>
+        <div class="row">
+          <div class="col-lg-6 py-3">
+            <h5>🚀 El Comienzo (2020)</h5>
+            <p class="mb-4">
+              Todo comenzó como un proyecto personal de xXACRVXx, un joven de 22 años 
+              apasionado por la informática y las redes. Mientras trabajaba como técnico 
+              y estudiaba ingeniería, decidió crear una plataforma que combinara 
+              la programación con la necesidad de una solución práctica para 
+              gestionar archivos y compartir conocimientos.
+            </p>
+            <h5>🔧 Evolución Técnica (2021-2022)</h5>
+            <p class="mb-4">
+              Lo que comenzó como un experimento para probar conocimientos de Python, 
+              evolucionó gradualmente añadiendo funciones para facilitar tareas personales. 
+              Poco a poco se transformó en una aplicación web completa con Flask, autenticación, 
+              gestión de archivos y sistema de blog.
+            </p>
+          </div>
+          <div class="col-lg-6 py-3">
+            <h5>👥 Formación del Equipo (2022-2023)</h5>
+            <p class="mb-4">
+              LegzDev se unió al proyecto como colaborador, convirtiéndose en 
+              coadministrador del VPS compartido y aportando su experiencia en 
+              infraestructura. MakeCraft se incorporó posteriormente, 
+              especializándose en testing multiplataforma y control de calidad.
+            </p>
+            <h5>🌟 Presente y Futuro (2024-2025)</h5>
+            <p class="mb-4">
+              Hoy, xXACRVXx Web es una plataforma madura con más de 4 años de desarrollo continuo, 
+              diseñada para ser desplegada tanto en internet como en redes locales, manteniendo 
+              siempre el compromiso con el código abierto y la privacidad del usuario.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Misión y Visión -->
+    <div class="row mb-5">
+      <div class="col-lg-6 py-3">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <div class="mb-3">
+              <span class="mai-flag text-primary" style="font-size: 48px;"></span>
+            </div>
+            <h4>Nuestra Misión</h4>
+            <p>
+              Proporcionar una plataforma web personal, segura y versátil que permita a los usuarios 
+              gestionar sus archivos, crear contenido y mantener su presencia digital de forma 
+              independiente y controlada.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 py-3">
+        <div class="card h-100">
+          <div class="card-body text-center">
+            <div class="mb-3">
+              <span class="mai-eye text-success" style="font-size: 48px;"></span>
+            </div>
+            <h4>Nuestra Visión</h4>
+            <p>
+              Ser una alternativa open-source confiable para quienes buscan tener control total 
+              sobre sus datos y contenido digital, adaptable tanto para uso personal como 
+              en entornos corporativos o educativos.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Valores -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="text-center mb-4">
+          <h2 class="title-section">Nuestros <span class="marked">Valores</span></h2>
+          <div class="divider mx-auto"></div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-shield-checkmark text-info" style="font-size: 36px;"></span>
+            </div>
+            <h5>Seguridad</h5>
+            <p class="small">Protección de datos y privacidad como prioridad fundamental</p>
+          </div>
+          <div class="col-md-4 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-code text-warning" style="font-size: 36px;"></span>
+            </div>
+            <h5>Open Source</h5>
+            <p class="small">Código abierto para transparencia y colaboración comunitaria</p>
+          </div>
+          <div class="col-md-4 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-settings text-danger" style="font-size: 36px;"></span>
+            </div>
+            <h5>Flexibilidad</h5>
+            <p class="small">Adaptable a diferentes necesidades y entornos de despliegue</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Características Técnicas -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="text-center mb-4">
+          <h2 class="title-section">Características <span class="marked">Técnicas</span></h2>
+          <div class="divider mx-auto"></div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100 text-center">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span class="mai-cloud text-primary" style="font-size: 48px;"></span>
+                </div>
+                <h5>Gestión de Archivos</h5>
+                <ul class="small text-left">
+                  <li>Subida hasta 4GB por archivo</li>
+                  <li>Organización en carpetas</li>
+                  <li>Miniaturas automáticas</li>
+                  <li>Enlaces seguros de compartición</li>
+                  <li>Descarga desde URLs</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100 text-center">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span class="mai-create text-success" style="font-size: 48px;"></span>
+                </div>
+                <h5>Sistema de Blog</h5>
+                <ul class="small text-left">
+                  <li>Editor Markdown integrado</li>
+                  <li>Categorías y etiquetas</li>
+                  <li>Sistema de comentarios</li>
+                  <li>Contador de visualizaciones</li>
+                  <li>Búsqueda de contenido</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100 text-center">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span class="mai-shield-checkmark text-warning" style="font-size: 48px;"></span>
+                </div>
+                <h5>Seguridad</h5>
+                <ul class="small text-left">
+                  <li>Autenticación JWT</li>
+                  <li>Protección CSRF</li>
+                  <li>Validación de datos</li>
+                  <li>Sesiones seguras</li>
+                  <li>Logs de auditoría</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100 text-center">
+              <div class="card-body">
+                <div class="mb-3">
+                  <span class="mai-settings text-info" style="font-size: 48px;"></span>
+                </div>
+                <h5>Administración</h5>
+                <ul class="small text-left">
+                  <li>Panel de control completo</li>
+                  <li>Gestión de usuarios</li>
+                  <li>Monitoreo del sistema</li>
+                  <li>Backups automáticos</li>
+                  <li>Configuración flexible</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filosofía Técnica -->
+    <div class="row mb-5">
+      <div class="col-lg-10 mx-auto">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="text-center mb-4">Filosofía Técnica</h3>
+            <div class="row">
+              <div class="col-md-6">
+                <h6>🐍 Python & Flask</h6>
+                <p class="small mb-3">
+                  Elegimos Python por su simplicidad y legibilidad, y Flask por su flexibilidad 
+                  y minimalismo. Esta combinación permite un desarrollo ágil sin sacrificar 
+                  la robustez del sistema.
+                </p>
+                <h6>🐘 PostgreSQL</h6>
+                <p class="small mb-3">
+                  Base de datos relacional robusta que garantiza la integridad de los datos 
+                  y ofrece excelente rendimiento para aplicaciones web modernas.
+                </p>
+                <h6>🎨 Diseño Responsivo</h6>
+                <p class="small mb-3">
+                  Interfaz adaptable que funciona perfectamente en dispositivos móviles, 
+                  tablets y escritorio, con soporte completo para modo oscuro.
+                </p>
+              </div>
+              <div class="col-md-6">
+                <h6>🐳 Docker Ready</h6>
+                <p class="small mb-3">
+                  Containerización completa que facilita el despliegue en cualquier entorno, 
+                  desde servidores locales hasta infraestructura en la nube.
+                </p>
+                <h6>🔒 Seguridad por Diseño</h6>
+                <p class="small mb-3">
+                  Implementación de mejores prácticas de seguridad desde el diseño inicial, 
+                  incluyendo autenticación robusta y protección contra vulnerabilidades comunes.
+                </p>
+                <h6>🌐 Versatilidad de Sistemas</h6>
+                <p class="small mb-3">
+                  Experiencia tanto en entornos Linux como Windows Server, adaptando 
+                  soluciones a diferentes infraestructuras y necesidades empresariales.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="text-center mb-4">
+          <h2 class="title-section">El Proyecto en <span class="marked">Números</span></h2>
+          <div class="divider mx-auto"></div>
+        </div>
+        <div class="row text-center">
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h3 class="text-primary mb-2">4+</h3>
+                <h6>Años de Desarrollo</h6>
+                <p class="small text-muted">Desde 2020 hasta hoy</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h3 class="text-success mb-2">15,000+</h3>
+                <h6>Líneas de Código</h6>
+                <p class="small text-muted">Python, HTML, CSS, JS</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h3 class="text-info mb-2">50+</h3>
+                <h6>Funcionalidades</h6>
+                <p class="small text-muted">Desde archivos hasta blog</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 py-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h3 class="text-warning mb-2">100%</h3>
+                <h6>Open Source</h6>
+                <p class="small text-muted">Licencia MIT</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row">
+      <div class="col-lg-10 mx-auto">
+        <div class="card bg-gradient-primary text-white">
+          <div class="card-body py-5 text-center">
+            <h3 class="mb-3">🚀 ¿Listo para Comenzar?</h3>
+            <p class="mb-4 lead">
+              Explora todas las posibilidades que ofrece xXACRVXx Web. Desde gestión de archivos 
+              hasta creación de contenido, todo en una plataforma open-source.
+            </p>
+            <div class="row">
+              <div class="col-md-4 py-2">
+                <a href="{{url_for('team')}}" class="btn btn-light btn-block">
+                  <span class="mai-people"></span> Conocer al Equipo
+                </a>
+              </div>
+              <div class="col-md-4 py-2">
+                <a href="https://github.com/xXACRVXx/web_xxacrvxx" class="btn btn-outline-light btn-block" target="_blank">
+                  <span class="mai-logo-github"></span> Ver en GitHub
+                </a>
+              </div>
+              <div class="col-md-4 py-2">
+                <a href="{{url_for('contactar')}}" class="btn btn-light btn-block">
+                  <span class="mai-mail"></span> Contactar
+                </a>
+              </div>
+            </div>
+            <div class="mt-4">
+              <small class="text-light">
+                🌍 Disponible para internet público e intranets | 🐳 Docker ready | 🔒 Seguro por diseño
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

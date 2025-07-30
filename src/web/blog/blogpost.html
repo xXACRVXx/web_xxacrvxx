@@ -19,6 +19,7 @@
             <div class="comment-form-wrap pt-5">
               <h2 class="mb-5">Agregar un post</h2>
               <form  action="{{ url_for('blogpost') }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 
                 <div class="form-group">
                   <label for="image">Imagen de portada (https://example.com/image/image.png)</label>

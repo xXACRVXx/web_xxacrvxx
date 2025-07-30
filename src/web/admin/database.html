@@ -1,0 +1,852 @@
+{% extends 'layout.html' %}
+
+{% block title %}Gestión de Base de Datos{% endblock %}
+
+{% block content %}
+
+<style>
+/* Variables CSS para temas */
+body {
+  --sql-bg: #1e1e1e;
+  --sql-color: #d4d4d4;
+  --border-color: #444;
+  --card-bg: #2d2d2d;
+  --text-color: #ffffff;
+  --muted-color: #888;
+  --table-bg: #333;
+  --table-hover: rgba(108, 85, 249, 0.2);
+}
+
+[data-theme="light"] {
+  --sql-bg: #f8f9fa;
+  --sql-color: #2d2b3a;
+  --border-color: #ddd;
+  --card-bg: #ffffff;
+  --text-color: #2d2b3a;
+  --muted-color: #6c757d;
+  --table-bg: #ffffff;
+  --table-hover: rgba(108, 85, 249, 0.1);
+}
+
+.sql-editor {
+  font-family: 'Courier New', monospace;
+  background: var(--sql-bg) !important;
+  color: var(--sql-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 5px;
+  padding: 15px;
+  min-height: 200px;
+  resize: vertical;
+}
+
+.result-table {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--table-bg);
+}
+
+.result-table table {
+  background: var(--table-bg);
+  color: var(--text-color);
+}
+
+.result-table tbody tr:hover {
+  background-color: var(--table-hover) !important;
+}
+
+.query-history {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.table-info {
+  background: var(--card-bg);
+  border: 1px solid rgba(108, 85, 249, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  color: var(--text-color);
+}
+
+.query-btn {
+  margin: 2px;
+  padding: 5px 10px;
+  font-size: 0.8em;
+  border-radius: 15px;
+}
+
+.card {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border: 1px solid rgba(108, 85, 249, 0.2) !important;
+}
+
+.card-header {
+  background: rgba(108, 85, 249, 0.1) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid rgba(108, 85, 249, 0.2) !important;
+}
+
+.text-muted {
+  color: var(--muted-color) !important;
+}
+
+.history-item {
+  background: rgba(108, 85, 249, 0.05);
+  border-left: 3px solid #6C55F9;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.history-item:hover {
+  background: rgba(108, 85, 249, 0.1);
+}
+
+.quick-queries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+</style>
+
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-12 text-center">
+        <h1 class="mb-3">🗄️ Gestión de Base de Datos</h1>
+        <p class="text-lg">Herramientas avanzadas para administrar la base de datos</p>
+        <a href="/admin/dashboard" class="btn btn-outline-primary">← Volver al Panel</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Estado de la BD -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Estado de la BD</h5>
+            </div>
+            <div class="card-body">
+              <div id="dbStatus">
+                <p><strong>Estado:</strong> <span class="badge badge-{{ 'success' if db_status else 'danger' }}">
+                  {{ 'Conectada' if db_status else 'Error' }}
+                </span></p>
+                <p><strong>Tablas:</strong> <span id="tableCount">-</span></p>
+                <p><strong>Usuarios:</strong> {{ stats.users }}</p>
+                <p><strong>Posts:</strong> {{ stats.posts }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h5>🔧 Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6 mb-2">
+                  <button class="btn btn-primary btn-block" onclick="showTables()">📋 Ver Tablas</button>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <button class="btn btn-info btn-block" onclick="analyzeDB()">🔍 Analizar BD</button>
+                </div>
+                <div class="col-md-6 mb-2">
+                  <button class="btn btn-warning btn-block" onclick="optimizeDB()">⚡ Optimizar</button>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <button class="btn btn-success btn-block" onclick="exportDB()">💾 Exportar</button>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <button class="btn btn-danger btn-block" onclick="showImportModal()">📥 Importar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editor SQL -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between">
+              <h5>💻 Editor SQL</h5>
+              <div>
+                <button class="btn btn-sm btn-success" onclick="executeQuery()">▶️ Ejecutar</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearEditor()">🗑️ Limpiar</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="quick-queries">
+                <button class="btn btn-sm btn-outline-primary query-btn" onclick="loadQuery('SELECT COUNT(*) as total_users FROM usernamedb;')">👥 Contar Usuarios</button>
+                <button class="btn btn-sm btn-outline-success query-btn" onclick="loadQuery('SELECT * FROM blogpg ORDER BY count_view DESC LIMIT 5;')">🔥 Posts Populares</button>
+                <button class="btn btn-sm btn-outline-info query-btn" onclick="loadQuery('SELECT username, email, time FROM usernamedb ORDER BY time DESC LIMIT 10;')">🆕 Usuarios Recientes</button>
+                <button class="btn btn-sm btn-outline-warning query-btn" onclick="loadQuery('SELECT email_confirm, COUNT(*) as cantidad FROM usernamedb GROUP BY email_confirm;')">✅ Estado Verificación</button>
+                <button class="btn btn-sm btn-outline-secondary query-btn" onclick="loadQuery('SELECT permission, COUNT(*) as cantidad FROM usernamedb GROUP BY permission;')">🔐 Permisos</button>
+                <button class="btn btn-sm btn-outline-danger query-btn" onclick="loadQuery('SELECT DATE(time) as fecha, COUNT(*) as registros FROM usernamedb WHERE time IS NOT NULL GROUP BY DATE(time) ORDER BY fecha DESC LIMIT 7;')">📅 Registros por Día</button>
+                <button class="btn btn-sm btn-outline-dark query-btn" onclick="loadQuery('SELECT creat_id, COUNT(*) as posts FROM blogpg GROUP BY creat_id ORDER BY posts DESC LIMIT 5;')">✍️ Autores Activos</button>
+                <button class="btn btn-sm btn-outline-primary query-btn" onclick="loadQuery('SELECT AVG(count_view) as promedio_vistas, MAX(count_view) as max_vistas, MIN(count_view) as min_vistas FROM blogpg;')">📊 Stats Posts</button>
+                <button class="btn btn-sm btn-outline-success query-btn" onclick="loadQuery('SELECT u.username, COUNT(b.id) as total_posts, SUM(b.count_view) as total_views FROM usernamedb u LEFT JOIN blogpg b ON u.id = b.creat_id GROUP BY u.username ORDER BY total_posts DESC;')">👤 Actividad Usuarios</button>
+                <button class="btn btn-sm btn-outline-warning query-btn" onclick="loadQuery('SELECT tags, COUNT(*) as uso FROM blogpg WHERE tags IS NOT NULL AND tags != \'\'  GROUP BY tags ORDER BY uso DESC LIMIT 10;')">🏷️ Tags Populares</button>
+                <button class="btn btn-sm btn-outline-info query-btn" onclick="loadQuery('SELECT DATE(time) as fecha, COUNT(*) as logins FROM usernamedb WHERE extra IS NOT NULL GROUP BY DATE(time) ORDER BY fecha DESC LIMIT 7;')">📈 Logins Diarios</button>
+                <button class="btn btn-sm btn-outline-secondary query-btn" onclick="loadQuery('SELECT title, count_view, LENGTH(content) as caracteres FROM blogpg ORDER BY count_view DESC LIMIT 10;')">📊 Posts + Vistos</button>
+                <button class="btn btn-sm btn-outline-primary query-btn" onclick="loadQuery('SELECT u.username, u.email, COUNT(b.id) as posts, u.time as registro FROM usernamedb u LEFT JOIN blogpg b ON u.id = b.creat_id WHERE u.permission = 1 GROUP BY u.username, u.email, u.time;')">👑 Administradores</button>
+                <button class="btn btn-sm btn-outline-success query-btn" onclick="loadQuery('SELECT EXTRACT(HOUR FROM CAST(time AS TIMESTAMP)) as hora, COUNT(*) as registros FROM usernamedb WHERE time IS NOT NULL GROUP BY EXTRACT(HOUR FROM CAST(time AS TIMESTAMP)) ORDER BY hora;')">🕐 Registros por Hora</button>
+                <button class="btn btn-sm btn-outline-danger query-btn" onclick="loadQuery('SELECT u.username, u.email, u.time as registro FROM usernamedb u WHERE u.email_confirm = \'false\' ORDER BY u.time DESC;')">⚠️ Usuarios Sin Verificar</button>
+                <button class="btn btn-sm btn-outline-dark query-btn" onclick="loadQuery('SELECT title, descript, count_view, LENGTH(content) as longitud FROM blogpg WHERE count_view = 0 ORDER BY time DESC;')">👻 Posts Sin Vistas</button>
+                <button class="btn btn-sm btn-outline-warning query-btn" onclick="loadQuery('SELECT u.username, COALESCE(u.extra, \'Nunca\') as ultimo_login, u.time as registro FROM usernamedb u WHERE u.extra IS NULL OR u.extra < CURRENT_DATE - INTERVAL \'30 days\' ORDER BY u.time DESC;')">😴 Usuarios Inactivos</button>
+                <button class="btn btn-sm btn-outline-info query-btn" onclick="loadQuery('SELECT CASE WHEN LENGTH(username) <= 5 THEN \'Corto\' WHEN LENGTH(username) <= 10 THEN \'Medio\' ELSE \'Largo\' END as tipo_username, COUNT(*) as cantidad FROM usernamedb GROUP BY CASE WHEN LENGTH(username) <= 5 THEN \'Corto\' WHEN LENGTH(username) <= 10 THEN \'Medio\' ELSE \'Largo\' END;')">📏 Longitud Usernames</button>
+                <button class="btn btn-sm btn-outline-danger query-btn" onclick="loadQuery('SELECT u.username, u.email, COUNT(DISTINCT DATE(CAST(u.extra AS TIMESTAMP))) as dias_activos FROM usernamedb u WHERE u.extra IS NOT NULL GROUP BY u.username, u.email HAVING COUNT(DISTINCT DATE(CAST(u.extra AS TIMESTAMP))) > 10 ORDER BY dias_activos DESC;')">🔥 Usuarios Muy Activos</button>
+                <button class="btn btn-sm btn-outline-success query-btn" onclick="loadQuery('SELECT DATE(time) as fecha, COUNT(*) as nuevos_posts, AVG(count_view) as promedio_vistas FROM blogpg WHERE time IS NOT NULL GROUP BY DATE(time) ORDER BY fecha DESC LIMIT 14;')">📅 Actividad Posts 14d</button>
+                <button class="btn btn-sm btn-outline-warning query-btn" onclick="loadQuery('SELECT u.username, COUNT(b.id) as posts, MAX(CAST(b.time AS TIMESTAMP)) as ultimo_post FROM usernamedb u JOIN blogpg b ON u.id = b.creat_id GROUP BY u.username HAVING MAX(CAST(b.time AS TIMESTAMP)) < CURRENT_DATE - INTERVAL \'7 days\' ORDER BY ultimo_post DESC;')">📝 Autores Inactivos</button>
+                <button class="btn btn-sm btn-outline-primary query-btn" onclick="loadQuery('SELECT SUBSTRING(email FROM POSITION(\'@\' IN email) + 1) as dominio, COUNT(*) as usuarios FROM usernamedb GROUP BY SUBSTRING(email FROM POSITION(\'@\' IN email) + 1) ORDER BY usuarios DESC LIMIT 10;')">🌐 Dominios Email</button>
+                <button class="btn btn-sm btn-outline-secondary query-btn" onclick="loadQuery('SELECT title, count_view, ROUND(LENGTH(content)/100.0, 1) as cientos_caracteres, CASE WHEN count_view > 0 THEN ROUND(count_view::numeric / (LENGTH(content)/100.0), 2) ELSE 0 END as engagement_ratio FROM blogpg WHERE LENGTH(content) > 0 ORDER BY engagement_ratio DESC LIMIT 15;')">🎯 Engagement Posts</button>
+                <button class="btn btn-sm btn-outline-danger query-btn" onclick="loadQuery('SELECT id, title, creat_id, count_view, time FROM blogpg ORDER BY time DESC;')">🗑️ Gestionar Posts</button>
+              </div>
+              <textarea id="sqlEditor" class="form-control sql-editor" placeholder="-- Escribe tu consulta SQL aquí o usa los botones de arriba
+SELECT * FROM usernamedb LIMIT 10;"></textarea>
+              <div class="mt-3 d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                  💡 <strong>Tip:</strong> Usa los botones de arriba para consultas rápidas o escribe tu propia consulta SQL
+                </small>
+                <div>
+                  <button class="btn btn-sm btn-outline-info" onclick="showQueryExamples()">📚 Ejemplos</button>
+                  <button class="btn btn-sm btn-outline-secondary" onclick="formatQuery()">✨ Formatear</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultados -->
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Resultados</h5>
+            </div>
+            <div class="card-body">
+              <div id="queryResults">
+                <p class="text-muted">Los resultados aparecerán aquí...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card">
+            <div class="card-header">
+              <h5>📝 Historial</h5>
+            </div>
+            <div class="card-body query-history">
+              <div id="queryHistory">
+                <p class="text-muted">Historial de consultas...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Tablas -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>🗂️ Estructura de Tablas</h5>
+            </div>
+            <div class="card-body">
+              <div id="tableInfo">
+                <p class="text-muted">Haz clic en "Ver Tablas" para mostrar la estructura...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Modal para Importar BD -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">📥 Importar Base de Datos</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <strong>⚠️ Advertencia:</strong> Esta acción puede sobrescribir datos existentes. Se recomienda hacer un backup antes.
+        </div>
+        <div class="alert alert-info">
+          <strong>📝 Nota:</strong> Los usuarios importados tendrán contraseña temporal "temp123" y deberán cambiarla.
+        </div>
+        <form id="importForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>Seleccionar archivo JSON:</label>
+            <input type="file" class="form-control-file" id="importFile" accept=".json" required>
+            <small class="text-muted">Solo archivos JSON exportados desde este sistema</small>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="confirmImport" required>
+            <label class="form-check-label">Confirmo que he hecho un backup y entiendo los riesgos</label>
+          </div>
+        </form>
+        <div id="importProgress" class="mt-3" style="display: none;">
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+          </div>
+          <small class="text-muted">Procesando importación...</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" onclick="importDB()">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let queryHistory = [];
+
+function executeQuery() {
+  const query = document.getElementById('sqlEditor').value.trim();
+  if (!query) {
+    alert('❌ Escribe una consulta SQL');
+    return;
+  }
+  
+  // Agregar al historial
+  queryHistory.unshift({
+    query: query,
+    timestamp: new Date().toLocaleString()
+  });
+  updateHistoryDisplay();
+  
+  document.getElementById('queryResults').innerHTML = '<div class="text-info">⏳ Ejecutando consulta...</div>';
+  
+  fetch('/admin/database/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      query: query,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      document.getElementById('queryResults').innerHTML = 
+        `<div class="alert alert-danger">❌ Error: ${data.error}</div>`;
+    } else {
+      displayResults(data.results, data.columns);
+    }
+  })
+  .catch(error => {
+    document.getElementById('queryResults').innerHTML = 
+      `<div class="alert alert-danger">❌ Error de conexión: ${error.message}</div>`;
+  });
+}
+
+function displayResults(results, columns) {
+  if (!results || results.length === 0) {
+    document.getElementById('queryResults').innerHTML = 
+      '<div class="alert alert-info">ℹ️ Consulta ejecutada correctamente. Sin resultados.</div>';
+    return;
+  }
+  
+  let html = '<div class="result-table"><table class="table table-sm table-striped">';
+  
+  // Headers
+  html += '<thead><tr>';
+  columns.forEach(col => {
+    html += `<th>${col}</th>`;
+  });
+  html += '</tr></thead>';
+  
+  // Rows
+  html += '<tbody>';
+  results.forEach(row => {
+    html += '<tr>';
+    columns.forEach(col => {
+      html += `<td>${row[col] || ''}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  
+  html += `<div class="mt-2"><small class="text-muted">📊 ${results.length} filas encontradas</small></div>`;
+  
+  document.getElementById('queryResults').innerHTML = html;
+  
+  // Agregar funcionalidad de exportar resultados
+  if (results.length > 0) {
+    let actionButtons = `<button class="btn btn-sm btn-success mt-2" onclick="exportResults()">📊 Exportar CSV</button>`;
+    
+    // Si es consulta de posts, agregar botones de gestión
+    if (columns.includes('id') && columns.includes('title') && results[0].title) {
+      actionButtons += ` <button class="btn btn-sm btn-danger mt-2 ml-2" onclick="showPostActions()">🗑️ Acciones Posts</button>`;
+    }
+    
+    document.getElementById('queryResults').innerHTML += actionButtons;
+    
+    // Guardar resultados para exportar
+    window.lastQueryResults = { results, columns };
+  }
+}
+
+function exportResults() {
+  if (!window.lastQueryResults) {
+    alert('❌ No hay resultados para exportar');
+    return;
+  }
+  
+  const { results, columns } = window.lastQueryResults;
+  let csv = columns.join(',') + '\n';
+  
+  results.forEach(row => {
+    const values = columns.map(col => {
+      const value = row[col] || '';
+      return `"${String(value).replace(/"/g, '""')}"`;
+    });
+    csv += values.join(',') + '\n';
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `query_results_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function showPostActions() {
+  if (!window.lastQueryResults || !window.lastQueryResults.results.length) {
+    alert('❌ No hay posts para gestionar');
+    return;
+  }
+  
+  const { results } = window.lastQueryResults;
+  let html = '<div class="mt-3"><h6>🗑️ Gestionar Posts:</h6>';
+  
+  results.forEach(post => {
+    if (post.id && post.title) {
+      html += `
+        <div class="border p-2 mb-2 rounded">
+          <strong>ID: ${post.id}</strong> - ${post.title.substring(0, 50)}${post.title.length > 50 ? '...' : ''}
+          <div class="mt-1">
+            <button class="btn btn-sm btn-warning" onclick="editPost(${post.id}, '${post.title.replace(/'/g, '\\\'')}')">✏️ Editar</button>
+            <button class="btn btn-sm btn-info" onclick="manageComments(${post.id}, '${post.title.replace(/'/g, '\\\'')}')">💬 Comentarios</button>
+            <button class="btn btn-sm btn-danger" onclick="deletePost(${post.id}, '${post.title.replace(/'/g, '\\\'')}')">🗑️ Eliminar</button>
+          </div>
+        </div>
+      `;
+    }
+  });
+  
+  html += '</div>';
+  document.getElementById('queryResults').innerHTML += html;
+}
+
+function deletePost(postId, title) {
+  if (!confirm(`¿Eliminar el post "${title}"?\n\nEsta acción no se puede deshacer.`)) return;
+  
+  fetch('/admin/database/delete-post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      post_id: postId,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`✅ Post "${title}" eliminado correctamente`);
+      // Recargar consulta
+      loadQuery('SELECT id, title, creat_id, count_view, time FROM blogpg ORDER BY time DESC;');
+      executeQuery();
+    } else {
+      alert(`❌ Error: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    alert(`❌ Error de conexión: ${error.message}`);
+  });
+}
+
+function editPost(postId, title) {
+  const newTitle = prompt(`Nuevo título para el post:`, title);
+  if (!newTitle || newTitle === title) return;
+  
+  fetch('/admin/database/edit-post', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      post_id: postId,
+      title: newTitle,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`✅ Post actualizado correctamente`);
+      loadQuery('SELECT id, title, creat_id, count_view, time FROM blogpg ORDER BY time DESC;');
+      executeQuery();
+    } else {
+      alert(`❌ Error: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    alert(`❌ Error de conexión: ${error.message}`);
+  });
+}
+
+function manageComments(postId, title) {
+  fetch(`/admin/database/post-comments/${postId}`)
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      alert(`❌ Error: ${data.error}`);
+      return;
+    }
+    
+    const comments = data.comments || [];
+    if (comments.length === 0) {
+      alert(`💬 El post "${title}" no tiene comentarios`);
+      return;
+    }
+    
+    let html = `<div class="mt-3"><h6>💬 Comentarios de "${title}":</h6>`;
+    
+    comments.forEach((comment, index) => {
+      html += `
+        <div class="border p-2 mb-2 rounded">
+          <strong>${comment.name}</strong> (${comment.email}) - ${comment.date}
+          <p class="mb-1">${comment.message.substring(0, 100)}${comment.message.length > 100 ? '...' : ''}</p>
+          <button class="btn btn-sm btn-danger" onclick="deleteComment(${postId}, ${index}, '${comment.name}')">🗑️ Eliminar</button>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    document.getElementById('queryResults').innerHTML += html;
+  })
+  .catch(error => {
+    alert(`❌ Error de conexión: ${error.message}`);
+  });
+}
+
+function deleteComment(postId, commentIndex, authorName) {
+  if (!confirm(`¿Eliminar comentario de "${authorName}"?`)) return;
+  
+  fetch('/admin/database/delete-comment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      post_id: postId,
+      comment_index: commentIndex,
+      csrf_token: '{{ csrf_token() }}'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(`✅ Comentario eliminado correctamente`);
+      manageComments(postId, 'Post'); // Recargar comentarios
+    } else {
+      alert(`❌ Error: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    alert(`❌ Error de conexión: ${error.message}`);
+  });
+}
+
+function showTables() {
+  fetch('/admin/database/tables')
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      document.getElementById('tableInfo').innerHTML = 
+        `<div class="alert alert-danger">❌ ${data.error}</div>`;
+      return;
+    }
+    
+    let html = '';
+    data.tables.forEach(table => {
+      html += `<div class="table-info">
+        <h6>📋 ${table.name}</h6>
+        <p><strong>Filas:</strong> ${table.rows} | <strong>Columnas:</strong> ${table.columns.length}</p>
+        <div class="row">`;
+      
+      table.columns.forEach(col => {
+        html += `<div class="col-md-3 mb-1">
+          <small><strong>${col.name}</strong><br>
+          <span class="text-muted">${col.type}</span></small>
+        </div>`;
+      });
+      
+      html += '</div></div>';
+    });
+    
+    document.getElementById('tableInfo').innerHTML = html;
+    document.getElementById('tableCount').textContent = data.tables.length;
+  });
+}
+
+function analyzeDB() {
+  fetch('/admin/database/analyze')
+  .then(response => response.json())
+  .then(data => {
+    const html = `
+      <div class="alert alert-info">
+        <h6>🔍 Análisis de Base de Datos</h6>
+        <p><strong>Tamaño total:</strong> ${data.size || 'N/A'}</p>
+        <p><strong>Conexiones activas:</strong> ${data.connections || 'N/A'}</p>
+        <p><strong>Última optimización:</strong> ${data.last_vacuum || 'Nunca'}</p>
+        <p><strong>Índices:</strong> ${data.indexes || 0}</p>
+      </div>
+    `;
+    document.getElementById('queryResults').innerHTML = html;
+  });
+}
+
+function optimizeDB() {
+  if (!confirm('¿Optimizar la base de datos? Esto puede tomar unos minutos.')) return;
+  
+  document.getElementById('queryResults').innerHTML = '<div class="text-info">⚡ Optimizando base de datos...</div>';
+  
+  fetch('/admin/database/optimize', {method: 'POST'})
+  .then(response => response.json())
+  .then(data => {
+    const alertClass = data.success ? 'alert-success' : 'alert-danger';
+    const icon = data.success ? '✅' : '❌';
+    document.getElementById('queryResults').innerHTML = 
+      `<div class="alert ${alertClass}">${icon} ${data.message}</div>`;
+  });
+}
+
+function exportDB() {
+  if (!confirm('¿Exportar la base de datos completa?')) return;
+  
+  document.getElementById('queryResults').innerHTML = '<div class="text-info">💾 Generando exportación...</div>';
+  
+  fetch('/admin/database/export', {method: 'POST'})
+  .then(response => {
+    if (response.ok) {
+      return response.blob();
+    }
+    throw new Error('Error en la exportación');
+  })
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `database_export_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.getElementById('queryResults').innerHTML = 
+      '<div class="alert alert-success">✅ Base de datos exportada correctamente</div>';
+  })
+  .catch(error => {
+    document.getElementById('queryResults').innerHTML = 
+      `<div class="alert alert-danger">❌ Error: ${error.message}</div>`;
+  });
+}
+
+function showImportModal() {
+  $('#importModal').modal('show');
+}
+
+function importDB() {
+  const fileInput = document.getElementById('importFile');
+  const confirmCheck = document.getElementById('confirmImport');
+  
+  if (!fileInput.files[0]) {
+    alert('❌ Selecciona un archivo JSON');
+    return;
+  }
+  
+  if (!confirmCheck.checked) {
+    alert('❌ Debes confirmar que entiendes los riesgos');
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('csrf_token', '{{ csrf_token() }}');
+  
+  // Mostrar progreso
+  document.getElementById('importProgress').style.display = 'block';
+  const progressBar = document.querySelector('.progress-bar');
+  progressBar.style.width = '50%';
+  
+  fetch('/admin/database/import', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    progressBar.style.width = '100%';
+    
+    if (data.success) {
+      alert(`✅ Importación completada: ${data.message}`);
+      $('#importModal').modal('hide');
+      showTables(); // Actualizar vista
+    } else {
+      alert(`❌ Error: ${data.error}`);
+    }
+  })
+  .catch(error => {
+    alert(`❌ Error de conexión: ${error.message}`);
+  })
+  .finally(() => {
+    document.getElementById('importProgress').style.display = 'none';
+    progressBar.style.width = '0%';
+  });
+}
+
+function loadQuery(query) {
+  document.getElementById('sqlEditor').value = query;
+}
+
+function clearEditor() {
+  document.getElementById('sqlEditor').value = '';
+}
+
+function formatQuery() {
+  const editor = document.getElementById('sqlEditor');
+  let query = editor.value.trim();
+  
+  if (!query) {
+    alert('❌ No hay consulta para formatear');
+    return;
+  }
+  
+  // Formateo básico de SQL
+  query = query
+    .replace(/\s+/g, ' ') // Normalizar espacios
+    .replace(/SELECT/gi, 'SELECT')
+    .replace(/FROM/gi, '\nFROM')
+    .replace(/WHERE/gi, '\nWHERE')
+    .replace(/GROUP BY/gi, '\nGROUP BY')
+    .replace(/ORDER BY/gi, '\nORDER BY')
+    .replace(/HAVING/gi, '\nHAVING')
+    .replace(/LIMIT/gi, '\nLIMIT')
+    .replace(/JOIN/gi, '\nJOIN')
+    .replace(/LEFT JOIN/gi, '\nLEFT JOIN')
+    .replace(/RIGHT JOIN/gi, '\nRIGHT JOIN')
+    .replace(/INNER JOIN/gi, '\nINNER JOIN')
+    .replace(/AND/gi, '\n  AND')
+    .replace(/OR/gi, '\n  OR');
+  
+  editor.value = query;
+}
+
+function showQueryExamples() {
+  const examples = `
+-- Ejemplos de consultas útiles:
+
+-- 1. Buscar usuarios por patrón en email
+SELECT username, email FROM usernamedb WHERE email LIKE '%gmail%';
+
+-- 2. Posts con más de X vistas
+SELECT title, count_view FROM blogpg WHERE count_view > 100;
+
+-- 3. Usuarios registrados en un rango de fechas
+SELECT username, time FROM usernamedb WHERE time BETWEEN '2025-01-01' AND '2025-01-31';
+
+-- 4. Contar posts por mes
+SELECT DATE_TRUNC('month', CAST(time AS TIMESTAMP)) as mes, COUNT(*) 
+FROM blogpg GROUP BY DATE_TRUNC('month', CAST(time AS TIMESTAMP));
+
+-- 5. Top autores con promedio de vistas
+SELECT u.username, COUNT(b.id) as posts, AVG(b.count_view) as promedio
+FROM usernamedb u JOIN blogpg b ON u.id = b.creat_id 
+GROUP BY u.username ORDER BY promedio DESC;
+  `;
+  
+  document.getElementById('sqlEditor').value = examples;
+}
+
+function updateHistoryDisplay() {
+  const html = queryHistory.slice(0, 10).map(item => 
+    `<div class="history-item" onclick="loadQuery('${item.query.replace(/'/g, '\\\'')}')"
+         title="Clic para cargar">
+      <small class="text-muted">${item.timestamp}</small>
+      <div style="font-family: monospace; font-size: 0.85em; margin-top: 4px;">
+        ${item.query.substring(0, 60)}${item.query.length > 60 ? '...' : ''}
+      </div>
+    </div>`
+  ).join('');
+  
+  document.getElementById('queryHistory').innerHTML = html || '<p class="text-muted">Sin historial</p>';
+}
+
+// Detectar cambio de tema y actualizar variables CSS
+function updateThemeVariables() {
+  const themeLink = document.getElementById('theme-link');
+  const isLightMode = themeLink && themeLink.getAttribute('href').includes('theme.css');
+  
+  if (isLightMode) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+// Observar cambios en el tema
+const observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
+      updateThemeVariables();
+    }
+  });
+});
+
+// Cargar información inicial
+document.addEventListener('DOMContentLoaded', () => {
+  showTables();
+  
+  // Inicializar tema
+  const themeLink = document.getElementById('theme-link');
+  if (themeLink) {
+    observer.observe(themeLink, { attributes: true });
+    updateThemeVariables();
+  }
+});
+</script>
+
+{% endblock %}

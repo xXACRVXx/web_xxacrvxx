@@ -5,85 +5,499 @@
 <link rel="alternative" href="https://wwww.xxacrvxx.ydns.eu/" />
 {% endblock %}
 
-{% block title %}WEB DE xXACRVXx{% endblock %}
+{% block title %}xXACRVXx Web - Plataforma Personal Open-Source{% endblock %}
 
 {% block content %}
 
-<div class="page-section border-top">
+<!-- Hero Section -->
+<div class="home-banner">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      <div class="col-lg-6 py-3 wow fadeInUp">
+        <h1 class="mb-4">xXACRVXx Web Platform</h1>
+        <p class="text-lg mb-4">
+          Plataforma web personal open-source desarrollada con Python y Flask. 
+          Ofrece gestión de archivos en la nube, blog personal y panel de administración completo.
+        </p>
+        <div class="mb-4">
+          <span class="badge badge-success mr-2">Open Source</span>
+          <span class="badge badge-info mr-2">Python + Flask</span>
+          <span class="badge badge-warning">PostgreSQL</span>
+        </div>
+        <div class="d-flex flex-wrap justify-content-start">
+          <a href="{{url_for('regist')}}" class="btn btn-primary mb-2 mr-2">Crear Cuenta</a>
+          <a href="{{url_for('portfolio')}}" class="btn btn-outline mb-2 mr-2">Portfolio</a>
+          <a href="https://github.com/xXACRVXx/web_xxacrvxx" class="btn btn-outline mb-2" target="_blank">GitHub</a>
+        </div>
+      </div>
+      <div class="col-lg-6 py-3 wow zoomIn text-center">
+        <div class="img-place">
+          <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="xXACRVXx Platform">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Características Principales -->
+<div class="page-section">
+  <div class="container">
+    <div class="text-center wow fadeInUp">
+      <div class="subhead">Características</div>
+      <h2 class="title-section">Funcionalidades <span class="marked">Principales</span></h2>
+      <div class="divider mx-auto"></div>
+    </div>
+    <div class="row my-5">
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-cloud-upload text-primary" style="font-size: 48px;"></span>
+            </div>
+            <h5>Gestión de Archivos</h5>
+            <p>Sube, organiza y accede a tus archivos desde cualquier dispositivo. Crea carpetas, renombra archivos y comparte con enlaces seguros.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-book text-primary" style="font-size: 48px;"></span>
+            </div>
+            <h5>Blog Personal</h5>
+            <p>Crea y publica contenido con soporte para Markdown, categorías, etiquetas y sistema de comentarios interactivo.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-settings text-primary" style="font-size: 48px;"></span>
+            </div>
+            <h5>Panel de Admin</h5>
+            <p>Dashboard completo con métricas del sistema, gestión de usuarios, monitoreo en tiempo real y herramientas de mantenimiento.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-layers text-success" style="font-size: 48px;"></span>
+            </div>
+            <h5>Arquitectura Modular</h5>
+            <p>Diseño modular que permite funcionamiento incluso tras fallos de componentes. Fácil personalización y extensión.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-globe text-info" style="font-size: 48px;"></span>
+            </div>
+            <h5>Multiplataforma</h5>
+            <p>Compatible con cualquier hardware que soporte Python. Funciona en Windows, Linux, macOS y sistemas embebidos.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4 py-3 wow fadeInUp">
+        <div class="card text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <span class="mai-wifi-off text-warning" style="font-size: 48px;"></span>
+            </div>
+            <h5>Intranet Ready</h5>
+            <p>Funciona completamente offline en redes locales. Solo requiere servidor SMTP opcional para notificaciones por email.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tecnologías -->
+<div class="page-section">
+  <div class="container">
+    <div class="text-center wow fadeInUp">
+      <div class="subhead">Stack Tecnológico</div>
+      <h2 class="title-section">Construido con <span class="marked">Tecnologías Modernas</span></h2>
+      <div class="divider mx-auto"></div>
+      <p class="text-lg mb-5">Arquitectura sólida basada en tecnologías probadas y confiables, diseñada para escalabilidad y mantenibilidad a largo plazo.</p>
+    </div>
+    <div class="row my-5">
+      <div class="col-md-3 col-6 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <i class="fab fa-python" style="font-size: 48px; color: #3776ab;"></i>
+        </div>
+        <h6>Python 3.11+</h6>
+        <p class="text-muted">Backend robusto con tipado estático, manejo de errores avanzado y optimizaciones de rendimiento</p>
+      </div>
+      <div class="col-md-3 col-6 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <i class="fas fa-flask" style="font-size: 48px; color: #000;"></i>
+        </div>
+        <h6>Flask Framework</h6>
+        <p class="text-muted">Microframework flexible con extensiones para autenticación, CSRF, SocketIO y más</p>
+      </div>
+      <div class="col-md-3 col-6 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <i class="fas fa-database" style="font-size: 48px; color: #336791;"></i>
+        </div>
+        <h6>PostgreSQL</h6>
+        <p class="text-muted">Base de datos empresarial con soporte para JSON, índices avanzados y transacciones ACID</p>
+      </div>
+      <div class="col-md-3 col-6 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <i class="fab fa-docker" style="font-size: 48px; color: #2496ed;"></i>
+        </div>
+        <h6>Docker Ready</h6>
+        <p class="text-muted">Contenedores optimizados con Docker Compose para despliegue escalable y replicable</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Posts Recientes -->
+{% if recent %}
+<div class="page-section">
   <div class="container">
     <div class="text-center wow fadeInUp">
       <div class="subhead">Blog</div>
-      <h2 class="title-section">Lee nuestros post mas <span class="marked">recientes</span></h2>
+      <h2 class="title-section">Posts <span class="marked">Recientes</span></h2>
       <div class="divider mx-auto"></div>
     </div>
     <div class="row my-5 card-blog-row">
       {% for post in recent %}
       <div class="col-md-6 col-lg-3 py-3 wow fadeInUp">
-        <div class="card-blog">
-          <div class="header">
-            <div class="entry-footer">
-              <div class="post-author">Por: {{ post['creat_id'] }}</div>
-              <a href="#" class="post-date">{{ post['time'][:10]}}</a>
+        <a href="{{ url_for('blogview', name=post['title']) }}" class="text-decoration-none">
+          <div class="card h-100 shadow-sm border-0" style="transition: all 0.3s; cursor: pointer;" onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.1)'">
+            <div class="position-relative" style="height: 180px; overflow: hidden; border-radius: 0.375rem 0.375rem 0 0;">
+              <img src="{{ post['image'] if post['image'] else url_for('static', filename='blog/default.png') }}" 
+                   class="w-100 h-100" 
+                   style="object-fit: cover; transition: transform 0.4s;" 
+                   alt="{{post['title']}}" 
+                   onerror="this.onerror=null; this.src='{{url_for('static', filename='blog/default.png')}}'" 
+                   onmouseover="this.style.transform='scale(1.1)'" 
+                   onmouseout="this.style.transform='scale(1)'">
+              <div class="position-absolute" style="top: 12px; right: 12px;">
+                <span class="badge badge-primary shadow-sm">👁️ {{ post['count_view'] or 0 }}</span>
+              </div>
+              <div class="position-absolute w-100" style="bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); height: 60px;"></div>
+            </div>
+            <div class="card-body d-flex flex-column p-3">
+              <h6 class="card-title mb-2 font-weight-bold" style="height: 48px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; color: var(--bs-body-color);">
+                {{ post['title'] }}
+              </h6>
+              <p class="card-text text-muted mb-3 flex-grow-1" style="height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.4; font-size: 0.9rem;">{{ post['descript'] }}</p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                  <div class="d-flex align-items-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 12px;">
+                      <span class="text-white font-weight-bold">{{ post['creat_id'][0].upper() }}</span>
+                    </div>
+                    <small class="ml-2 font-weight-medium" style="color: var(--bs-body-color); font-size: 0.8rem;">{{ post['creat_id'] }}</small>
+                  </div>
+                  <small class="text-muted" style="font-size: 0.75rem;">
+                    📅 {{ post['time'][:10] }}
+                  </small>
+                </div>
+                <div class="text-center">
+                  <span class="btn btn-primary btn-sm btn-block font-weight-bold" style="border-radius: 20px; pointer-events: none; font-size: 0.8rem;">
+                    📖 Leer Artículo
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="body">
-            <div class="post-title"><a href="{{ url_for('blogview', name=post['title']) }}">{{ post['title'] }}</a></div>
-            <div class="post-excerpt">{{ post['descript'] }}</div>
-          </div>
-          <div class="footer">
-            <a href="{{ url_for('blogview', name=post['title']) }}">Leer Mas <span class="mai-chevron-forward text-sm"></span></a>
-          </div>
-        </div>
+        </a>
       </div>
       {% endfor %}
     </div>
-
     <div class="text-center">
-      <a href="{{url_for('blog')}}" class="btn btn-outline-primary rounded-pill">Descuble Mas</a>
+      <a href="{{url_for('blog')}}" class="btn btn-outline-primary rounded-pill">Ver Todos los Posts</a>
     </div>
-  </div> <!-- .container -->
-</div> <!-- .page-section -->
+  </div>
+</div>
+{% endif %}
 
+<!-- Funcionalidades Detalladas -->
+<div class="page-section">
+  <div class="container">
+    <div class="text-center wow fadeInUp mb-5">
+      <div class="subhead">Funcionalidades Core</div>
+      <h2 class="title-section">Capacidades <span class="marked">Avanzadas</span></h2>
+      <div class="divider mx-auto"></div>
+    </div>
+    <div class="row">
+      <div class="col-lg-6 py-3 wow fadeInLeft">
+        <h2 class="title-section">🗂️ Gestión de Archivos Avanzada</h2>
+        <div class="divider"></div>
+        <p class="mb-3">Sistema completo de almacenamiento en la nube con características empresariales:</p>
+        <ul class="mb-4">
+          <li>✅ <strong>Subida masiva:</strong> Archivos hasta 4GB con validación de tipos</li>
+          <li>✅ <strong>Estructura jerárquica:</strong> Carpetas anidadas con navegación breadcrumb</li>
+          <li>✅ <strong>Miniaturas inteligentes:</strong> Generación automática con caché optimizado</li>
+          <li>✅ <strong>Descarga remota:</strong> Importación directa desde URLs con timeout configurable</li>
+          <li>✅ <strong>Compartición segura:</strong> Enlaces JWT con expiración y permisos granulares</li>
+          <li>✅ <strong>Operaciones avanzadas:</strong> Renombrado, movimiento y duplicación</li>
+          <li>✅ <strong>Vista previa:</strong> Visualización integrada de imágenes y documentos</li>
+          <li>✅ <strong>Paginación:</strong> Navegación eficiente en directorios grandes</li>
+        </ul>
+        <div class="d-flex flex-wrap">
+          <a href="{{url_for('cloud')}}" class="btn btn-primary mb-2 mr-2">Explorar Archivos</a>
+          <a href="{{url_for('upload')}}" class="btn btn-outline mb-2">Subir Archivos</a>
+        </div>
+      </div>
+      <div class="col-lg-6 py-3 wow fadeInRight">
+        <h2 class="title-section">📝 Blog y Contenido</h2>
+        <div class="divider"></div>
+        <p class="mb-3">Plataforma de publicación completa con herramientas profesionales:</p>
+        <ul class="mb-4">
+          <li>✅ <strong>Editor Markdown:</strong> Vista previa en tiempo real con sintaxis highlighting</li>
+          <li>✅ <strong>Comentarios dinámicos:</strong> Sistema anidado con moderación automática</li>
+          <li>✅ <strong>Taxonomía flexible:</strong> Categorías y etiquetas con autocompletado</li>
+          <li>✅ <strong>Analytics integrado:</strong> Contador de vistas y estadísticas de engagement</li>
+          <li>✅ <strong>Búsqueda full-text:</strong> Índices optimizados en título y contenido</li>
+          <li>✅ <strong>SEO automático:</strong> RSS, sitemap XML y meta tags dinámicos</li>
+          <li>✅ <strong>Filtros avanzados:</strong> Por autor, fecha, categoría y popularidad</li>
+          <li>✅ <strong>Paginación adaptativa:</strong> Carga optimizada según dispositivo</li>
+        </ul>
+        <div class="d-flex flex-wrap">
+          <a href="{{url_for('blog')}}" class="btn btn-primary mb-2 mr-2">Ver Blog</a>
+          <a href="{{url_for('blogpost')}}" class="btn btn-outline mb-2">Crear Post</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Características Técnicas -->
+<div class="page-section">
+  <div class="container">
+    <div class="text-center wow fadeInUp">
+      <div class="subhead">Características Técnicas</div>
+      <h2 class="title-section">Diseñado para <span class="marked">Profesionales</span></h2>
+      <div class="divider mx-auto"></div>
+    </div>
+    <div class="row my-5">
+      <div class="col-md-6 col-lg-3 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <span class="mai-shield-checkmark text-success" style="font-size: 48px;"></span>
+        </div>
+        <h6>Seguridad Avanzada</h6>
+        <p class="text-muted">Autenticación JWT, CSRF protection, validación de archivos, logs de seguridad y encriptación de datos</p>
+      </div>
+      <div class="col-md-6 col-lg-3 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <span class="mai-analytics text-info" style="font-size: 48px;"></span>
+        </div>
+        <h6>Analytics Integrado</h6>
+        <p class="text-muted">Métricas de visitantes, análisis de contenido, estadísticas en tiempo real y historial de estabilidad</p>
+      </div>
+      <div class="col-md-6 col-lg-3 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <span class="mai-phone-portrait text-warning" style="font-size: 48px;"></span>
+        </div>
+        <h6>Responsive Design</h6>
+        <p class="text-muted">Interfaz adaptable a móviles, tablets y escritorio con modo oscuro automático</p>
+      </div>
+      <div class="col-md-6 col-lg-3 py-3 text-center wow fadeInUp">
+        <div class="mb-3">
+          <span class="mai-code text-primary" style="font-size: 48px;"></span>
+        </div>
+        <h6>APIs REST</h6>
+        <p class="text-muted">Endpoints para integración con bots, aplicaciones externas y automatización</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Administración y Monitoreo -->
 <div class="page-section">
   <div class="container">
     <div class="row">
       <div class="col-lg-6 py-3 wow fadeInLeft">
-        <h2 class="title-section">Publicar nuevo contenido</h2>
+        <h2 class="title-section">⚙️ Panel de Administración</h2>
         <div class="divider"></div>
-        <p class="mb-5">Recientemente añadimos los blogs y queremos que cualquiera pueda publicar cosas en nuestra web, para hacerlo solo nesesita logearse</p>
-        <a href="{{url_for('blogpost')}}" class="btn btn-primary">Nuevo post</a>
-        <a href="{{url_for('blog')}}" class="btn btn-outline ml-2">Blog</a>
+        <ul class="mb-4">
+          <li>✅ Dashboard con métricas en tiempo real</li>
+          <li>✅ Gestión completa de usuarios</li>
+          <li>✅ Monitoreo de sistema (CPU, RAM, disco)</li>
+          <li>✅ Logs de seguridad y errores</li>
+          <li>✅ Backup y restauración automática</li>
+          <li>✅ Configuración de variables de entorno</li>
+          <li>✅ Análisis de base de datos</li>
+          <li>✅ Control de mantenimiento</li>
+        </ul>
+        <div class="d-flex flex-wrap">
+          <a href="{{url_for('admin_dashboard')}}" class="btn btn-primary mb-2 mr-2">Panel Admin</a>
+          <a href="{{url_for('status_server')}}" class="btn btn-outline mb-2">Estado del Sistema</a>
+        </div>
       </div>
       <div class="col-lg-6 py-3 wow fadeInRight">
-        <h2 class="title-section">Descargar y subir archivos</h2>
+        <h2 class="title-section">🔧 Adaptabilidad Total</h2>
         <div class="divider"></div>
-        <p>Al crearte una cuenta en nuestra web tambien podras acceder a guardar tus archivos en nuestro servidor y poder descargarlos en otro dispositivo de forma facil y rapida o tambien para compartirlos con tus amigos,los archivos estan protegidos por nuestro servidor y solo estaran disponibles para las personas a las que les proporciones el link</p>
-        <a href="{{url_for('download')}}" class="btn btn-primary">Descargar Archivos</a>
-        <a href="{{url_for('upload')}}" class="btn btn-outline ml-2">Subir archivos</a>
+        <ul class="mb-4">
+          <li>✅ Plantillas HTML completamente editables</li>
+          <li>✅ Backend modular y extensible</li>
+          <li>✅ Configuración SMTP personalizable</li>
+          <li>✅ Soporte completo para intranet</li>
+          <li>✅ Funciona sin servicios externos</li>
+          <li>✅ Tolerancia a fallos de módulos</li>
+          <li>✅ Despliegue en cualquier hardware</li>
+          <li>✅ Modo offline completamente funcional</li>
+        </ul>
+        <div class="d-flex flex-wrap">
+          <a href="{{url_for('settings')}}" class="btn btn-primary mb-2 mr-2">Configuración</a>
+          <a href="{{url_for('portfolio')}}" class="btn btn-outline mb-2">Portfolio</a>
+        </div>
       </div>
     </div>
-  </div> <!-- .container -->
-</div> <!-- .page-section -->
+  </div>
+</div>
 
-<div class="home-banner">
-  <div class="container h-100">
-    <div class="row align-items-center h-100">
-      
-      <div class="col-lg-6 py-3 wow fadeInUp">
-        <h1 class="mb-4">Esta web sigue en desarrollo activo</h1>
-        <p class="text-lg mb-5">
-          No deberias estar viendo esto ahora mismo, 
-          esta web apenas esta empezando a ser desarrollada, vuelve en un tiempo
-        </p>
-        <p class="text-lg mb-5">
-          Si quieres probar las funciones disponibles hasta el momento
-          puedes iniciar sesion y acceder a ellas
-        </p>
+<!-- Portfolio del Desarrollador -->
+<div class="page-section" id="portfolio">
+  <div class="container">
+    <div class="text-center wow fadeInUp">
+      <div class="subhead">Sobre el Desarrollador</div>
+      <h2 class="title-section">Portfolio de <span class="marked">xXACRVXx</span></h2>
+      <div class="divider mx-auto"></div>
+      <p class="text-lg mb-5">Desarrollador autodidacta de Cuba, especializado en backend con Python y administración de servidores Linux. Apasionado por el open-source y la creación de soluciones prácticas.</p>
+    </div>
+    <div class="row my-5">
+      <div class="col-lg-4 py-3 wow fadeInUp">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5>👨‍💻 Perfil Profesional</h5>
+            <ul class="mb-3">
+              <li><strong>Experiencia:</strong> 4+ años programando (desde 2020)</li>
+              <li><strong>Especialidad:</strong> Backend con Python y Flask</li>
+              <li><strong>Industria:</strong> Metalúrgica (trabajo principal)</li>
+              <li><strong>Hobby:</strong> Desarrollo de software y servidores</li>
+              <li><strong>Enfoque:</strong> APIs RESTful y automatización</li>
+            </ul>
+          </div>
+        </div>
       </div>
+      <div class="col-lg-4 py-3 wow fadeInUp">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5>🛠️ Stack Tecnológico</h5>
+            <ul class="mb-3">
+              <li><strong>Backend:</strong> Python, Flask, FastAPI</li>
+              <li><strong>Bases de Datos:</strong> PostgreSQL, MySQL, SQLite</li>
+              <li><strong>DevOps:</strong> Docker, Nginx, Ubuntu Server</li>
+              <li><strong>Sistemas:</strong> Linux (Debian, Arch, Mint)</li>
+              <li><strong>Aprendiendo:</strong> Go, C, JavaScript</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-4 py-3 wow fadeInUp">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5>🚀 Proyectos Destacados</h5>
+            <ul class="mb-3">
+              <li><strong>web_xxacrvxx:</strong> Esta plataforma completa</li>
+              <li><strong>etecsa_search_bot:</strong> Bot Telegram para ETECSA</li>
+              <li><strong>chat_tcp_server:</strong> Chat con sockets TCP</li>
+              <li><strong>socket_server_http:</strong> Servidor HTTP desde cero</li>
+              <li><strong>Varios bots:</strong> Automatización con Telegram</li>
+            </ul>
+            <a href="https://github.com/xXACRVXx" class="btn btn-outline-primary btn-sm" target="_blank">Ver GitHub</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="text-center">
+      <a href="{{url_for('portfolio')}}" class="btn btn-primary">Ver Portfolio Completo</a>
+    </div>
+    <div class="row">
+      <div class="col-lg-6 py-3 wow fadeInLeft">
+        <h3>Casos de Uso de la Plataforma</h3>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <span class="mai-home text-primary mr-3" style="font-size: 24px;"></span>
+              <div>
+                <h6 class="mb-1">Uso Personal</h6>
+                <small class="text-muted">Nube propia y blog personal</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <span class="mai-business text-success mr-3" style="font-size: 24px;"></span>
+              <div>
+                <h6 class="mb-1">Empresas</h6>
+                <small class="text-muted">Archivos y documentación interna</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <span class="mai-school text-warning mr-3" style="font-size: 24px;"></span>
+              <div>
+                <h6 class="mb-1">Educación</h6>
+                <small class="text-muted">Recursos y contenido educativo</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="d-flex align-items-center">
+              <span class="mai-server text-info mr-3" style="font-size: 24px;"></span>
+              <div>
+                <h6 class="mb-1">Intranet</h6>
+                <small class="text-muted">Redes corporativas offline</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 py-3 wow fadeInRight">
+        <h3>Contacto</h3>
+        <p class="mb-4">Siempre abierto a colaboraciones, consultas técnicas y nuevos proyectos interesantes.</p>
+        <div class="mb-3">
+          <div class="d-flex align-items-center mb-2">
+            <span class="mai-mail text-primary mr-3" style="font-size: 20px;"></span>
+            <a href="mailto:xxacrvxx@duck.com">xxacrvxx@duck.com</a>
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <span class="mai-chatbubbles text-info mr-3" style="font-size: 20px;"></span>
+            <a href="https://t.me/xXACRVXx" target="_blank">@xXACRVXx en Telegram</a>
+          </div>
+          <div class="d-flex align-items-center">
+            <span class="mai-logo-github text-dark mr-3" style="font-size: 20px;"></span>
+            <a href="https://github.com/xXACRVXx" target="_blank">GitHub Profile</a>
+          </div>
+        </div>
 
-      <div class="col-lg-6 py-3 wow zoomIn text-center">
-        <div class="img-place">
-          <img src="{{url_for('static', filename='img/bg_image_1.png')}}" alt="xd">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Call to Action -->
+<div class="page-section bg-primary text-white">
+  <div class="container text-center">
+    <div class="wow fadeInUp">
+      <h2 class="mb-4">¿Listo para comenzar?</h2>
+      <p class="text-lg mb-5">
+        Únete a nuestra plataforma y descubre todas las funcionalidades disponibles.
+        Es completamente gratuito y open-source.
+      </p>
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="d-flex flex-wrap justify-content-center">
+            <a href="{{url_for('regist')}}" class="btn btn-light btn-lg mx-1 mb-2">Crear Cuenta</a>
+            <a href="{{url_for('status_server')}}" class="btn btn-outline-light btn-lg mx-1 mb-2">Estado</a>
+            <a href="https://github.com/xXACRVXx/web_xxacrvxx" class="btn btn-outline-light btn-lg mx-1 mb-2" target="_blank">GitHub</a>
+            <a href="mailto:xxacrvxx@duck.com" class="btn btn-outline-light btn-lg mx-1 mb-2">Contacto</a>
+          </div>
         </div>
       </div>
     </div>

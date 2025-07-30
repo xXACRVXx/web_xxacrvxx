@@ -53,19 +53,23 @@
 						</div>
 
                         <form action="regist" method="post"  id="sing"  data-focus="false">
+                            {{ form.hidden_tag() }}
                             <div class="form-group">
-                                <input type="email" class="form-control-input" name="email" required>
-                                <label class="label-control" for="semail">Correo</label>
+                                {{ form.email(class="form-control-input", required=True) }}
+                                <label class="label-control" for="email">Correo</label>
                                 <div class="help-block with-errors"></div>
                             </div>
                             <div class="form-group">
-                                <input type="text" class="form-control-input" name="username" required>
-                                <label class="label-control" for="sname">Usuario</label>
+                                {{ form.username(class="form-control-input", required=True) }}
+                                <label class="label-control" for="username">Usuario</label>
                                 <div class="help-block with-errors"></div>
                             </div>
-                            <div class="form-group">
-                                <input type="password" class="form-control-input" name="passw" required>
-                                <label class="label-control" for="spassword">Contraseña</label>
+                            <div class="form-group" style="position: relative;">
+                                {{ form.passw(class="form-control-input", required=True) }}
+                                <label class="label-control" for="passw">Contraseña</label>
+                                <button type="button" onclick="togglePassword('passw')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 12px; color: #666;" title="Mostrar/Ocultar contraseña">
+                                    <span id="passw-toggle">mostrar</span>
+                                </button>
                                 <div class="help-block with-errors"></div>
                             </div>
                             <div class="form-group checkbox">
@@ -73,7 +77,7 @@
                                 <div class="help-block with-errors"></div>
                             </div>
                             <div class="form-group">
-                                <button type="submit" class="form-control-submit-button">Registrarse</button>
+                                {{ form.submit(class="form-control-submit-button") }}
                             </div>
                             
                         </form>

@@ -1,0 +1,514 @@
+{% extends 'layout.html' %}
+
+{% block title %}Monitor del Sistema{% endblock %}
+
+{% block content %}
+
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2">
+        <h1 class="mb-3">📈 Monitor del Sistema</h1>
+        <p class="text-lg mb-4">Monitoreo en tiempo real del sistema</p>
+        <a href="/admin/dashboard" class="btn btn-outline-primary">← Volver al Dashboard</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Estadísticas en Tiempo Real -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h3 class="text-primary" id="totalVisits">{{ total_visits }}</h3>
+              <small>Visitas Totales</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h3 class="text-success" id="uniqueVisitors">{{ unique_visitors }}</h3>
+              <small>Visitantes Únicos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h3 class="text-info" id="visitsToday">{{ realtime.visits_today }}</h3>
+              <small>Visitas Hoy</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h3 class="text-warning" id="onlineNow">{{ realtime.online_now }}</h3>
+              <small>En Línea Ahora</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos de Visitas -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Visitas por Hora (Hoy)</h5>
+            </div>
+            <div class="card-body">
+              <canvas id="hourlyChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between">
+              <h5>📈 Visitas Temporales</h5>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary active" onclick="showChart('daily')">7 Días</button>
+                <button class="btn btn-outline-primary" onclick="showChart('monthly')">6 Meses</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <canvas id="temporalChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Países y Páginas -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5>🌍 Top Países</h5>
+              <button class="btn btn-sm btn-outline-primary" onclick="loadGeoData()" id="geoBtn">
+                <span id="geoBtnText">Cargar Datos</span>
+                <span id="geoSpinner" class="spinner-border spinner-border-sm d-none"></span>
+              </button>
+            </div>
+            <div class="card-body">
+              <div id="topCountries">
+                <div class="text-muted text-center py-3">
+                  <i class="fas fa-globe"></i><br>
+                  Haz clic en "Cargar Datos" para ver información geográfica
+                  <br><small>Esto puede tardar unos segundos</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📄 Páginas Populares</h5>
+            </div>
+            <div class="card-body">
+              <div id="topPages">
+                {% for page, visits in top_pages.items() %}
+                <div class="d-flex justify-content-between mb-2">
+                  <span>{{ page }}</span>
+                  <span class="badge badge-success">{{ visits }}</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sistema -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>💾 Uso de Memoria</h5>
+            </div>
+            <div class="card-body">
+              <div id="memoryChart">Cargando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>💽 Uso de Disco</h5>
+            </div>
+            <div class="card-body">
+              <div id="diskChart">Cargando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegadores y SO -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>🌐 Navegadores</h5>
+            </div>
+            <div class="card-body">
+              {% for browser, count in browsers.items() %}
+              <div class="d-flex justify-content-between mb-2">
+                <span>{{ browser }}</span>
+                <span class="badge badge-info">{{ count }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>💻 Sistemas Operativos</h5>
+            </div>
+            <div class="card-body">
+              {% for os, count in operating_systems.items() %}
+              <div class="d-flex justify-content-between mb-2">
+                <span>{{ os }}</span>
+                <span class="badge badge-secondary">{{ count }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispositivos y Ciudades -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📱 Dispositivos</h5>
+            </div>
+            <div class="card-body">
+              {% for device, count in devices.items() %}
+              <div class="d-flex justify-content-between mb-2">
+                <span>{{ device }}</span>
+                <span class="badge badge-warning">{{ count }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>🏢 Top Ciudades</h5>
+            </div>
+            <div class="card-body">
+              <div id="topCities">
+                <div class="text-muted text-center py-3">
+                  <i class="fas fa-city"></i><br>
+                  Datos disponibles después de cargar información geográfica
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ISPs y Métricas Avanzadas -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>🌐 Top ISPs</h5>
+            </div>
+            <div class="card-body">
+              <div id="topIsps">
+                <div class="text-muted text-center py-3">
+                  <i class="fas fa-network-wired"></i><br>
+                  Datos disponibles después de cargar información geográfica
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Métricas Avanzadas</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Bounce Rate</span>
+                <span class="badge badge-{{ 'success' if bounce_rate < 50 else 'warning' if bounce_rate < 70 else 'danger' }}">{{ bounce_rate }}%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Bots Detectados</span>
+                <span class="badge badge-secondary">{{ bots_detected }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Promedio/Hora</span>
+                <span class="badge badge-primary">{{ avg_visits_per_hour }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Páginas/Sesión</span>
+                <span class="badge badge-info" id="pagesPerSession">{{ realtime.pages_per_session }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Hora Pico</span>
+                <span class="badge badge-warning">{{ realtime.peak_hour[0] }}:00 ({{ realtime.peak_hour[1] }})</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Duración Sesión</span>
+                <span class="badge badge-success">{{ avg_session_duration }}min</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sistema -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Estadísticas del Sistema</h5>
+            </div>
+            <div class="card-body">
+              <div id="systemStats">Cargando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let hourlyChart, temporalChart;
+let currentView = 'daily';
+
+const dailyData = {{ daily_visits | tojson }};
+const monthlyData = {{ monthly_visits | tojson }};
+
+function initCharts() {
+  // Gráfico por horas
+  const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  hourlyChart = new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+      labels: {{ hourly_visits | map(attribute='hour') | list | tojson }},
+      datasets: [{
+        label: 'Visitas',
+        data: {{ hourly_visits | map(attribute='visits') | list | tojson }},
+        borderColor: '#6C55F9',
+        backgroundColor: 'rgba(108, 85, 249, 0.1)',
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+
+  // Gráfico temporal (días/meses)
+  const temporalCtx = document.getElementById('temporalChart').getContext('2d');
+  temporalChart = new Chart(temporalCtx, {
+    type: 'bar',
+    data: {
+      labels: dailyData.map(d => d.date),
+      datasets: [{
+        label: 'Visitas',
+        data: dailyData.map(d => d.visits),
+        backgroundColor: '#35bb78'
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+function showChart(view) {
+  currentView = view;
+  
+  // Actualizar botones
+  document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Actualizar datos del gráfico
+  if (view === 'daily') {
+    temporalChart.data.labels = dailyData.map(d => d.date);
+    temporalChart.data.datasets[0].data = dailyData.map(d => d.visits);
+    temporalChart.data.datasets[0].label = 'Visitas Diarias';
+  } else {
+    temporalChart.data.labels = monthlyData.map(d => d.month);
+    temporalChart.data.datasets[0].data = monthlyData.map(d => d.visits);
+    temporalChart.data.datasets[0].label = 'Visitas Mensuales';
+  }
+  
+  temporalChart.update();
+}
+
+function loadGeoData() {
+  const btn = document.getElementById('geoBtn');
+  const btnText = document.getElementById('geoBtnText');
+  const spinner = document.getElementById('geoSpinner');
+  
+  // Mostrar loading
+  btn.disabled = true;
+  btnText.textContent = 'Cargando...';
+  spinner.classList.remove('d-none');
+  
+  fetch('/admin/monitor/analytics?geo=true&force_geo=true', { method: 'POST' })
+    .then(response => response.json())
+    .then(data => {
+      // Actualizar países
+      let countriesHtml = '';
+      Object.entries(data.top_countries || {}).forEach(([country, visits]) => {
+        countriesHtml += `
+          <div class="d-flex justify-content-between mb-2">
+            <span>${country}</span>
+            <span class="badge badge-primary">${visits}</span>
+          </div>
+        `;
+      });
+      document.getElementById('topCountries').innerHTML = countriesHtml || '<div class="text-muted">No hay datos disponibles</div>';
+      
+      // Actualizar ciudades
+      let citiesHtml = '';
+      Object.entries(data.top_cities || {}).forEach(([city, count]) => {
+        citiesHtml += `
+          <div class="d-flex justify-content-between mb-2">
+            <span>${city}</span>
+            <span class="badge badge-info">${count}</span>
+          </div>
+        `;
+      });
+      document.getElementById('topCities').innerHTML = citiesHtml || '<div class="text-muted">No hay datos disponibles</div>';
+      
+      // Actualizar ISPs
+      let ispsHtml = '';
+      Object.entries(data.top_isps || {}).forEach(([isp, count]) => {
+        ispsHtml += `
+          <div class="d-flex justify-content-between mb-2">
+            <span title="${isp}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${isp}</span>
+            <span class="badge badge-dark">${count}</span>
+          </div>
+        `;
+      });
+      document.getElementById('topIsps').innerHTML = ispsHtml || '<div class="text-muted">No hay datos disponibles</div>';
+      
+      // Actualizar botón
+      btnText.textContent = 'Actualizar';
+      btn.disabled = false;
+      spinner.classList.add('d-none');
+    })
+    .catch(error => {
+      console.error('Error cargando datos geográficos:', error);
+      btnText.textContent = 'Error - Reintentar';
+      btn.disabled = false;
+      spinner.classList.add('d-none');
+    });
+}
+
+function updateRealtime() {
+  fetch('/admin/monitor/analytics')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('visitsToday').textContent = data.realtime?.visits_today || 0;
+      document.getElementById('onlineNow').textContent = data.realtime?.online_now || 0;
+    })
+    .catch(console.error);
+}
+
+function updateBasicStats() {
+  // Usar estadísticas básicas para mejor rendimiento
+  fetch('/admin/monitor/analytics')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('totalVisits').textContent = data.total_visits || 0;
+      document.getElementById('uniqueVisitors').textContent = data.unique_visitors || 0;
+      
+      // Mostrar cuántas IPs están pendientes de geolocalizar
+      const pending = data.pending_geolocate || 0;
+      if (pending > 0) {
+        const geoBtn = document.getElementById('geoBtnText');
+        geoBtn.textContent = `Cargar Datos (${pending} pendientes)`;
+      }
+    })
+    .catch(console.error);
+}
+
+function updateSystem() {
+  fetch('/admin/monitor/analytics?system=true')
+    .then(response => response.json())
+    .then(data => {
+      const system = data.system || {};
+      
+      // Actualizar memoria
+      const memoryUsage = Math.min(100, Math.max(0, system.memory_percent || 0));
+      document.getElementById('memoryChart').innerHTML = `
+        <div class="progress mb-2">
+          <div class="progress-bar ${memoryUsage > 80 ? 'bg-danger' : memoryUsage > 60 ? 'bg-warning' : 'bg-success'}" 
+               style="width: ${memoryUsage}%">${memoryUsage.toFixed(1)}%</div>
+        </div>
+        <small>Usado: ${(system.memory_used_gb || 0).toFixed(1)} GB / ${(system.memory_total_gb || 0).toFixed(1)} GB</small>
+      `;
+      
+      // Actualizar disco
+      const diskUsage = Math.min(100, Math.max(0, system.disk_percent || 0));
+      document.getElementById('diskChart').innerHTML = `
+        <div class="progress mb-2">
+          <div class="progress-bar ${diskUsage > 80 ? 'bg-danger' : diskUsage > 60 ? 'bg-warning' : 'bg-success'}" 
+               style="width: ${diskUsage}%">${diskUsage.toFixed(1)}%</div>
+        </div>
+        <small>Libre: ${(system.disk_free_gb || 0).toFixed(1)} GB / ${(system.disk_total_gb || 0).toFixed(1)} GB</small>
+      `;
+      
+      // Actualizar estadísticas
+      document.getElementById('systemStats').innerHTML = `
+        <div class="row">
+          <div class="col-md-4"><strong>Procesos:</strong> ${system.process_count || 0}</div>
+          <div class="col-md-4"><strong>Uptime:</strong> ${data.uptime_hours || 0}h</div>
+          <div class="col-md-4"><strong>Conexiones:</strong> ${system.network_connections || 0}</div>
+        </div>
+        <div class="row mt-2">
+          <div class="col-md-4"><strong>CPU:</strong> ${(system.cpu_percent || 0).toFixed(1)}%</div>
+          <div class="col-md-4"><strong>Load Avg:</strong> ${(system.load_avg || [0,0,0])[0].toFixed(2)}</div>
+          <div class="col-md-4"><strong>Promedio/h:</strong> ${data.avg_visits_per_hour || 0}</div>
+        </div>
+      `;
+    })
+    .catch(() => {
+      document.getElementById('memoryChart').innerHTML = 'Error cargando datos';
+      document.getElementById('diskChart').innerHTML = 'Error cargando datos';
+      document.getElementById('systemStats').innerHTML = 'Error cargando datos';
+    });
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', () => {
+  initCharts();
+  updateSystem();
+  updateRealtime();
+  updateBasicStats();
+});
+
+// Actualizar cada 30 segundos
+setInterval(updateRealtime, 30000);
+setInterval(updateSystem, 60000);
+setInterval(updateBasicStats, 30000);
+</script>
+
+{% endblock %}

@@ -29,7 +29,11 @@
                             {% with messages = get_flashed_messages(category_filter=["warning"]) %}
                               {% if messages %}
                                {% for message in messages %}
-                                <p><b>{{message}} <a class=white href="{{url_for('resetpassw')}}">aqui</a></b></p>
+                                {% if "Usuario o contraseña incorrecta" in message %}
+                                <p><b>{{message}} <a class=white href="{{url_for('resetpassw')}}">Recuperar contraseña</a></b></p>
+                                {% else %}
+                                <p><b>{{message}}</b></p>
+                                {% endif %}
                                 {% endfor %}
                               {% endif %}
                             {% endwith %}
@@ -52,24 +56,27 @@
 						  </div>
 
                         <form action="login" method="post" id="log" data-focus="false">
-                         
+                            {{ form.hidden_tag() }}
                             <div class="form-group">
-                                <input type="text" class="form-control-input" name="email" required>
-                                <label class="label-control" for="lemail">Usuario/Correo</label>
+                                {{ form.email(class="form-control-input", required=True) }}
+                                <label class="label-control" for="email">Usuario/Correo</label>
                                 <div class="help-block with-errors"></div>
                             </div>
-                            <div class="form-group">
-                                <input type="password" class="form-control-input" name='passw' required>
-                                <label class="label-control" for="lpassword">Contraseña</label>
+                            <div class="form-group" style="position: relative;">
+                                {{ form.passw(class="form-control-input", required=True) }}
+                                <label class="label-control" for="passw">Contraseña</label>
+                                <button type="button" onclick="togglePassword('passw')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 12px; color: #999;" title="Mostrar/Ocultar contraseña">
+                                    <span id="passw-toggle">mostrar</span>
+                                </button>
                                 <div class="help-block with-errors"></div>
                             </div>
                             <div class="form-group checkbox">
-                                <input type="checkbox" id="sterms" value="remember-me" checked>Recuerdame
+                                {{ form.remember_me(id="sterms", checked=True) }}Recuerdame
                             <div class="help-block with-errors"></div>
                             </div>
-                            <input type="hidden" name="redirect_for" value= "{{redirect_for}}" />
+                            {{ form.redirect_for() }}
                             <div class="form-group">
-                                <button type="submit" class="form-control-submit-button">Inciar Sesion</button>
+                                {{ form.submit(class="form-control-submit-button") }}
                             </div>
                             <div class="form-message">
                                 <div id="lmsgSubmit" class="h3 text-center hidden"></div>

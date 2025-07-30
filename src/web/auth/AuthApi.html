@@ -40,6 +40,7 @@
                     <!-- Sign Up Form -->
                     <div class="form-container">
                         <form action="{{url_for('authorize')}}" method="post" id="log" data-focus="false">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                          
                             <div class="form-group">
                                 <spam><h2>{{username}}</h2></spam>

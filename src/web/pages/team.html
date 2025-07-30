@@ -1,0 +1,274 @@
+{% extends 'layout.html' %}
+
+{% block title %}Nuestro Equipo{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+  <div class="page-banner">
+    <div class="row justify-content-center align-items-center h-100">
+      <div class="col-md-6">
+        <nav aria-label="Breadcrumb">
+          <ul class="breadcrumb justify-content-center py-0 bg-transparent">
+            <li class="breadcrumb-item"><a href="{{url_for('index')}}">Inicio</a></li>
+            <li class="breadcrumb-item active">Nuestro Equipo</li>
+          </ul>
+        </nav>
+        <h1 class="text-center">Nuestro Equipo</h1>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Contenido Principal -->
+<div class="page-section">
+  <div class="container">
+    
+    <!-- Introducción -->
+    <div class="row mb-5">
+      <div class="col-lg-8 mx-auto text-center">
+        <h2 class="title-section">Conoce a Nuestro <span class="marked">Equipo</span></h2>
+        <div class="divider mx-auto"></div>
+        <p class="lead">
+          Somos un equipo de desarrolladores apasionados por la tecnología y Linux, unidos por la 
+          programación y el deseo de crear soluciones útiles y accesibles para todos.
+        </p>
+      </div>
+    </div>
+
+    <!-- Miembros del Equipo -->
+    <div class="row mb-5">
+      
+      <!-- xXACRVXx - Desarrollador Principal -->
+      <div class="col-lg-4 py-3">
+        <div class="card h-100 text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="avatar-lg mx-auto" style="background: linear-gradient(45deg, #007bff, #0056b3); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span class="text-white font-weight-bold" style="font-size: 24px;">xX</span>
+              </div>
+            </div>
+            <h4>xXACRVXx</h4>
+            <p class="text-primary mb-3">Desarrollador Principal & Fundador</p>
+            <p class="small mb-4">
+              Desarrollador autodidacta de 22 años, apasionado por la informática, 
+              redes y servidores. Combina su trabajo como técnico con estudios de 
+              ingeniería y la programación, con el objetivo de dedicarse al desarrollo 
+              de software, especializándose en Python y aplicaciones web.
+            </p>
+            <div class="mb-3">
+              <span class="badge badge-primary mr-1">Python</span>
+              <span class="badge badge-info mr-1">Flask</span>
+              <span class="badge badge-success mr-1">Pyrogram</span>
+              <span class="badge badge-warning mr-1">Socket</span>
+              <span class="badge badge-secondary">PostgreSQL</span>
+            </div>
+            <div>
+              <h6>Responsabilidades:</h6>
+              <ul class="small text-left">
+                <li>Arquitectura y desarrollo backend</li>
+                <li>Diseño de base de datos</li>
+                <li>Implementación de seguridad</li>
+                <li>Gestión del proyecto</li>
+              </ul>
+            </div>
+            <div class="mt-3">
+              <a href="https://github.com/xXACRVXx" class="btn btn-outline-secondary btn-sm" target="_blank">
+                <span class="mai-logo-github"></span> GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LegzDev - Colaborador -->
+      <div class="col-lg-4 py-3">
+        <div class="card h-100 text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="avatar-lg mx-auto" style="background: linear-gradient(45deg, #28a745, #1e7e34); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span class="text-white font-weight-bold" style="font-size: 24px;">LD</span>
+              </div>
+            </div>
+            <h4>LegzDev</h4>
+            <p class="text-success mb-3">Colaborador & Administrador de Sistemas</p>
+            <p class="small mb-4">
+              Desarrollador que se unió al equipo hace más de 2 años. Experto en 
+              administración de servidores y containerización, contribuye activamente 
+              en el testing y la infraestructura del proyecto.
+            </p>
+            <div class="mb-3">
+              <span class="badge badge-success mr-1">C#</span>
+              <span class="badge badge-info mr-1">Go</span>
+              <span class="badge badge-warning mr-1">Docker</span>
+              <span class="badge badge-primary mr-1">Python</span>
+              <span class="badge badge-secondary">JavaScript</span>
+            </div>
+            <div>
+              <h6>Responsabilidades:</h6>
+              <ul class="small text-left">
+                <li>Administración del VPS compartido</li>
+                <li>Configuración y mantenimiento Docker</li>
+                <li>Testing en diferentes entornos</li>
+                <li>Soporte técnico y debugging</li>
+              </ul>
+            </div>
+            <div class="mt-3">
+              <a href="https://github.com/legzdev" class="btn btn-outline-secondary btn-sm" target="_blank">
+                <span class="mai-logo-github"></span> GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MakeCraft - Colaborador -->
+      <div class="col-lg-4 py-3">
+        <div class="card h-100 text-center">
+          <div class="card-body">
+            <div class="mb-3">
+              <div class="avatar-lg mx-auto" style="background: linear-gradient(45deg, #ffc107, #e0a800); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <span class="text-white font-weight-bold" style="font-size: 24px;">MC</span>
+              </div>
+            </div>
+            <h4>MakeCraft</h4>
+            <p class="text-warning mb-3">Tester & Control de Calidad</p>
+            <p class="small mb-4">
+              Desarrollador especializado en Python que se enfoca en 
+              garantizar la compatibilidad multiplataforma del proyecto. Su rol 
+              principal es probar las nuevas funcionalidades en diversos dispositivos 
+              y navegadores para asegurar una experiencia consistente.
+            </p>
+            <div class="mb-3">
+              <span class="badge badge-primary mr-1">Python</span>
+              <span class="badge badge-warning mr-1">Testing</span>
+              <span class="badge badge-info mr-1">QA</span>
+              <span class="badge badge-success">Mobile Testing</span>
+            </div>
+            <div>
+              <h6>Responsabilidades:</h6>
+              <ul class="small text-left">
+                <li>Testing multiplataforma y dispositivos</li>
+                <li>Verificación de compatibilidad</li>
+                <li>Control de calidad de UI/UX</li>
+                <li>Feedback de usabilidad</li>
+              </ul>
+            </div>
+            <div class="mt-3">
+              <a href="https://github.com/makecraft" class="btn btn-outline-secondary btn-sm" target="_blank">
+                <span class="mai-logo-github"></span> GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Filosofía de Trabajo -->
+    <div class="row mb-5">
+      <div class="col-lg-10 mx-auto">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="text-center mb-4">Nuestra Filosofía de Trabajo</h3>
+            <div class="row">
+              <div class="col-md-6">
+                <h6>📱 Comunicación Directa</h6>
+                <p class="small mb-3">
+                  Mantenemos una comunicación fluida y directa que nos permite resolver 
+                  problemas rápidamente y compartir ideas en tiempo real.
+                </p>
+                <h6>🎯 Testing Exhaustivo</h6>
+                <p class="small mb-3">
+                  Cada nueva funcionalidad pasa por pruebas rigurosas en múltiples 
+                  dispositivos y navegadores antes de ser implementada, garantizando 
+                  una experiencia consistente para todos los usuarios.
+                </p>
+              </div>
+              <div class="col-md-6">
+                <h6>🎓 Aprendizaje Autodidacta</h6>
+                <p class="small mb-3">
+                  Como desarrolladores autodidactas, valoramos el aprendizaje 
+                  continuo y el intercambio de conocimientos entre los miembros 
+                  del equipo, cada uno aportando desde su experiencia.
+                </p>
+                <h6>🌍 Colaboración Abierta</h6>
+                <p class="small mb-3">
+                  Mantenemos nuestros proyectos open-source y sin ánimo de lucro, 
+                  dando la bienvenida a cualquiera que quiera participar y 
+                  contribuir a la comunidad.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Proceso de Desarrollo -->
+    <div class="row mb-5">
+      <div class="col-lg-12">
+        <div class="text-center mb-4">
+          <h2 class="title-section">Nuestro <span class="marked">Proceso</span></h2>
+          <div class="divider mx-auto"></div>
+        </div>
+        <div class="row">
+          <div class="col-md-3 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-chatbubbles text-warning" style="font-size: 36px;"></span>
+            </div>
+            <h6>1. Discusión</h6>
+            <p class="small">Ideas compartidas en equipo</p>
+          </div>
+          <div class="col-md-3 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-code text-primary" style="font-size: 36px;"></span>
+            </div>
+            <h6>2. Desarrollo</h6>
+            <p class="small">Implementación por xXACRVXx</p>
+          </div>
+          <div class="col-md-3 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-phone-portrait text-success" style="font-size: 36px;"></span>
+            </div>
+            <h6>3. Testing</h6>
+            <p class="small">Pruebas multiplataforma por el equipo</p>
+          </div>
+          <div class="col-md-3 py-3 text-center">
+            <div class="mb-3">
+              <span class="mai-logo-github text-info" style="font-size: 36px;"></span>
+            </div>
+            <h6>4. GitHub</h6>
+            <p class="small">Versionado y documentación</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row">
+      <div class="col-lg-8 mx-auto text-center">
+        <div class="card bg-gradient-primary text-white">
+          <div class="card-body py-5">
+            <h3 class="mb-3">¿Quieres Unirte?</h3>
+            <p class="mb-4">
+              Siempre estamos abiertos a colaboraciones y contribuciones. 
+              Si compartes nuestra pasión por el desarrollo, ¡contáctanos!
+            </p>
+            <div>
+              <a href="https://github.com/xXACRVXx/web_xxacrvxx" class="btn btn-light mr-2" target="_blank">
+                Contribuir en GitHub
+              </a>
+              <a href="{{url_for('about')}}" class="btn btn-outline-light">
+                Conocer Más
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

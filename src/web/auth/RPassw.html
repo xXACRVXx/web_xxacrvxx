@@ -71,6 +71,7 @@
                                 <div class="help-block with-errors"></div>
                             </div>
                             <input type="hidden" id="postId" name="token" value= "{{token}}" />
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <div class="form-group">
                                 <button type="submit" class="form-control-submit-button">Cambiar</button>
                             </div>

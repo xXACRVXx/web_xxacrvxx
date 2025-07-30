@@ -1,0 +1,399 @@
+{% extends 'layout.html' %}
+
+{% block title %}Estado del Servidor{% endblock %}
+
+{% block head %}
+<script>
+function updateStatusTheme() {
+  const themeLink = document.getElementById('theme-link');
+  const isDark = themeLink && themeLink.href.includes('theme-dark.css');
+  
+  const cards = document.querySelectorAll('.card');
+  const tables = document.querySelectorAll('.table td');
+  const headers = document.querySelectorAll('.card-header h5');
+  
+  cards.forEach(card => {
+    if (isDark) {
+      card.style.backgroundColor = '#2a2a2a';
+      card.style.border = '1px solid #6c55f9';
+      card.style.color = '#ffffff';
+    } else {
+      card.style.backgroundColor = '#ffffff';
+      card.style.border = '1px solid #dee2e6';
+      card.style.color = '#212529';
+    }
+  });
+  
+  tables.forEach(td => {
+    td.style.color = isDark ? '#ffffff' : '#212529';
+  });
+  
+  headers.forEach(h5 => {
+    h5.style.color = isDark ? '#ffffff' : '#212529';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  updateStatusTheme();
+  
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
+        setTimeout(updateStatusTheme, 50);
+      }
+    });
+  });
+  
+  const themeLink = document.getElementById('theme-link');
+  if (themeLink) {
+    observer.observe(themeLink, { attributes: true });
+  }
+  
+  document.getElementById('toggle-style').addEventListener('click', function() {
+    setTimeout(updateStatusTheme, 100);
+  });
+});
+</script>
+
+<style>
+.stability-day { transition: transform 0.2s; }
+.stability-day:hover { transform: scale(1.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">     
+      <div class="col-lg-8 py-2">
+        <h1 class="mb-3 status-text">📊 Estado del Servidor</h1>
+        <p class="text-lg mb-4 status-muted">Información en tiempo real del sistema</p>
+        <div class="badge badge-{{ 'success' if status.database.status == 'OK' else 'danger' }} mr-2">
+          {{ status.database.status }}
+        </div>
+        <div class="badge badge-info">
+          Activo {{ status.uptime.hours }}h {{ status.uptime.minutes }}m
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Resumen Principal -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card status-card">
+            <div class="card-body text-center">
+              <h2 class="text-{{ 'success' if status.database.status == 'OK' else 'danger' }}">
+                {{ status.database.status }}
+              </h2>
+              <small class="text-muted">Base de Datos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card status-card">
+            <div class="card-body text-center">
+              <h2 class="text-info">{{ status.uptime.hours }}h {{ status.uptime.minutes }}m</h2>
+              <small class="text-muted">Tiempo Activo</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card status-card">
+            <div class="card-body text-center">
+              <h2 class="text-{{ 'success' if status.server.stability.errors_24h == 0 else 'warning' if status.server.stability.errors_24h < 5 else 'danger' }}">
+                {{ status.server.stability.errors_24h }}
+              </h2>
+              <small class="text-muted">Errores (24h)</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card status-card">
+            <div class="card-body text-center">
+              <h2 class="text-{{ 'success' if status.server.stability.warnings_24h == 0 else 'warning' if status.server.stability.warnings_24h < 10 else 'danger' }}">
+                {{ status.server.stability.warnings_24h }}
+              </h2>
+              <small class="text-muted">Advertencias (24h)</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% if status.is_admin %}
+      <!-- Métricas del Sistema (Solo Admins) -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">💾 Uso de Memoria</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress mb-2">
+                <div class="progress-bar {{ 'bg-danger' if status.system.memory_usage > 80 else 'bg-warning' if status.system.memory_usage > 60 else 'bg-success' }}" 
+                     style="width: {{ status.system.memory_usage }}%">
+                  {{ "%.1f"|format(status.system.memory_usage) }}%
+                </div>
+              </div>
+              <small class="text-muted">Proceso: {{ "%.1f"|format(status.system.process_memory) }} MB</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">🖥️ Uso de CPU</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress mb-2">
+                <div class="progress-bar {{ 'bg-danger' if status.system.cpu_usage > 80 else 'bg-warning' if status.system.cpu_usage > 60 else 'bg-success' }}" 
+                     style="width: {{ status.system.cpu_usage }}%">
+                  {{ "%.1f"|format(status.system.cpu_usage) }}%
+                </div>
+              </div>
+              <small class="text-muted">Utilización del procesador</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">💽 Uso de Disco</h5>
+            </div>
+            <div class="card-body">
+              <div class="progress mb-2">
+                <div class="progress-bar {{ 'bg-danger' if status.system.disk_usage > 90 else 'bg-warning' if status.system.disk_usage > 75 else 'bg-success' }}" 
+                     style="width: {{ status.system.disk_usage }}%">
+                  {{ "%.1f"|format(status.system.disk_usage) }}%
+                </div>
+              </div>
+              <small class="text-muted">Espacio utilizado</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Historial de Estabilidad (30 días) -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">📈 Historial de Estabilidad (30 días)</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex flex-wrap" style="gap: 2px; justify-content: center;">
+                {% for day in status.server.stability_history %}
+                <div class="stability-day" 
+                     data-date="{{ day.date }}" 
+                     data-status="{{ day.status }}"
+                     style="width: 12px; height: 12px; border-radius: 2px; 
+                            background-color: {% if day.status == 'critical' %}#dc3545{% elif day.status == 'error' %}#fd7e14{% else %}#28a745{% endif %};"
+                     title="{{ day.date }}: {% if day.status == 'critical' %}Errores críticos{% elif day.status == 'error' %}Errores{% else %}Sin errores{% endif %}"></div>
+                {% endfor %}
+              </div>
+              <div class="mt-2 d-flex align-items-center justify-content-center" style="font-size: 12px; gap: 15px;">
+                <div class="d-flex align-items-center">
+                  <div style="width: 12px; height: 12px; background-color: #28a745; border-radius: 2px; margin-right: 5px;"></div>
+                  <span class="text-muted">Sin errores</span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div style="width: 12px; height: 12px; background-color: #fd7e14; border-radius: 2px; margin-right: 5px;"></div>
+                  <span class="text-muted">Con errores</span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div style="width: 12px; height: 12px; background-color: #dc3545; border-radius: 2px; margin-right: 5px;"></div>
+                  <span class="text-muted">Errores críticos</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información del Servidor -->
+      <div class="row mb-4">
+        <div class="col-md-{{ '6' if status.is_admin else '12' }}">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">🖥️ Información del Servidor</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm">
+                <tr>
+                  <td><strong>Versión:</strong></td>
+                  <td class="status-text">{{ status.server.version }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Estado:</strong></td>
+                  <td>
+                    <span class="badge badge-success">
+                      {{ status.server.status }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Último Error:</strong></td>
+                  <td><span class="text-muted">{{ status.server.stability.last_error }}</span></td>
+                </tr>
+                {% if status.is_admin %}
+                <tr>
+                  <td><strong>Python:</strong></td>
+                  <td>{{ status.server.python_version }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Sistema:</strong></td>
+                  <td>{{ status.server.os }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Debug:</strong></td>
+                  <td>
+                    <span class="badge badge-{{ 'warning' if status.server.debug_mode == 'True' else 'success' }}">
+                      {{ status.server.debug_mode }}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Mantenimiento:</strong></td>
+                  <td>
+                    <span class="badge badge-{{ 'danger' if status.server.maintenance_mode == 'True' else 'success' }}">
+                      {{ status.server.maintenance_mode }}
+                    </span>
+                  </td>
+                </tr>
+                {% endif %}
+              </table>
+            </div>
+          </div>
+        </div>
+        {% if status.is_admin %}
+        <div class="col-md-6">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">📊 Estadísticas de Contenido</h5>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm">
+                <tr>
+                  <td><strong>Usuarios Totales:</strong></td>
+                  <td>{{ status.content.total_users }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Usuarios Verificados:</strong></td>
+                  <td>
+                    {{ status.content.verified_users }}
+                    {% if status.content.total_users > 0 %}
+                    <small class="text-muted">
+                      ({{ "%.1f"|format((status.content.verified_users / status.content.total_users) * 100) }}%)
+                    </small>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Posts Totales:</strong></td>
+                  <td>{{ status.content.total_posts }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Vistas Totales:</strong></td>
+                  <td>{{ status.content.total_views }}</td>
+                </tr>
+                <tr>
+                  <td><strong>Visitantes Únicos:</strong></td>
+                  <td>{{ status.analytics.unique_visitors }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if status.is_admin %}
+      <!-- Base de Datos (Solo Admins) -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">🗄️ Estado de la Base de Datos</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="status-text"><strong>Estado:</strong> 
+                    <span class="badge badge-{{ 'success' if status.database.status == 'OK' else 'danger' }}">
+                      {{ status.database.status }}
+                    </span>
+                  </p>
+                  <p class="status-text"><strong>Conexión:</strong></p>
+                  <code style="font-size: 12px;">{{ status.database.connection_test }}</code>
+                </div>
+                <div class="col-md-6">
+                  <p class="status-text"><strong>Tiempo de Respuesta:</strong> 
+                    <span class="text-success">< 100ms</span>
+                  </p>
+                  <p class="status-text"><strong>Tipo:</strong> PostgreSQL</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Acciones Rápidas -->
+      <div class="row">
+        <div class="col-12">
+          <div class="card status-card">
+            <div class="card-header">
+              <h5 class="status-text">⚡ Acciones Rápidas</h5>
+            </div>
+            <div class="card-body text-center">
+              <button class="btn btn-primary mr-2" onclick="location.reload()">
+                🔄 Actualizar Estado
+              </button>
+              <a href="/status?format=json" class="btn btn-info mr-2" target="_blank">
+                📋 Ver JSON
+              </a>
+              <a href="/healthcheck" class="btn btn-success mr-2" target="_blank">
+                ❤️ Health Check
+              </a>
+              {% if status.is_admin %}
+              <a href="/admin/dashboard" class="btn btn-warning">
+                ⚙️ Panel Admin
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+// Auto-actualizar cada 30 segundos
+setInterval(() => {
+  fetch('/status?format=json')
+    .then(response => response.json())
+    .then(data => {
+      // Actualizar tiempo de actividad
+      const cards = document.querySelectorAll('.card-body h2');
+      if (cards.length >= 2) {
+        cards[1].textContent = `${data.uptime.hours}h ${data.uptime.minutes}m`;
+      }
+      if (data.server && data.server.stability && cards.length >= 4) {
+        cards[2].textContent = data.server.stability.errors_24h;
+        cards[3].textContent = data.server.stability.warnings_24h;
+      }
+    })
+    .catch(console.error);
+}, 30000);
+</script>
+
+{% endblock %}

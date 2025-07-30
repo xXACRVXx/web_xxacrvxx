@@ -1,0 +1,525 @@
+{% extends 'layout.html' %}
+
+{% block title %}Configuración de Cuenta{% endblock %}
+
+{% block content %}
+
+<style>
+.settings-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%;
+}
+
+.settings-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(108, 85, 249, 0.2);
+}
+
+.danger-zone {
+  border: 2px solid #dc3545;
+  border-radius: 8px;
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.form-section {
+  border: 1px solid #6c55f9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #6C55F9, #9C88FF);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.stats-item {
+  text-align: center;
+  padding: 15px;
+  background: rgba(108, 85, 249, 0.1);
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.stats-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #6C55F9;
+}
+
+.btn-danger-outline {
+  color: #dc3545;
+  border-color: #dc3545;
+  background: transparent;
+}
+
+.btn-danger-outline:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* Variables CSS para temas */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --card-bg: #ffffff;
+}
+
+html[data-theme="dark"] {
+  --bg-color: #2d3748;
+  --text-color: #e2e8f0;
+  --card-bg: #2d3748;
+}
+
+[data-theme="dark"] .form-section {
+  background-color: #2a2a2a !important;
+  border-color: rgba(108, 85, 249, 0.3) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .card {
+  background: #2d3748 !important;
+  border-color: rgba(108, 85, 249, 0.3) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .form-control {
+  background: #4a5568 !important;
+  border-color: #718096 !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .form-control:focus {
+  background: #4a5568 !important;
+  border-color: #6c55f9 !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 85, 249, 0.25) !important;
+}
+
+html[data-theme="dark"] .stats-item {
+  background: rgba(108, 85, 249, 0.2) !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .card-header {
+  background: #374151 !important;
+  border-color: #4a5568 !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .card-body {
+  background: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] label {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .form-text {
+  color: #a0aec0 !important;
+}
+
+html[data-theme="dark"] .danger-zone {
+  background: rgba(220, 53, 69, 0.1) !important;
+  border-color: #dc3545 !important;
+}
+
+/* Modal en modo oscuro - usando el CSS de tema oscuro */
+.modal-content {
+  background-color: #171717 !important;
+  color: #ffffff !important;
+}
+
+.modal-header {
+  background-color: #171717 !important;
+  border-color: #6c55f9 !important;
+  color: #ffffff !important;
+}
+
+.modal-body {
+  color: #ffffff !important;
+}
+
+.modal-body ul,
+.modal-body li {
+  color: #ffffff !important;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.2) !important;
+  border-color: #dc3545 !important;
+  color: #f8d7da !important;
+}
+
+html[data-theme="dark"] .modal-header {
+  border-color: #4a5568 !important;
+}
+
+html[data-theme="dark"] .modal-footer {
+  border-color: #4a5568 !important;
+}
+</style>
+
+<div class="page-banner home-banner" style="height:200px">
+  <div class="container h-100">
+    <div class="row align-items-center h-100">
+      <div class="col-lg-12 text-center">
+        <h1 class="mb-3">⚙️ Configuración de Cuenta</h1>
+        <p class="text-lg">Gestiona tu perfil y preferencias</p>
+        <a href="/" class="btn btn-outline-primary">← Volver a Opciones</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="page-section">
+    <div class="container">
+      
+      <!-- Información del Perfil -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card settings-card">
+            <div class="card-header">
+              <h5>👤 Mi Perfil</h5>
+            </div>
+            <div class="card-body text-center">
+              <div class="avatar-placeholder mx-auto mb-3">
+                {{ user_data.username[0].upper() if user_data.username else 'U' }}
+              </div>
+              <h5>{{ user_data.username }}</h5>
+              <p class="text-muted">{{ user_data.email }}</p>
+              <div class="row">
+                <div class="col-6">
+                  <div class="stats-item">
+                    <div class="stats-number">{{ user_stats.files }}</div>
+                    <small>Archivos</small>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="stats-item">
+                    <div class="stats-number">{{ user_stats.posts }}</div>
+                    <small>Posts</small>
+                  </div>
+                </div>
+              </div>
+              <small class="text-muted">
+                Miembro desde: {{ user_data.time[:10] if user_data.time else 'Desconocido' }}
+              </small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-8">
+          <div class="card settings-card">
+            <div class="card-header">
+              <h5>📊 Estadísticas de Actividad</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <strong>Estado de Verificación:</strong>
+                  {% if user_data.email_confirm == 'true' %}
+                    <span class="badge badge-success">✅ Verificado</span>
+                  {% else %}
+                    <span class="badge badge-warning">⏳ Pendiente</span>
+                  {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Tipo de Cuenta:</strong>
+                  {% if user_data.permission == 1 %}
+                    <span class="badge badge-primary">👑 Administrador</span>
+                  {% else %}
+                    <span class="badge badge-secondary">👤 Usuario</span>
+                  {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Último Acceso:</strong><br>
+                  <small>{{ user_data.extra[:16] if user_data.extra else 'Nunca' }}</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <strong>Espacio Usado:</strong><br>
+                  <small>{{ user_stats.storage_used }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuración de Perfil -->
+      <div class="form-section">
+        <h4>✏️ Actualizar Perfil</h4>
+        <form method="POST" action="/settings">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update_profile">
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="username">Nombre de Usuario</label>
+                <input type="text" class="form-control" id="username" name="username" 
+                       value="{{ user_data.username }}" required>
+                <small class="form-text text-muted">Solo letras, números y guiones bajos</small>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="{{ user_data.email }}" required>
+                <small class="form-text text-muted">Se requerirá verificación si cambias el email</small>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">💾 Guardar Cambios</button>
+        </form>
+      </div>
+
+      <!-- Cambiar Contraseña -->
+      <div class="form-section">
+        <h4>🔐 Cambiar Contraseña</h4>
+        <form method="POST" action="/settings">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="change_password">
+          
+          <div class="row">
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="current_password">Contraseña Actual</label>
+                <input type="password" class="form-control" id="current_password" 
+                       name="current_password" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="new_password">Nueva Contraseña</label>
+                <input type="password" class="form-control" id="new_password" 
+                       name="new_password" required minlength="8">
+                <small class="form-text text-muted">Mínimo 8 caracteres</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-group">
+                <label for="confirm_password">Confirmar Contraseña</label>
+                <input type="password" class="form-control" id="confirm_password" 
+                       name="confirm_password" required>
+              </div>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-warning">🔑 Cambiar Contraseña</button>
+        </form>
+      </div>
+
+      <!-- Verificación de Email -->
+      {% if user_data.email_confirm != 'true' %}
+      <div class="form-section">
+        <h4>📧 Verificación de Email</h4>
+        <div class="alert alert-warning">
+          <strong>⚠️ Tu email no está verificado.</strong> 
+          Algunas funcionalidades pueden estar limitadas.
+        </div>
+        <form method="POST" action="/settings">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="resend_verification">
+          <button type="submit" class="btn btn-info">📨 Reenviar Código de Verificación</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Gestión de Datos -->
+      <div class="form-section">
+        <h4>📦 Gestión de Datos</h4>
+        <div class="row">
+          <div class="col-md-4">
+            <h6>Exportar Mis Datos</h6>
+            <p class="text-muted">Descarga una copia de todos tus datos en formato JSON</p>
+            <a href="/settings/export" class="btn btn-info">📥 Exportar Datos</a>
+          </div>
+          <div class="col-md-4">
+            <h6>Cambiar Tema</h6>
+            <p class="text-muted">Alternar entre modo claro y oscuro</p>
+            <button class="btn btn-secondary" onclick="toggleTheme()">🌙 Cambiar Tema</button>
+          </div>
+          {% if user_data.permission == 1 %}
+          <div class="col-md-4">
+            <h6>Panel de Administración</h6>
+            <p class="text-muted">Acceso completo al dashboard administrativo</p>
+            <a href="/admin/dashboard" class="btn btn-warning">👑 Dashboard Admin</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Zona de Peligro -->
+      <div class="danger-zone p-4">
+        <h4 class="text-danger">⚠️ Zona de Peligro</h4>
+        <p class="text-muted">Las siguientes acciones son irreversibles. Procede con precaución.</p>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Eliminar Todos los Archivos</h6>
+            <p class="text-muted">Elimina permanentemente todos tus archivos subidos</p>
+            <button class="btn btn-danger-outline" onclick="deleteAllFiles()">🗑️ Eliminar Archivos</button>
+          </div>
+          <div class="col-md-6">
+            <h6>Eliminar Cuenta Completa</h6>
+            <p class="text-muted">Elimina tu cuenta y todos los datos asociados</p>
+            <button class="btn btn-danger" onclick="showDeleteModal()">💀 Eliminar Cuenta</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- Modal de Confirmación para Eliminar Cuenta -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">💀 Eliminar Cuenta Permanentemente</h5>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <strong>⚠️ ADVERTENCIA:</strong> Esta acción es irreversible y eliminará:
+        </div>
+        <ul>
+          <li>Tu cuenta de usuario</li>
+          <li>Todos tus archivos subidos</li>
+          <li>Todos tus posts del blog</li>
+          <li>Todos tus comentarios</li>
+          <li>Todo el historial de actividad</li>
+        </ul>
+        
+        <form method="POST" action="/settings">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="delete_account">
+          
+          <div class="form-group">
+            <label>Confirma tu contraseña:</label>
+            <input type="password" class="form-control" name="password_confirm" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Escribe "ELIMINAR" para confirmar:</label>
+            <input type="text" class="form-control" name="delete_confirm" 
+                   placeholder="ELIMINAR" required>
+          </div>
+          
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="understand" required>
+            <label class="form-check-label">
+              Entiendo que esta acción es irreversible
+            </label>
+          </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger">💀 Eliminar Definitivamente</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showDeleteModal() {
+  $('#deleteAccountModal').modal('show');
+}
+
+function deleteAllFiles() {
+  if (confirm('¿Estás seguro de que quieres eliminar TODOS tus archivos? Esta acción no se puede deshacer.')) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Eliminando...';
+    
+    fetch('/settings/delete-files', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+      },
+      body: JSON.stringify({csrf_token: document.querySelector('input[name="csrf_token"]').value})
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('✅ Todos los archivos han sido eliminados');
+        location.reload();
+      } else {
+        alert('❌ Error: ' + data.error);
+        btn.disabled = false;
+        btn.innerHTML = '🗑️ Eliminar Archivos';
+      }
+    })
+    .catch(error => {
+      alert('❌ Error de conexión');
+      btn.disabled = false;
+      btn.innerHTML = '🗑️ Eliminar Archivos';
+    });
+  }
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  document.documentElement.setAttribute('data-theme', newTheme);
+  document.cookie = `dark-mode=${newTheme === 'dark' ? 'true' : 'false'}; path=/; max-age=31536000`;
+  
+  const btn = event.target;
+  btn.innerHTML = newTheme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
+  
+  // Mostrar notificación adaptada al tema
+  const message = `Tema cambiado a modo ${newTheme === 'dark' ? 'oscuro' : 'claro'}`;
+  if (typeof showNotification === 'function') {
+    showNotification(message, 'success');
+  } else {
+    alert(message);
+  }
+}
+
+// Validación de contraseñas en tiempo real
+document.getElementById('new_password').addEventListener('input', function() {
+  const password = this.value;
+  const confirm = document.getElementById('confirm_password');
+  
+  if (password.length < 8) {
+    this.setCustomValidity('La contraseña debe tener al menos 8 caracteres');
+  } else {
+    this.setCustomValidity('');
+  }
+  
+  if (confirm.value && password !== confirm.value) {
+    confirm.setCustomValidity('Las contraseñas no coinciden');
+  } else {
+    confirm.setCustomValidity('');
+  }
+});
+
+document.getElementById('confirm_password').addEventListener('input', function() {
+  const password = document.getElementById('new_password').value;
+  
+  if (this.value !== password) {
+    this.setCustomValidity('Las contraseñas no coinciden');
+  } else {
+    this.setCustomValidity('');
+  }
+});
+</script>
+
+{% endblock %}

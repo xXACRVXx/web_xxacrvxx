@@ -55,6 +55,7 @@
             <div class="subhead">{{response}}</div>
             {% endif %}
             <form action="contact" method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
               <div class="py-2">
                 <input type="text" class="form-control" name="username" placeholder="Nombre completo">
               </div>

@@ -1,0 +1,554 @@
+{% extends 'layout.html' %}
+
+{% block title %}Panel de Administración - Contenido{% endblock %}
+
+{% block content %}
+<div class="page-section">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>🗂️ Gestión de Contenido</h2>
+          <a href="/admin/dashboard" class="btn btn-secondary">← Volver al Dashboard</a>
+        </div>
+        
+        <!-- Estadísticas de Contenido -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h3 class="text-primary">{{ posts|length }}</h3>
+                <p class="mb-0">Posts Totales</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h3 class="text-success">{{ posts|sum(attribute='count_view') or 0 }}</h3>
+                <p class="mb-0">Vistas Totales</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h3 class="text-info" id="totalComments">0</h3>
+                <p class="mb-0">Comentarios</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h3 class="text-warning">{{ posts|selectattr('count_view', 'equalto', 0)|list|length }}</h3>
+                <p class="mb-0">Sin Vistas</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtros y Búsqueda -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5>🔍 Filtros</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <input type="text" id="searchPosts" class="form-control" placeholder="Buscar por título..." onkeyup="filterPosts()">
+              </div>
+              <div class="col-md-3">
+                <select id="authorFilter" class="form-control" onchange="filterPosts()">
+                  <option value="">Todos los autores</option>
+                  {% set authors = posts|map(attribute='author')|unique|list %}
+                  {% for author in authors %}
+                  <option value="{{ author }}">{{ author }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select id="viewsFilter" class="form-control" onchange="filterPosts()">
+                  <option value="">Todas las vistas</option>
+                  <option value="0">Sin vistas</option>
+                  <option value="1-10">1-10 vistas</option>
+                  <option value="11-50">11-50 vistas</option>
+                  <option value="50+">Más de 50 vistas</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button class="btn btn-secondary btn-block" onclick="clearFilters()">Limpiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Posts -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between">
+            <h5>📝 Posts del Blog</h5>
+            <div>
+              <button class="btn btn-sm btn-success" onclick="exportPosts()">📤 Exportar</button>
+              <button class="btn btn-sm btn-danger" onclick="bulkDelete()" id="bulkDeleteBtn" style="display:none">🗑️ Eliminar Seleccionados</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped" id="postsTable">
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                    <th onclick="sortTable(1)" style="cursor: pointer; white-space: nowrap;">ID ↕️</th>
+                    <th onclick="sortTable(2)" style="cursor: pointer; white-space: nowrap;">Título ↕️</th>
+                    <th onclick="sortTable(3)" style="cursor: pointer; white-space: nowrap;">Autor ↕️</th>
+                    <th onclick="sortTable(4)" style="cursor: pointer; white-space: nowrap;">Fecha ↕️</th>
+                    <th onclick="sortTable(5)" style="cursor: pointer; white-space: nowrap;">Vistas ↕️</th>
+                    <th>Comentarios</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="posts-table">
+                  {% for post in posts %}
+                  <tr id="post-{{ post.id }}" data-title="{{ post.title|lower }}" data-author="{{ post.author|lower }}" data-views="{{ post.count_view or 0 }}">
+                    <td><input type="checkbox" class="post-checkbox" value="{{ post.id }}"></td>
+                    <td>{{ post.id }}</td>
+                    <td>
+                      <div class="post-title" title="{{ post.title }}">
+                        {{ post.title[:50] }}{% if post.title|length > 50 %}...{% endif %}
+                      </div>
+                      {% if post.descript %}
+                      <small class="text-muted">{{ post.descript[:80] }}{% if post.descript|length > 80 %}...{% endif %}</small>
+                      {% endif %}
+                    </td>
+                    <td>{{ post.author or 'Desconocido' }}</td>
+                    <td>{{ post.time[:10] if post.time else 'N/A' }}</td>
+                    <td>
+                      <span class="badge badge-{{ 'success' if post.count_view > 50 else 'warning' if post.count_view > 10 else 'secondary' }}">
+                        {{ post.count_view or 0 }}
+                      </span>
+                    </td>
+                    <td><span class="comment-count" data-post-id="{{ post.id }}">-</span></td>
+                    <td>
+                      <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-info" onclick="viewPost({{ post.id }})" title="Ver post">👁️</button>
+                        <button class="btn btn-sm btn-primary" onclick="viewComments({{ post.id }})" title="Comentarios">💬</button>
+                        <button class="btn btn-sm btn-warning" onclick="editPost({{ post.id }}, '{{ post.title|replace("'", "\\'")|replace('"', '\\"') }}')" title="Editar">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="deletePost({{ post.id }})" title="Eliminar">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Paginación -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div>
+                <small class="text-muted">Mostrando <span id="showingCount">{{ posts|length }}</span> de {{ posts|length }} posts</small>
+              </div>
+              <div id="pagination"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Comentarios -->
+        <div class="modal fade" id="commentsModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">💬 Comentarios del Post</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+              </div>
+              <div class="modal-body" id="comments-content">
+                <!-- Comentarios se cargan aquí -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.table {
+  color: #ffffff !important;
+}
+
+.table th,
+.table td {
+  color: #ffffff !important;
+  border-color: #6c55f9 !important;
+}
+
+.sort-indicator {
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.modal-content {
+  background-color: #171717 !important;
+  color: #ffffff !important;
+}
+
+.modal-header {
+  background-color: #171717 !important;
+  border-color: #6c55f9 !important;
+  color: #ffffff !important;
+}
+
+.modal-body {
+  color: #ffffff !important;
+}
+</style>
+
+<script>
+let currentSort = { column: 1, direction: 'desc' };
+
+function deletePost(postId) {
+  if (confirm('¿Eliminar este post permanentemente?')) {
+    fetch('/admin/database/delete-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        post_id: postId, 
+        csrf_token: '{{ csrf_token() }}' 
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById(`post-${postId}`).remove();
+        updateStats();
+        showNotification('✅ Post eliminado', 'success');
+      } else {
+        showNotification('❌ Error: ' + data.error, 'error');
+      }
+    });
+  }
+}
+
+function viewPost(postId) {
+  // Abrir post en nueva pestaña
+  window.open(`/blog/${postId}`, '_blank');
+}
+
+function filterPosts() {
+  const searchTerm = document.getElementById('searchPosts').value.toLowerCase();
+  const authorFilter = document.getElementById('authorFilter').value.toLowerCase();
+  const viewsFilter = document.getElementById('viewsFilter').value;
+  
+  const rows = document.querySelectorAll('#posts-table tr');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const title = row.dataset.title || '';
+    const author = row.dataset.author || '';
+    const views = parseInt(row.dataset.views) || 0;
+    
+    let showRow = true;
+    
+    // Filtro de búsqueda
+    if (searchTerm && !title.includes(searchTerm)) {
+      showRow = false;
+    }
+    
+    // Filtro de autor
+    if (authorFilter && author !== authorFilter) {
+      showRow = false;
+    }
+    
+    // Filtro de vistas
+    if (viewsFilter) {
+      switch(viewsFilter) {
+        case '0':
+          if (views !== 0) showRow = false;
+          break;
+        case '1-10':
+          if (views < 1 || views > 10) showRow = false;
+          break;
+        case '11-50':
+          if (views < 11 || views > 50) showRow = false;
+          break;
+        case '50+':
+          if (views <= 50) showRow = false;
+          break;
+      }
+    }
+    
+    row.style.display = showRow ? '' : 'none';
+    if (showRow) visibleCount++;
+  });
+  
+  document.getElementById('showingCount').textContent = visibleCount;
+}
+
+function clearFilters() {
+  document.getElementById('searchPosts').value = '';
+  document.getElementById('authorFilter').value = '';
+  document.getElementById('viewsFilter').value = '';
+  filterPosts();
+}
+
+function sortTable(columnIndex) {
+  const table = document.getElementById('postsTable');
+  const tbody = table.querySelector('tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  
+  // Cambiar dirección si es la misma columna
+  if (currentSort.column === columnIndex) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = columnIndex;
+    currentSort.direction = 'asc';
+  }
+  
+  rows.sort((a, b) => {
+    let aVal = a.cells[columnIndex].textContent.trim();
+    let bVal = b.cells[columnIndex].textContent.trim();
+    
+    // Convertir a número si es numérico
+    if (!isNaN(aVal) && !isNaN(bVal)) {
+      aVal = parseInt(aVal);
+      bVal = parseInt(bVal);
+    }
+    
+    if (currentSort.direction === 'asc') {
+      return aVal > bVal ? 1 : -1;
+    } else {
+      return aVal < bVal ? 1 : -1;
+    }
+  });
+  
+  // Reordenar filas
+  rows.forEach(row => tbody.appendChild(row));
+  
+  // Actualizar indicadores
+  const headers = table.querySelectorAll('th[onclick]');
+  headers.forEach((header, index) => {
+    const text = header.textContent.replace(/[↕️↑↓]/g, '').trim();
+    if (index + 1 === columnIndex) {
+      header.textContent = text + (currentSort.direction === 'asc' ? ' ↑' : ' ↓');
+    } else {
+      header.textContent = text + ' ↕️';
+    }
+  });
+}
+
+function toggleSelectAll() {
+  const selectAll = document.getElementById('selectAll');
+  const checkboxes = document.querySelectorAll('.post-checkbox');
+  
+  checkboxes.forEach(checkbox => {
+    checkbox.checked = selectAll.checked;
+  });
+  
+  updateBulkActions();
+}
+
+function updateBulkActions() {
+  const checkedBoxes = document.querySelectorAll('.post-checkbox:checked');
+  const bulkBtn = document.getElementById('bulkDeleteBtn');
+  
+  if (checkedBoxes.length > 0) {
+    bulkBtn.style.display = 'inline-block';
+    bulkBtn.textContent = `🗑️ Eliminar ${checkedBoxes.length} seleccionados`;
+  } else {
+    bulkBtn.style.display = 'none';
+  }
+}
+
+function bulkDelete() {
+  const checkedBoxes = document.querySelectorAll('.post-checkbox:checked');
+  const postIds = Array.from(checkedBoxes).map(cb => cb.value);
+  
+  if (postIds.length === 0) return;
+  
+  if (!confirm(`¿Eliminar ${postIds.length} posts seleccionados permanentemente?`)) return;
+  
+  Promise.all(postIds.map(postId => 
+    fetch('/admin/database/delete-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        post_id: postId, 
+        csrf_token: '{{ csrf_token() }}' 
+      })
+    })
+  ))
+  .then(responses => Promise.all(responses.map(r => r.json())))
+  .then(results => {
+    const successful = results.filter(r => r.success).length;
+    const failed = results.length - successful;
+    
+    postIds.forEach(postId => {
+      const row = document.getElementById(`post-${postId}`);
+      if (row) row.remove();
+    });
+    
+    updateStats();
+    updateBulkActions();
+    
+    if (failed === 0) {
+      showNotification(`✅ ${successful} posts eliminados`, 'success');
+    } else {
+      showNotification(`⚠️ ${successful} eliminados, ${failed} errores`, 'warning');
+    }
+  });
+}
+
+function exportPosts() {
+  const posts = [];
+  document.querySelectorAll('#posts-table tr').forEach(row => {
+    if (row.style.display !== 'none') {
+      const cells = row.cells;
+      posts.push({
+        id: cells[1].textContent,
+        title: cells[2].textContent,
+        author: cells[3].textContent,
+        date: cells[4].textContent,
+        views: cells[5].textContent
+      });
+    }
+  });
+  
+  const csv = 'ID,Título,Autor,Fecha,Vistas\n' + 
+    posts.map(p => `${p.id},"${p.title}","${p.author}",${p.date},${p.views}`).join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `posts_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
+
+function loadCommentCounts() {
+  document.querySelectorAll('.comment-count').forEach(span => {
+    const postId = span.dataset.postId;
+    fetch(`/admin/database/post-comments/${postId}`)
+      .then(response => response.json())
+      .then(data => {
+        span.textContent = data.comments ? data.comments.length : 0;
+      })
+      .catch(() => {
+        span.textContent = '?';
+      });
+  });
+}
+
+function updateStats() {
+  // Actualizar contador de comentarios totales
+  setTimeout(() => {
+    let totalComments = 0;
+    document.querySelectorAll('.comment-count').forEach(span => {
+      const count = parseInt(span.textContent) || 0;
+      if (!isNaN(count)) totalComments += count;
+    });
+    document.getElementById('totalComments').textContent = totalComments;
+  }, 1000);
+}
+
+function showNotification(message, type) {
+  // Crear notificación temporal
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'warning'} alert-dismissible`;
+  notification.innerHTML = `${message} <button type="button" class="close" onclick="this.parentElement.remove()">&times;</button>`;
+  notification.style.position = 'fixed';
+  notification.style.top = '20px';
+  notification.style.right = '20px';
+  notification.style.zIndex = '9999';
+  notification.style.minWidth = '300px';
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    if (notification.parentElement) {
+      notification.remove();
+    }
+  }, 5000);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  loadCommentCounts();
+  updateStats();
+  
+  // Agregar event listeners a checkboxes
+  document.querySelectorAll('.post-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+  });
+});
+
+function editPost(postId, currentTitle) {
+  const newTitle = prompt('Nuevo título:', currentTitle);
+  if (newTitle && newTitle !== currentTitle) {
+    fetch('/admin/database/edit-post', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        post_id: postId, 
+        title: newTitle,
+        csrf_token: '{{ csrf_token() }}' 
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('❌ Error: ' + data.error);
+      }
+    });
+  }
+}
+
+function viewComments(postId) {
+  fetch(`/admin/database/post-comments/${postId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.comments) {
+        let html = '';
+        data.comments.forEach((comment, index) => {
+          html += `
+            <div class="border p-3 mb-2">
+              <strong>${comment.name}</strong> (${comment.email})
+              <small class="text-muted">${comment.date}</small>
+              <p>${comment.message}</p>
+              <button class="btn btn-sm btn-danger" onclick="deleteComment(${postId}, ${index})">🗑️ Eliminar</button>
+            </div>
+          `;
+        });
+        document.getElementById('comments-content').innerHTML = html || '<p>No hay comentarios</p>';
+        $('#commentsModal').modal('show');
+      }
+    });
+}
+
+function deleteComment(postId, commentIndex) {
+  if (confirm('¿Eliminar este comentario?')) {
+    fetch('/admin/database/delete-comment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        post_id: postId, 
+        comment_index: commentIndex,
+        csrf_token: '{{ csrf_token() }}' 
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        viewComments(postId); // Recargar comentarios
+        loadCommentCounts(); // Actualizar contadores
+        showNotification('✅ Comentario eliminado', 'success');
+      } else {
+        showNotification('❌ Error: ' + data.error, 'error');
+      }
+    });
+  }
+}
+</script>
+{% endblock %}

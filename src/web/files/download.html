@@ -1,66 +1,305 @@
-
 {% extends 'layout.html' %}
 
-{% block title %}Descargar Archivos{% endblock %}
-
+{% block title %}Mis Archivos{% endblock %}
 
 {% block content %}
 
-<div style="height:400px" class="page-banner home-banner">
-  <div class="container h-100">
-    <div class="row align-items-center h-100">     
-      <div class="col-lg-6 py-2 wow fadeInUp">
-        <h1 class="mb-4">Descargas</h1>
-        <p class="text-lg mb-5">
-          Aqui podras ver, descargar y compartir tus archivos con amigos
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
+<style>
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.file-card {
+  background: var(--card-bg, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(108, 85, 249, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  border: 1px solid rgba(108, 85, 249, 0.2);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.file-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 20px rgba(108, 85, 249, 0.5);
+}
+
+.file-preview {
+  height: 160px;
+  background: var(--preview-bg, #f8f9fa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Variables CSS para modo oscuro */
+body {
+  --card-bg: #171717;
+  --preview-bg: #1f1f1f;
+  --text-color: #ffffff;
+  --secondary-color: #B4B2C5;
+  --stats-bg: #171717;
+}
+
+/* Variables CSS para modo claro */
+[data-theme="light"] {
+  --card-bg: #ffffff;
+  --preview-bg: #f8f9fa;
+  --text-color: #333333;
+  --secondary-color: #6c757d;
+  --stats-bg: #f8f9fa;
+}
+
+.file-icon {
+  font-size: 48px;
+  color: #6c55f9;
+}
+
+.file-info {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  margin-bottom: 5px;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-color);
+}
+
+.file-size {
+  color: var(--secondary-color);
+  font-size: 0.9em;
+  margin-bottom: 15px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.85em;
+  transition: all 0.2s;
+}
+
+.btn-download { background: #007bff; color: white; }
+.btn-download:hover { background: #0056b3; color: white; }
+
+.btn-share { background: #28a745; color: white; }
+.btn-share:hover { background: #1e7e34; color: white; }
+
+.btn-delete { background: #dc3545; color: white; }
+.btn-delete:hover { background: #c82333; color: white; }
+
+.stats-bar {
+  background: var(--stats-bg);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid rgba(108, 85, 249, 0.2);
+  color: var(--text-color);
+}
+
+.stats-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.space-info {
+  font-size: 0.9em;
+  color: var(--secondary-color);
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-input {
+  min-width: 120px;
+  flex: 1;
+  max-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .file-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+  }
+  
+  .stats-bar {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+  
+  .toolbar {
+    justify-content: space-between;
+  }
+  
+  .toolbar .btn {
+    min-width: 70px;
+    height: 38px;
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+  
+  .search-input {
+    flex: 1;
+    min-width: 100px;
+    max-width: none;
+    margin-left: 8px;
+  }
+}
+</style>
 
 <main>
-  <div class="page-section features">
+  <div class="page-section">
     <div class="container">
-      <h1 class="mb-4">Archivos
-        <a href="{{url_for('upload')}}" class="btn btn-outline border text-secondary">Subir archivos</a>
-      </h1>
-      <div>
-        <h4>
-          Espacio libre: {{space}}
-        </h4>  
+
+      <div class="col-lg-8 py-2 wow fadeInDown">
+        <h1 class="mb-3">📁 Mis Archivos</h1>
+        <p class="text-lg mb-4">
+          Gestiona, descarga y comparte tus archivos de forma segura
+        </p>
+      </div>
+      <!-- Breadcrumb Navigation -->
+      {% if breadcrumb %}
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb" style="background: var(--stats-bg); border: 1px solid rgba(108, 85, 249, 0.2);">
+          <li class="breadcrumb-item"><a href="{{url_for('download')}}" style="color: var(--text-color);">🏠 Inicio</a></li>
+          {% for crumb in breadcrumb %}
+          <li class="breadcrumb-item"><a href="{{url_for('download', folder=crumb.path)}}" style="color: var(--text-color);">{{crumb.name}}</a></li>
+          {% endfor %}
+        </ol>
+      </nav>
+      {% endif %}
+
+      <div class="stats-bar">
+        <div class="stats-info">
+          <div><strong>📁 {{folders|length}} carpetas | 📊 {{files|length}} archivos | 💾 {{space}}</strong></div>
+        </div>
+        <div class="toolbar">
+          <button onclick="createFolder()" class="btn btn-sm btn-primary">📁 Crear</button>
+          <a href="{{url_for('upload', folder=current_folder)}}" class="btn btn-sm btn-success">📤 Subir</a>
+          <input type="text" id="searchFiles" class="form-control search-input" placeholder="🔍 Buscar...">
+        </div>
       </div>
 
-      <ul class="footer-menu features">
-      {% for archive in files %}
-      <li class="flex-row py-2">
-       <div style="max-width:800px" class="border card-blog">
-          <div class="post-title">
-            <a href="{{url_for('download')}}?file={{archive[0]}}" class="btn btn-lg btn-block text-primary">          
-              <img src="{{url_for('download')}}?token={{archive[1]}}" style="aspect-ratio: 16/9; object-fit: contain;" class="card-img-top" alt="..." onerror="this.onerror=null; this.src='/static/img/file.png'">
-              {{archive[0]}} [{{archive[2]}}]</a>
+      {% if folders or files %}
+      <div class="file-grid" id="fileGrid">
+        <!-- Carpetas -->
+        {% for folder in folders %}
+        <div class="file-card folder-card" data-filename="{{folder.lower()}}">
+          <div class="file-preview" onclick="window.location.href='{{url_for('download', folder=(current_folder + '/' + folder) if current_folder else folder)}}'">
+            <div class="file-icon" style="font-size: 64px;">📁</div>
           </div>
-          <div class="row align-items-end"> 
-            <div class="col">
-              <a href="{{url_for('delete')}}?del_file={{archive[1]}}" class="btn btn-outline btn-block border text-danger">Borrar</a>
-            </div>
-            <div class="col">
-              <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn btn-outline btn-block border text-primary">Descargar</a>
-            </div>
-            <div class="col">
-              <a href="javascript:getlink('{{archive[1]}}');"  class="btn btn-outline border btn-block text-success ">Compartir</a>    
+          <div class="file-info">
+            <div class="file-name" title="{{folder}}">{{folder}} <span onclick="renameItem('{{folder}}', true)" style="cursor: pointer; color: #6c55f9; margin-left: 5px;" title="Renombrar">✏️</span></div>
+            <div class="file-size">Carpeta</div>
+            <div class="file-actions">
+              <a href="{{url_for('download', folder=(current_folder + '/' + folder) if current_folder else folder)}}" class="btn-action btn-download" title="Abrir">📂</a>
+              <a href="javascript:deleteFolder('{{folder}}');" class="btn-action btn-delete" title="Eliminar">🗑️</a>
             </div>
           </div>
         </div>
-      </li>
-      {%endfor%}
-      </ul>
+        {% endfor %}
+        
+        <!-- Archivos -->
+        {% for archive in files %}
+        <div class="file-card" data-filename="{{archive[0].lower()}}">
+          <div class="file-preview">
+            {% set ext = archive[0].split('.')[-1].lower() if '.' in archive[0] else '' %}
+            {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+              <img src="{{url_for('thumbnail')}}?token={{archive[1]}}" style="width: 100%; height: 100%; object-fit: cover;" alt="{{archive[0]}}" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'image', '{{archive[0]}}')"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="file-icon" style="display: none;">🖼️</div>
+            {% elif ext in ['mp4', 'avi', 'mov', 'mkv'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'video', '{{archive[0]}}')">🎬</div>
+            {% elif ext in ['mp3', 'wav', 'flac', 'aac'] %}
+              <div class="file-icon">🎵</div>
+            {% elif ext in ['pdf'] %}
+              <div class="file-icon">📄</div>
+            {% elif ext in ['doc', 'docx'] %}
+              <div class="file-icon">📝</div>
+            {% elif ext in ['xls', 'xlsx'] %}
+              <div class="file-icon">📊</div>
+            {% elif ext in ['zip', 'rar', '7z'] %}
+              <div class="file-icon">🗜️</div>
+            {% elif ext in ['txt'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">📃</div>
+            {% elif ext in ['py'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">🐍</div>
+            {% elif ext in ['html', 'htm'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">🌐</div>
+            {% elif ext in ['css'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">🎨</div>
+            {% elif ext in ['js'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">⚡</div>
+            {% elif ext in ['json'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">🔗</div>
+            {% elif ext in ['md'] %}
+              <div class="file-icon" onclick="openPreview('{{url_for('download')}}?token={{archive[1]}}', 'text', '{{archive[0]}}')">📝</div>
+            {% else %}
+              <div class="file-icon">📄</div>
+            {% endif %}
+          </div>
+          
+          <div class="file-info">
+            <div class="file-name" title="{{archive[0]}}">{{archive[0]}} <span onclick="renameItem('{{archive[0]}}', false)" style="cursor: pointer; color: #6c55f9; margin-left: 5px;" title="Renombrar">✏️</span></div>
+            <div class="file-size">{{archive[2]}}</div>
+            
+            <div class="file-actions">
+              <a href="{{url_for('download')}}?f_file={{archive[1]}}" class="btn-action btn-download" title="Descargar">⬇️</a>
+              <a href="javascript:shareFile('{{archive[1]}}', '{{archive[0]}}');" class="btn-action btn-share" title="Compartir">🔗</a>
+              <a href="javascript:moveFile('{{archive[0]}}');" class="btn-action" style="background: #ffc107; color: #000;" title="Mover">📎</a>
+              <a href="javascript:deleteFile('{{archive[1]}}', '{{archive[0]}}');" class="btn-action btn-delete" title="Eliminar">🗑️</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <div style="font-size: 64px; margin-bottom: 20px;">📂</div>
+        <h3>No tienes archivos aún</h3>
+        <p class="text-muted">Sube tu primer archivo para comenzar</p>
+        <a href="{{url_for('upload', folder=current_folder)}}" class="btn btn-primary rounded-pill px-4 mt-3">📤 Subir Archivos</a>
+      </div>
+      {% endif %}
+
       <div class="col-12 mt-5">
         <nav aria-label="Page Navigation">
             <ul class="pagination justify-content-center">
                 {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('download', page=page-1) }}" tabindex="-1">Previous</a>
+                        <a class="page-link" href="{{ url_for('download', page=page-1, folder=current_folder) }}" tabindex="-1">Previous</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -69,7 +308,7 @@
                 {% endif %}
 
                 {% if page > 1 %}
-                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page-1) }}">{{ page-1 }}</a></li>
+                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page-1, folder=current_folder) }}">{{ page-1 }}</a></li>
                 {% endif %}
     
                 <li class="page-item active" aria-current="page">
@@ -77,12 +316,12 @@
                 </li>
     
                 {% if page < total_pages %}
-                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page+1) }}">{{ page+1 }}</a></li>
+                    <li class="page-item"><a class="page-link" href="{{ url_for('download', page=page+1, folder=current_folder) }}">{{ page+1 }}</a></li>
                 {% endif %}
     
                 {% if page < total_pages %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('download', page=page+1) }}">Next</a>
+                        <a class="page-link" href="{{ url_for('download', page=page+1, folder=current_folder) }}">Next</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -96,26 +335,284 @@
   </div>
 </main>
 
+<!-- Modal de Vista Previa -->
+<div id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center;">
+  <div style="position: relative; max-width: 90%; max-height: 90%;">
+    <span onclick="closePreview()" style="position: absolute; top: -40px; right: 0; color: white; font-size: 30px; cursor: pointer;">&times;</span>
+    <div id="previewContent"></div>
+  </div>
+</div>
+
 <script>
-  //<![CDATA[
-  function getlink(e) {
-    var aux = document.createElement("input");
-    // Obtener la URL actual
-    var currentUrl = window.location.href;
-    // Crear un objeto URL
-    var url = new URL(currentUrl);
-    // Obtener solo la ruta base sin parámetros
-    var basePath = url.origin + url.pathname;
-    // Asignar el nuevo valor con el token
-    aux.setAttribute("value", basePath + '?token=' + e);
-    document.body.appendChild(aux);
-    aux.select();
-    document.execCommand("copy");
-    document.body.removeChild(aux);
-    alert("URL copiada al portapapeles\n\n" + basePath + '?token=' + e);
-  }//]]>
+// Detectar cambio de tema y actualizar variables CSS
+function updateThemeVariables() {
+  const themeLink = document.getElementById('theme-link');
+  const isLightMode = themeLink && themeLink.getAttribute('href').includes('theme.css');
+  
+  if (isLightMode) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+// Observar cambios en el tema
+const observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'href') {
+      updateThemeVariables();
+    }
+  });
+});
+
+const themeLink = document.getElementById('theme-link');
+if (themeLink) {
+  observer.observe(themeLink, { attributes: true });
+  updateThemeVariables(); // Inicializar
+}
+
+// Búsqueda de archivos
+document.getElementById('searchFiles').addEventListener('input', function(e) {
+  const searchTerm = e.target.value.toLowerCase();
+  const fileCards = document.querySelectorAll('.file-card');
+  
+  fileCards.forEach(card => {
+    const filename = card.getAttribute('data-filename');
+    if (filename.includes(searchTerm)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+});
+
+// Función mejorada para compartir
+function shareFile(token, filename) {
+  const url = window.location.origin + window.location.pathname + '?token=' + token;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: 'Compartir archivo: ' + filename,
+      url: url
+    });
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      showNotification('🔗 Enlace copiado al portapapeles', 'success');
+    }).catch(() => {
+      // Fallback para navegadores antiguos
+      const aux = document.createElement("input");
+      aux.setAttribute("value", url);
+      document.body.appendChild(aux);
+      aux.select();
+      document.execCommand("copy");
+      document.body.removeChild(aux);
+      showNotification('🔗 Enlace copiado al portapapeles', 'success');
+    });
+  }
+}
+
+// Confirmación para eliminar
+function deleteFile(token, filename) {
+  if (confirm('¿Estás seguro de que quieres eliminar "' + filename + '"?')) {
+    window.location.href = '{{url_for("delete")}}?del_file=' + token;
+  }
+}
+
+// Vista previa de archivos
+function openPreview(url, type, filename) {
+  const modal = document.getElementById('previewModal');
+  const content = document.getElementById('previewContent');
+  
+  if (type === 'image') {
+    content.innerHTML = `<img src="${url}" style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="${filename}">`;
+  } else if (type === 'video') {
+    content.innerHTML = `<video controls style="max-width: 100%; max-height: 100%;" preload="metadata">
+      <source src="${url}" type="video/mp4">
+      Tu navegador no soporta el elemento video.
+    </video>`;
+  } else if (type === 'text') {
+    fetch(url)
+      .then(response => response.text())
+      .then(text => {
+        content.innerHTML = `<div style="background: var(--card-bg); color: var(--text-color); padding: 20px; border-radius: 8px; max-width: 80vw; max-height: 80vh; overflow: auto; font-family: monospace; white-space: pre-wrap; border: 1px solid rgba(108, 85, 249, 0.3);">${text}</div>`;
+      })
+      .catch(error => {
+        content.innerHTML = `<div style="color: #ff4943; padding: 20px;">Error al cargar el archivo: ${error.message}</div>`;
+      });
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function closePreview() {
+  const modal = document.getElementById('previewModal');
+  modal.style.display = 'none';
+  document.getElementById('previewContent').innerHTML = '';
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closePreview();
+  }
+});
+
+// Crear carpeta
+function createFolder() {
+  const name = prompt('📁 Nombre de la nueva carpeta:');
+  if (!name) return;
+  
+  const currentFolder = new URLSearchParams(window.location.search).get('folder') || '';
+  
+  fetch('/folder', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: name, current_folder: currentFolder})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('📁 Carpeta creada correctamente', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification('❌ ' + data.error, 'danger');
+    }
+  });
+}
+
+// Eliminar carpeta
+function deleteFolder(folderName) {
+  if (!confirm(`¿Eliminar la carpeta "${folderName}" y todo su contenido?`)) return;
+  
+  const currentFolder = new URLSearchParams(window.location.search).get('folder') || '';
+  
+  fetch('/folder', {
+    method: 'DELETE',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: folderName, current_folder: currentFolder})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('🗑️ Carpeta eliminada', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification('❌ ' + data.error, 'danger');
+    }
+  });
+}
+
+// Mover archivo con modal clickeable
+function moveFile(fileName) {
+  // Obtener carpetas visibles en la vista actual
+  const visibleFolders = Array.from(document.querySelectorAll('.folder-card .file-name')).map(el => el.textContent.replace(' ✏️', '').trim());
+  
+  // Construir lista completa de destinos posibles
+  const currentFolder = new URLSearchParams(window.location.search).get('folder') || '';
+  const folders = [];
+  
+  // Agregar carpetas visibles con ruta completa
+  visibleFolders.forEach(folder => {
+    const fullPath = currentFolder ? `${currentFolder}/${folder}` : folder;
+    folders.push({name: folder, path: fullPath});
+  });
+  
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center;';
+  
+  const content = document.createElement('div');
+  content.style.cssText = 'background: var(--card-bg); padding: 20px; border-radius: 12px; max-width: 400px; width: 90%; border: 1px solid rgba(108, 85, 249, 0.3);';
+  
+  let html = `<h4 style="color: var(--text-color); margin-bottom: 15px;">📎 Mover "${fileName}" a:</h4>`;
+  
+  html += `<div onclick="doMove('${fileName}', '')" style="padding: 10px; margin: 5px 0; background: var(--preview-bg); border-radius: 6px; cursor: pointer; color: var(--text-color); border: 1px solid rgba(108, 85, 249, 0.2);" onmouseover="this.style.background='rgba(108, 85, 249, 0.1)'" onmouseout="this.style.background='var(--preview-bg)'">🏠 Carpeta raíz</div>`;
+  
+  folders.forEach(folder => {
+    html += `<div onclick="doMove('${fileName}', '${folder.path}')" style="padding: 10px; margin: 5px 0; background: var(--preview-bg); border-radius: 6px; cursor: pointer; color: var(--text-color); border: 1px solid rgba(108, 85, 249, 0.2);" onmouseover="this.style.background='rgba(108, 85, 249, 0.1)'" onmouseout="this.style.background='var(--preview-bg)'">📁 ${folder.name}</div>`;
+  });
+  
+  html += `<button onclick="this.closest('.move-modal').remove()" style="margin-top: 15px; padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>`;
+  
+  content.innerHTML = html;
+  modal.appendChild(content);
+  modal.className = 'move-modal';
+  document.body.appendChild(modal);
+}
+
+function doMove(fileName, targetFolder) {
+  document.querySelector('.move-modal').remove();
+  
+  const currentFolder = new URLSearchParams(window.location.search).get('folder') || '';
+  
+  fetch('/move', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      file: fileName, 
+      folder: targetFolder,
+      current_folder: currentFolder
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('📎 Archivo movido correctamente', 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification('❌ ' + data.error, 'danger');
+    }
+  });
+}
+
+// Renombrar archivo o carpeta
+function renameItem(oldName, isFolder) {
+  const newName = prompt(`✏️ Nuevo nombre para "${oldName}":`, oldName);
+  if (!newName || newName === oldName) return;
+  
+  const currentFolder = new URLSearchParams(window.location.search).get('folder') || '';
+  
+  fetch('/rename', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      old_name: oldName,
+      new_name: newName,
+      current_folder: currentFolder,
+      is_folder: isFolder
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification(`✏️ ${isFolder ? 'Carpeta' : 'Archivo'} renombrado correctamente`, 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showNotification('❌ ' + data.error, 'danger');
+    }
+  })
+  .catch(error => {
+    showNotification('❌ Error de conexión', 'danger');
+  });
+}
+
+// Sistema de notificaciones
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} alert-dismissible fade show`;
+  notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+  notification.innerHTML = `
+    ${message}
+    <button type="button" class="close" data-dismiss="alert">
+      <span>&times;</span>
+    </button>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+}
 </script>
 
-
-
-  {% endblock %}
+{% endblock %}
