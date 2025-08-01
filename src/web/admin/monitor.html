@@ -41,7 +41,7 @@
         <div class="col-md-3">
           <div class="card text-center">
             <div class="card-body">
-              <h3 class="text-info" id="visitsToday">{{ realtime.visits_today }}</h3>
+              <h3 class="text-info" id="visitsToday">{{ realtime.visits_today if realtime else 0 }}</h3>
               <small>Visitas Hoy</small>
             </div>
           </div>
@@ -49,8 +49,60 @@
         <div class="col-md-3">
           <div class="card text-center">
             <div class="card-body">
-              <h3 class="text-warning" id="onlineNow">{{ realtime.online_now }}</h3>
+              <h3 class="text-warning" id="onlineNow">{{ realtime.online_estimate if realtime else 0 }}</h3>
               <small>En Línea Ahora</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Métricas Adicionales -->
+      <div class="row mb-4">
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-info">{{ engagement_metrics.active_sessions if engagement_metrics else 0 }}</h4>
+              <small>Sesiones Activas</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-success">{{ user_metrics.unique_users if user_metrics else 0 }}</h4>
+              <small>Usuarios Únicos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-primary">{{ engagement_metrics.total_page_views if engagement_metrics else 0 }}</h4>
+              <small>Páginas Vistas</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-warning">{{ user_metrics.new_users if user_metrics else 0 }}</h4>
+              <small>Usuarios Nuevos</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-secondary">{{ user_metrics.returning_users if user_metrics else 0 }}</h4>
+              <small>Usuarios Recurrentes</small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="card text-center">
+            <div class="card-body">
+              <h4 class="text-danger">{{ bots_detected if bots_detected else 0 }}</h4>
+              <small>Bots Detectados</small>
             </div>
           </div>
         </div>
@@ -61,7 +113,7 @@
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
-              <h5>📊 Visitas por Hora (Hoy)</h5>
+              <h5>📊 Visitas por Hora (Formato 12h)</h5>
             </div>
             <div class="card-body">
               <canvas id="hourlyChart" width="400" height="200"></canvas>
@@ -73,12 +125,38 @@
             <div class="card-header d-flex justify-content-between">
               <h5>📈 Visitas Temporales</h5>
               <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary active" onclick="showChart('daily')">7 Días</button>
-                <button class="btn btn-outline-primary" onclick="showChart('monthly')">6 Meses</button>
+                <button class="btn btn-outline-primary active" onclick="showChart('daily')">30 Días</button>
+                <button class="btn btn-outline-primary" onclick="showChart('monthly')">12 Meses</button>
+                <button class="btn btn-outline-primary" onclick="showChart('yearly')">Por Años</button>
+
               </div>
             </div>
             <div class="card-body">
               <canvas id="temporalChart" width="400" height="200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Gráfico de Categorías de Páginas -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📄 Categorías de Páginas</h5>
+            </div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="pageCategoriesChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>🔗 Tipos de Tráfico</h5>
+            </div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="trafficTypesChart" width="400" height="300"></canvas>
             </div>
           </div>
         </div>
@@ -89,7 +167,7 @@
         <div class="col-md-6">
           <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-              <h5>🌍 Top Países</h5>
+              <h5>🌍 Top Países (Ordenados por Visitas)</h5>
               <button class="btn btn-sm btn-outline-primary" onclick="loadGeoData()" id="geoBtn">
                 <span id="geoBtnText">Cargar Datos</span>
                 <span id="geoSpinner" class="spinner-border spinner-border-sm d-none"></span>
@@ -101,6 +179,7 @@
                   <i class="fas fa-globe"></i><br>
                   Haz clic en "Cargar Datos" para ver información geográfica
                   <br><small>Esto puede tardar unos segundos</small>
+                  <br><small class="text-info">"Red Local (LAN)" = IPs privadas (192.168.x, 10.x, 172.x, 127.x)</small>
                 </div>
               </div>
             </div>
@@ -109,16 +188,23 @@
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
-              <h5>📄 Páginas Populares</h5>
+              <h5>📄 Páginas Populares (Ordenadas por Visitas)</h5>
             </div>
             <div class="card-body">
               <div id="topPages">
-                {% for page, visits in top_pages.items() %}
-                <div class="d-flex justify-content-between mb-2">
-                  <span>{{ page }}</span>
-                  <span class="badge badge-success">{{ visits }}</span>
-                </div>
-                {% endfor %}
+                {% if top_pages %}
+                  {% for page, visits in top_pages.items() %}
+                  <div class="d-flex justify-content-between mb-2">
+                    <span title="{{ page }}">{{ page }}</span>
+                    <span class="badge badge-success">{{ visits }}</span>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="text-muted text-center py-3">
+                    <i class="fas fa-file-alt"></i><br>
+                    No hay datos de páginas disponibles
+                  </div>
+                {% endif %}
               </div>
             </div>
           </div>
@@ -149,12 +235,36 @@
         </div>
       </div>
 
-      <!-- Navegadores y SO -->
+      <!-- Gráficas de Navegadores y Dispositivos -->
       <div class="row mb-4">
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
-              <h5>🌐 Navegadores</h5>
+              <h5>🌐 Navegadores (Gráfica)</h5>
+            </div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="browsersChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📱 Dispositivos (Gráfica)</h5>
+            </div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="devicesChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navegadores y SO (Listas) -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>🌐 Navegadores (Detalle)</h5>
             </div>
             <div class="card-body">
               {% for browser, count in browsers.items() %}
@@ -183,23 +293,8 @@
         </div>
       </div>
 
-      <!-- Dispositivos y Ciudades -->
+      <!-- Ciudades y ISPs -->
       <div class="row mb-4">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5>📱 Dispositivos</h5>
-            </div>
-            <div class="card-body">
-              {% for device, count in devices.items() %}
-              <div class="d-flex justify-content-between mb-2">
-                <span>{{ device }}</span>
-                <span class="badge badge-warning">{{ count }}</span>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
@@ -210,15 +305,12 @@
                 <div class="text-muted text-center py-3">
                   <i class="fas fa-city"></i><br>
                   Datos disponibles después de cargar información geográfica
+                  <br><small class="text-info">Formato: "Ciudad, País"</small>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- ISPs y Métricas Avanzadas -->
-      <div class="row mb-4">
         <div class="col-md-6">
           <div class="card">
             <div class="card-header">
@@ -229,46 +321,146 @@
                 <div class="text-muted text-center py-3">
                   <i class="fas fa-network-wired"></i><br>
                   Datos disponibles después de cargar información geográfica
+                  <br><small class="text-info">Proveedores de Internet ordenados por visitas</small>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h5>📊 Métricas Avanzadas</h5>
-            </div>
-            <div class="card-body">
-              <div class="d-flex justify-content-between mb-2">
-                <span>Bounce Rate</span>
-                <span class="badge badge-{{ 'success' if bounce_rate < 50 else 'warning' if bounce_rate < 70 else 'danger' }}">{{ bounce_rate }}%</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Bots Detectados</span>
-                <span class="badge badge-secondary">{{ bots_detected }}</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Promedio/Hora</span>
-                <span class="badge badge-primary">{{ avg_visits_per_hour }}</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Páginas/Sesión</span>
-                <span class="badge badge-info" id="pagesPerSession">{{ realtime.pages_per_session }}</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Hora Pico</span>
-                <span class="badge badge-warning">{{ realtime.peak_hour[0] }}:00 ({{ realtime.peak_hour[1] }})</span>
-              </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>Duración Sesión</span>
-                <span class="badge badge-success">{{ avg_session_duration }}min</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Métricas de Rendimiento -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Métricas de Rendimiento</h5>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span title="Porcentaje de visitantes que ven solo una página" style="cursor: help;">Bounce Rate</span>
+                    <span class="badge badge-{{ 'success' if bounce_rate < 50 else 'warning' if bounce_rate < 70 else 'danger' }}">{{ bounce_rate }}%</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Páginas/Sesión</span>
+                    <span class="badge badge-info" id="pagesPerSession">{{ engagement_metrics.avg_session_pages if engagement_metrics else realtime.pages_per_session if realtime else '0.0' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Duración Sesión</span>
+                    <span class="badge badge-success">{{ avg_session_duration }}min</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Tráfico Móvil</span>
+                    <span class="badge badge-{{ 'success' if mobile_percentage > 50 else 'warning' if mobile_percentage > 30 else 'secondary' }}">{{ mobile_percentage if mobile_percentage else '0' }}%</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Retención Usuarios</span>
+                    <span class="badge badge-{{ 'success' if user_metrics.user_retention_rate > 30 else 'warning' if user_metrics.user_retention_rate > 15 else 'secondary' }}">{{ user_metrics.user_retention_rate if user_metrics else 0 }}%</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Promedio/Hora</span>
+                    <span class="badge badge-primary">{{ avg_visits_per_hour }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Crecimiento Diario</span>
+                    <span class="badge badge-{{ 'success' if growth_rate > 0 else 'danger' if growth_rate < 0 else 'secondary' }}">{{ growth_rate }}%</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Sesiones Rebote</span>
+                    <span class="badge badge-warning">{{ engagement_metrics.bounce_sessions if engagement_metrics else 0 }}</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Hora Pico</span>
+                    <span class="badge badge-warning">{{ realtime.peak_hour if realtime and realtime.peak_hour else '12:00 AM' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Visitas Hora Pico</span>
+                    <span class="badge badge-info">{{ peak_hour_visits if peak_hour_visits else '0' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Hora Más Activa Hoy</span>
+                    <span class="badge badge-primary">{{ busiest_hour_today }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Tráfico Fin Semana</span>
+                    <span class="badge badge-{{ 'success' if weekend_vs_weekday_ratio > 40 else 'warning' if weekend_vs_weekday_ratio > 20 else 'secondary' }}">{{ weekend_vs_weekday_ratio }}%</span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Página Más Popular</span>
+                    <span class="badge badge-success" title="{{ most_popular_page if most_popular_page else 'Sin datos' }}" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;">{{ most_popular_page[:15] + '...' if most_popular_page and most_popular_page|length > 15 else most_popular_page or 'Sin datos' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Top Referrer</span>
+                    <span class="badge badge-primary" title="{{ top_referrer_domain if top_referrer_domain else 'Sin datos' }}" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis;">{{ top_referrer_domain[:15] + '...' if top_referrer_domain and top_referrer_domain|length > 15 else top_referrer_domain or 'Sin datos' }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Día Pico</span>
+                    <span class="badge badge-info">{{ peak_traffic_day }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>&nbsp;</span>
+                    <span>&nbsp;</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Análisis de Tráfico por Días de la Semana -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📅 Tráfico por Días de la Semana</h5>
+            </div>
+            <div class="card-body" style="height: 300px;">
+              <canvas id="weekdaysChart" width="400" height="300"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5>📊 Estadísticas de Tráfico</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Promedio diario</span>
+                <span class="badge badge-info">{{ (avg_visits_per_hour * 24) | round(1) }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Día más activo</span>
+                <span class="badge badge-success">{{ peak_traffic_day }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Patrón semanal</span>
+                <span class="badge badge-info">{{ weekend_vs_weekday_ratio }}% fin semana</span>
+              </div>
+              {% if traffic_analysis and traffic_analysis.referrer_types %}
+              <hr>
+              <h6>Tipos de Tráfico:</h6>
+              {% for type, count in traffic_analysis.referrer_types.items() %}
+              <div class="d-flex justify-content-between mb-1">
+                <small>{{ type }}</small>
+                <span class="badge badge-sm badge-secondary">{{ count }}</span>
+              </div>
+              {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- Sistema -->
       <div class="row">
         <div class="col-12">
@@ -289,51 +481,402 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-let hourlyChart, temporalChart;
+let hourlyChart, temporalChart, browsersChart, devicesChart, pageCategoriesChart, trafficTypesChart, weekdaysChart;
 let currentView = 'daily';
 
-const dailyData = {{ daily_visits | tojson }};
-const monthlyData = {{ monthly_visits | tojson }};
+const temporalData = {{ temporal | tojson if temporal else '{}' | safe }};
+const browsersData = {{ browsers | tojson if browsers else '{}' | safe }};
+const devicesData = {{ devices | tojson if devices else '{}' | safe }};
+const pageCategoriesData = {{ traffic_analysis.page_categories | tojson if traffic_analysis and traffic_analysis.page_categories else '{}' | safe }};
+const trafficTypesData = {{ traffic_analysis.referrer_types | tojson if traffic_analysis and traffic_analysis.referrer_types else '{}' | safe }};
+const weekdaysData = {{ temporal.weekdays | tojson if temporal and temporal.weekdays else '{}' | safe }};
 
 function initCharts() {
-  // Gráfico por horas
+  // Gráfico por horas (formato 12h) - Mejorado
   const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+  const hourlyData = temporalData.hourly || [];
+  
+  // Crear gradiente
+  const gradient = hourlyCtx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(108, 85, 249, 0.8)');
+  gradient.addColorStop(0.5, 'rgba(108, 85, 249, 0.4)');
+  gradient.addColorStop(1, 'rgba(108, 85, 249, 0.1)');
+  
   hourlyChart = new Chart(hourlyCtx, {
     type: 'line',
     data: {
-      labels: {{ hourly_visits | map(attribute='hour') | list | tojson }},
+      labels: hourlyData.map(h => h.time || '12:00 AM'),
       datasets: [{
-        label: 'Visitas',
-        data: {{ hourly_visits | map(attribute='visits') | list | tojson }},
+        label: 'Visitas por Hora',
+        data: hourlyData.map(h => h.visits || 0),
         borderColor: '#6C55F9',
-        backgroundColor: 'rgba(108, 85, 249, 0.1)',
-        tension: 0.4
+        backgroundColor: gradient,
+        borderWidth: 3,
+        pointBackgroundColor: '#6C55F9',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        tension: 0.4,
+        fill: true
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      animation: {
+        duration: 2000,
+        easing: 'easeInOutQuart'
+      },
       scales: {
-        y: { beginAtZero: true }
+        y: { 
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#666',
+            font: { size: 12 }
+          }
+        },
+        x: { 
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#666',
+            font: { size: 11 },
+            maxRotation: 45
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          borderColor: '#6C55F9',
+          borderWidth: 1,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: function(context) {
+              const index = context[0].dataIndex;
+              const hourData = hourlyData[index];
+              return hourData ? `${hourData.time}` : '';
+            },
+            label: function(context) {
+              return `${context.parsed.y} visitas`;
+            },
+            afterLabel: function(context) {
+              const index = context.dataIndex;
+              const hourData = hourlyData[index];
+              return hourData ? `Fecha: ${hourData.date}` : '';
+            }
+          }
+        }
       }
     }
   });
 
-  // Gráfico temporal (días/meses)
+  // Gráfico temporal (días/meses/años) - Mejorado
   const temporalCtx = document.getElementById('temporalChart').getContext('2d');
+  const dailyData = temporalData.daily || [];
+  
+  // Crear gradiente para barras
+  const barGradient = temporalCtx.createLinearGradient(0, 0, 0, 400);
+  barGradient.addColorStop(0, '#35bb78');
+  barGradient.addColorStop(1, '#2a9d5f');
+  
   temporalChart = new Chart(temporalCtx, {
     type: 'bar',
     data: {
-      labels: dailyData.map(d => d.date),
+      labels: dailyData.map(d => d.date || ''),
       datasets: [{
-        label: 'Visitas',
-        data: dailyData.map(d => d.visits),
-        backgroundColor: '#35bb78'
+        label: 'Visitas Diarias',
+        data: dailyData.map(d => d.visits || 0),
+        backgroundColor: barGradient,
+        borderColor: '#35bb78',
+        borderWidth: 1,
+        borderRadius: 4,
+        borderSkipped: false
       }]
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1500,
+        easing: 'easeOutBounce'
+      },
       scales: {
-        y: { beginAtZero: true }
+        y: { 
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#666',
+            font: { size: 12 }
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#666',
+            font: { size: 11 },
+            maxRotation: 45
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          borderColor: '#35bb78',
+          borderWidth: 1,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks: {
+            title: function(context) {
+              const index = context[0].dataIndex;
+              const dayData = dailyData[index];
+              return dayData ? `${dayData.day_name || ''} ${dayData.date || ''}` : '';
+            },
+            label: function(context) {
+              return `${context.parsed.y} visitas`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfica de Navegadores (Doughnut)
+  const browsersCtx = document.getElementById('browsersChart').getContext('2d');
+  const browserLabels = Object.keys(browsersData);
+  const browserValues = Object.values(browsersData);
+  
+  const browserColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+  
+  browsersChart = new Chart(browsersCtx, {
+    type: 'doughnut',
+    data: {
+      labels: browserLabels,
+      datasets: [{
+        data: browserValues,
+        backgroundColor: browserColors.slice(0, browserLabels.length),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 2000 },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed / total) * 100).toFixed(1);
+              return `${context.label}: ${context.parsed} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfica de Dispositivos (Doughnut)
+  const devicesCtx = document.getElementById('devicesChart').getContext('2d');
+  const deviceLabels = Object.keys(devicesData);
+  const deviceValues = Object.values(devicesData);
+  
+  const deviceColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+  
+  devicesChart = new Chart(devicesCtx, {
+    type: 'doughnut',
+    data: {
+      labels: deviceLabels,
+      datasets: [{
+        data: deviceValues,
+        backgroundColor: deviceColors.slice(0, deviceLabels.length),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 2000 },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed / total) * 100).toFixed(1);
+              return `${context.label}: ${context.parsed} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfica de Categorías de Páginas
+  const pageCategoriesCtx = document.getElementById('pageCategoriesChart').getContext('2d');
+  const categoryLabels = Object.keys(pageCategoriesData);
+  const categoryValues = Object.values(pageCategoriesData);
+  
+  const categoryColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+  
+  pageCategoriesChart = new Chart(pageCategoriesCtx, {
+    type: 'pie',
+    data: {
+      labels: categoryLabels,
+      datasets: [{
+        data: categoryValues,
+        backgroundColor: categoryColors.slice(0, categoryLabels.length),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 2000 },
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed / total) * 100).toFixed(1);
+              return `${context.label}: ${context.parsed} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfica de Tipos de Tráfico
+  const trafficTypesCtx = document.getElementById('trafficTypesChart').getContext('2d');
+  const trafficLabels = Object.keys(trafficTypesData);
+  const trafficValues = Object.values(trafficTypesData);
+  
+  const trafficColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+  
+  trafficTypesChart = new Chart(trafficTypesCtx, {
+    type: 'bar',
+    data: {
+      labels: trafficLabels,
+      datasets: [{
+        label: 'Visitas por Tipo',
+        data: trafficValues,
+        backgroundColor: trafficColors.slice(0, trafficLabels.length),
+        borderColor: trafficColors.slice(0, trafficLabels.length),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 2000 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed.y / total) * 100).toFixed(1);
+              return `${context.label}: ${context.parsed.y} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true },
+        x: { 
+          ticks: {
+            maxRotation: 45
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfica de Días de la Semana
+  const weekdaysCtx = document.getElementById('weekdaysChart').getContext('2d');
+  const weekdayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekdayLabels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  const weekdayValues = weekdayOrder.map(day => weekdaysData[day] || 0);
+  
+  const weekdayColors = weekdayOrder.map((day, index) => {
+    // Destacar fines de semana
+    return (day === 'Saturday' || day === 'Sunday') ? '#FF6B6B' : '#4ECDC4';
+  });
+  
+  weekdaysChart = new Chart(weekdaysCtx, {
+    type: 'bar',
+    data: {
+      labels: weekdayLabels,
+      datasets: [{
+        label: 'Visitas por Día',
+        data: weekdayValues,
+        backgroundColor: weekdayColors,
+        borderColor: weekdayColors,
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 2000 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const total = weekdayValues.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : '0.0';
+              return `${context.parsed.y} visitas (${percentage}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: { 
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0,0,0,0.1)',
+            drawBorder: false
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          }
+        }
       }
     }
   });
@@ -342,22 +885,53 @@ function initCharts() {
 function showChart(view) {
   currentView = view;
   
-  // Actualizar botones
-  document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+  // Actualizar botones con animación
+  document.querySelectorAll('.btn-group .btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.transform = 'scale(1)';
+  });
   event.target.classList.add('active');
+  event.target.style.transform = 'scale(1.05)';
+  
+  // Crear gradientes dinámicos
+  const ctx = temporalChart.ctx;
+  let gradient;
   
   // Actualizar datos del gráfico
+  let data, label, color;
+  
   if (view === 'daily') {
-    temporalChart.data.labels = dailyData.map(d => d.date);
-    temporalChart.data.datasets[0].data = dailyData.map(d => d.visits);
-    temporalChart.data.datasets[0].label = 'Visitas Diarias';
-  } else {
-    temporalChart.data.labels = monthlyData.map(d => d.month);
-    temporalChart.data.datasets[0].data = monthlyData.map(d => d.visits);
-    temporalChart.data.datasets[0].label = 'Visitas Mensuales';
+    data = temporalData.daily || [];
+    gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, '#35bb78');
+    gradient.addColorStop(1, '#2a9d5f');
+    color = '#35bb78';
+    label = 'Visitas Diarias (Últimos 30 días)';
+    temporalChart.data.labels = data.map(d => d.date || '');
+  } else if (view === 'monthly') {
+    data = temporalData.monthly || [];
+    gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, '#6C55F9');
+    gradient.addColorStop(1, '#5a47d1');
+    color = '#6C55F9';
+    label = 'Visitas Mensuales (Últimos 12 meses)';
+    temporalChart.data.labels = data.map(d => d.month_name || d.month || '');
+  } else if (view === 'yearly') {
+    data = temporalData.yearly || [];
+    gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, '#ff6b6b');
+    gradient.addColorStop(1, '#e55555');
+    color = '#ff6b6b';
+    label = 'Visitas Anuales (Datos disponibles)';
+    temporalChart.data.labels = data.map(d => d.year || '');
   }
   
-  temporalChart.update();
+  temporalChart.data.datasets[0].data = data.map(d => d.visits || 0);
+  temporalChart.data.datasets[0].label = label;
+  temporalChart.data.datasets[0].backgroundColor = gradient;
+  temporalChart.data.datasets[0].borderColor = color;
+  
+  temporalChart.update('active');
 }
 
 function loadGeoData() {
@@ -373,37 +947,46 @@ function loadGeoData() {
   fetch('/admin/monitor/analytics?geo=true&force_geo=true', { method: 'POST' })
     .then(response => response.json())
     .then(data => {
-      // Actualizar países
+      // Actualizar países (ya ordenados por el backend)
       let countriesHtml = '';
-      Object.entries(data.top_countries || {}).forEach(([country, visits]) => {
+      const countries = data.top_countries || {};
+      Object.entries(countries).forEach(([country, visits]) => {
+        const isLocal = country.includes('Red Local');
+        const badgeClass = isLocal ? 'badge-info' : 'badge-primary';
+        const tooltip = isLocal ? 'title="IPs privadas: 192.168.x, 10.x, 172.x, 127.x"' : '';
         countriesHtml += `
           <div class="d-flex justify-content-between mb-2">
-            <span>${country}</span>
-            <span class="badge badge-primary">${visits}</span>
+            <span ${tooltip}>${country}</span>
+            <span class="badge ${badgeClass}">${visits}</span>
           </div>
         `;
       });
       document.getElementById('topCountries').innerHTML = countriesHtml || '<div class="text-muted">No hay datos disponibles</div>';
       
-      // Actualizar ciudades
+      // Actualizar ciudades (ya ordenadas por el backend)
       let citiesHtml = '';
-      Object.entries(data.top_cities || {}).forEach(([city, count]) => {
+      const cities = data.top_cities || {};
+      Object.entries(cities).forEach(([city, count]) => {
+        const isLocal = city.includes('Red Local');
+        const badgeClass = isLocal ? 'badge-info' : 'badge-success';
         citiesHtml += `
           <div class="d-flex justify-content-between mb-2">
-            <span>${city}</span>
-            <span class="badge badge-info">${count}</span>
+            <span title="${city}">${city}</span>
+            <span class="badge ${badgeClass}">${count}</span>
           </div>
         `;
       });
       document.getElementById('topCities').innerHTML = citiesHtml || '<div class="text-muted">No hay datos disponibles</div>';
       
-      // Actualizar ISPs
+      // Actualizar ISPs (ya ordenados por el backend con nombres completos)
       let ispsHtml = '';
-      Object.entries(data.top_isps || {}).forEach(([isp, count]) => {
+      const isps = data.top_isps || {};
+      Object.entries(isps).forEach(([isp, count]) => {
+        // Mostrar nombre completo sin truncar
         ispsHtml += `
-          <div class="d-flex justify-content-between mb-2">
-            <span title="${isp}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;">${isp}</span>
-            <span class="badge badge-dark">${count}</span>
+          <div class="d-flex justify-content-between mb-2" style="align-items: flex-start;">
+            <span title="${isp}" style="flex: 1; word-wrap: break-word; margin-right: 10px; line-height: 1.2;">${isp}</span>
+            <span class="badge badge-dark" style="flex-shrink: 0;">${count}</span>
           </div>
         `;
       });
@@ -426,8 +1009,16 @@ function updateRealtime() {
   fetch('/admin/monitor/analytics')
     .then(response => response.json())
     .then(data => {
-      document.getElementById('visitsToday').textContent = data.realtime?.visits_today || 0;
-      document.getElementById('onlineNow').textContent = data.realtime?.online_now || 0;
+      const realtime = data.realtime || {};
+      document.getElementById('visitsToday').textContent = realtime.visits_today || 0;
+      document.getElementById('onlineNow').textContent = realtime.online_estimate || 0;
+      document.getElementById('pagesPerSession').textContent = realtime.pages_per_session || '0.0';
+      
+      // Actualizar hora actual en formato 12h
+      if (realtime.current_time) {
+        const timeElements = document.querySelectorAll('[data-realtime="current_time"]');
+        timeElements.forEach(el => el.textContent = realtime.current_time);
+      }
     })
     .catch(console.error);
 }
@@ -445,6 +1036,17 @@ function updateBasicStats() {
       if (pending > 0) {
         const geoBtn = document.getElementById('geoBtnText');
         geoBtn.textContent = `Cargar Datos (${pending} pendientes)`;
+      }
+      
+      // Actualizar métricas adicionales si están disponibles
+      if (data.peak_traffic_day) {
+        const peakDayElements = document.querySelectorAll('[data-metric="peak_traffic_day"]');
+        peakDayElements.forEach(el => el.textContent = data.peak_traffic_day);
+      }
+      
+      if (data.busiest_hour_today) {
+        const busiestHourElements = document.querySelectorAll('[data-metric="busiest_hour_today"]');
+        busiestHourElements.forEach(el => el.textContent = data.busiest_hour_today);
       }
     })
     .catch(console.error);
@@ -509,6 +1111,44 @@ document.addEventListener('DOMContentLoaded', () => {
 setInterval(updateRealtime, 30000);
 setInterval(updateSystem, 60000);
 setInterval(updateBasicStats, 30000);
+
+// Función para exportar datos de analytics
+function exportAnalytics() {
+  const link = document.createElement('a');
+  link.href = '/admin/analytics/export';
+  link.download = `analytics_export_${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+}
+
+// Función para resetear analytics (solo admin)
+function resetAnalytics() {
+  if (confirm('¿Estás seguro de que quieres resetear todos los datos de analytics? Esta acción no se puede deshacer.')) {
+    fetch('/admin/analytics/reset', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('[name=csrf-token]').getAttribute('content')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert('Analytics reseteados correctamente');
+        location.reload();
+      } else {
+        alert('Error: ' + (data.error || 'Error desconocido'));
+      }
+    })
+    .catch(error => {
+      alert('Error de conexión: ' + error.message);
+    });
+  }
+}
+
+// Función para generar reporte completo
+function generateReport() {
+  window.open('/admin/analytics/report', '_blank');
+}
 </script>
 
 {% endblock %}

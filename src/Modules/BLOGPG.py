@@ -127,36 +127,54 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
         TIPOS = ["id", "descript", "title", "content", "creat_id", "category", "image", "count_view", "permission", "extra"]
         users = GET_USER('all')
         if TYPE in TIPOS:
-            cur.execute(f'SELECT * FROM blogpg WHERE {TYPE}= %s', (DATA_SEARCH,))
-            resp = []
-            for row in cur.fetchall():
-                row = dict(row)
-                if MARKDOWN:
-                    row['content'] =  markdown.markdown(row['content'])
-                if TAGS:
-                    row['tags'] = row['tags'].split(',') if row['tags'] else []
-                # Procesar categoría de forma similar a tags
-                if row.get('category'):
-                    row['category'] = row['category'].split(',') if ',' in str(row['category']) else [row['category']]
+            # Convertir DATA_SEARCH al tipo correcto si es necesario
+            if TYPE == 'creat_id' and isinstance(DATA_SEARCH, str) and not DATA_SEARCH.isdigit():
+                # Si se pasa un username en lugar de ID, buscar el ID del usuario
+                user_data = GET_USER('username', DATA_SEARCH)
+                if user_data and not isinstance(user_data, str):
+                    DATA_SEARCH = user_data['id']
                 else:
-                    row['category'] = []
-                if UID:
-                    try:
-                        for user in users:
-                            if user['id'] == row['creat_id']:
-                                row['creat_id'] = user['username']
-                        if type(row['creat_id']) == int:
+                    return None
+            
+            try:
+                cur.execute(f'SELECT * FROM blogpg WHERE {TYPE}= %s', (DATA_SEARCH,))
+                resp = []
+                for row in cur.fetchall():
+                    row = dict(row)
+                    if MARKDOWN:
+                        row['content'] =  markdown.markdown(row['content'])
+                    if TAGS:
+                        row['tags'] = row['tags'].split(',') if row['tags'] else []
+                    # Procesar categoría de forma similar a tags
+                    if row.get('category'):
+                        row['category'] = row['category'].split(',') if ',' in str(row['category']) else [row['category']]
+                    else:
+                        row['category'] = []
+                    if UID:
+                        try:
+                            for user in users:
+                                if user['id'] == row['creat_id']:
+                                    row['creat_id'] = user['username']
+                            if type(row['creat_id']) == int:
+                                row['creat_id'] = 'unknown'
+                        except:
                             row['creat_id'] = 'unknown'
-                    except:
-                        row['creat_id'] = 'unknown'
-                if SUM_VIEW:
-                    row['count_view'] = int(row['count_view']) + 1
-                resp.append(row)
-            log.debug(
-                f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
-            if len(resp) == 0:
-                return None
-            return resp  
+                    if SUM_VIEW:
+                        row['count_view'] = int(row['count_view']) + 1
+                    resp.append(row)
+                log.debug(
+                    f"[SEARCH_DB:] [OK] (type: {TYPE}, data: {DATA_SEARCH})")
+                if len(resp) == 0:
+                    return None
+                return resp
+            except Exception as db_error:
+                # Rollback y reconectar en caso de error de transacción
+                try:
+                    con.rollback()
+                    recon()
+                except:
+                    pass
+                raise db_error  
         elif TYPE == 'time':
             resp = []
             cur.execute('SELECT * FROM blogpg')
@@ -204,25 +222,41 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
                 return None
             return resp
         elif TYPE == 'all':
-            resp = []
-            for row in cur.execute('SELECT * FROM blogpg'):
-                row = dict(row)
-                if MARKDOWN:
-                    row['content'] =  markdown.markdown(row['content'])
-                row['tags'] = row['tags'].split(',') if row['tags'] else []
-                if UID:
-                    try:
-                        for user in users:
-                            if user['id'] == row['creat_id']:
-                                row['creat_id'] = user['username']
-                        if type(row['creat_id']) == int:
+            try:
+                resp = []
+                cur.execute('SELECT * FROM blogpg')
+                for row in cur.fetchall():
+                    row = dict(row)
+                    if MARKDOWN:
+                        row['content'] =  markdown.markdown(row['content'])
+                    if TAGS:
+                        row['tags'] = row['tags'].split(',') if row['tags'] else []
+                    # Procesar categoría de forma similar a tags
+                    if row.get('category'):
+                        row['category'] = row['category'].split(',') if ',' in str(row['category']) else [row['category']]
+                    else:
+                        row['category'] = []
+                    if UID:
+                        try:
+                            for user in users:
+                                if user['id'] == row['creat_id']:
+                                    row['creat_id'] = user['username']
+                            if type(row['creat_id']) == int:
+                                row['creat_id'] = 'unknown'
+                        except:
                             row['creat_id'] = 'unknown'
-                    except:
-                        row['creat_id'] = 'unknown'
-                resp.append(row)
-            if len(resp) == 0:
-                return None
-            return resp
+                    resp.append(row)
+                if len(resp) == 0:
+                    return None
+                return resp
+            except Exception as db_error:
+                # Rollback y reconectar en caso de error de transacción
+                try:
+                    con.rollback()
+                    recon()
+                except:
+                    pass
+                raise db_error
         else:
             log.debug(
                 f"[SEARCH_DB:] [None] (type: {TYPE}, data: {DATA_SEARCH})")
@@ -231,7 +265,13 @@ def GET_BL(TYPE='title', DATA_SEARCH='', MARKDOWN=True, UID=True, SUM_VIEW=False
         ERROR = f"ERROR AL BUSCAR EN LA TABLA:\n{e}"
         log.error(
             f"[SEARCH_DB:] [ERROR] [{ERROR}] (type: {TYPE}, data: {DATA_SEARCH}) [{traceback.format_exc()}]")
-        return ERROR
+        # Intentar reconectar en caso de error de transacción
+        try:
+            con.rollback()
+            recon()
+        except:
+            pass
+        return []
 
 
 def DELETE_BL(B_ID):

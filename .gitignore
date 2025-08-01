@@ -4,14 +4,12 @@ src/logs/*
 src/config.env
 src/__pycache__
 
-src/web/_dev
-src/static/_dev
-
 src/Modules/__pycache__
 src/Modules/PRUEBAS.py
 src/Modules/logs/*
 
-src/Databases/*
+src/backups/*
+src/data/*
 
 test/*
 client/*

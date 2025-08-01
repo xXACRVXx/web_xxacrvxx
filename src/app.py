@@ -64,7 +64,7 @@ load_dotenv("config.env")
 log = logging.getLogger("WEB")
 
 # Constantes de la aplicación
-VERSION = "v1.0.0-dev4"
+VERSION = "v1.0.0-beta1"
 START_SERVER_TIME = time.time()
 EMAIL_WEBMASTER = os.getenv("EMAIL_WEBMASTER")
 
@@ -118,16 +118,25 @@ def sanitize_path(path: str) -> str:
 
 @app.before_request
 def analytics_middleware():
-    """Middleware para registrar visitas."""
+    """Middleware para registrar visitas básicas (sin datos de cookies)."""
     try:
+        # Rutas a excluir de las métricas
+        excluded_paths = [
+            '/static/', '/admin/', '/api/', '/favicon.ico', '/robots.txt', 
+            '/humans.txt', '/sitemap.xml', '/v2/sitemap.xml', '/healthcheck',
+            '/thumbnail/', '/poweroff', '/reboot'
+        ]
+        
+        # No registrar rutas excluidas
+        if any(request.path.startswith(prefix) for prefix in excluded_paths):
+            return
+            
         ip_client = get_client_ip()
         user_agent = request.headers.get('User-Agent', '')
         page = request.endpoint or request.path
         referrer = request.headers.get('Referer', '')
         
-        # No registrar rutas estáticas o de admin
-        if not request.path.startswith('/static/') and not request.path.startswith('/admin/'):
-            ANALYTICS.record_visit(ip_client, user_agent, page, referrer)
+        ANALYTICS.record_visit(ip_client, user_agent, page, referrer)
     except Exception as e:
         log.debug(f"Error en analytics middleware: {e}")
 
@@ -322,9 +331,15 @@ def index():
     dark_mode = request.cookies.get('dark-mode', 'true')
     
     try:
-        posts = BLOGPG.GET_BL('all') or []
-        posts.sort(key=lambda x: x.get('id', 0), reverse=True)
-        recent = posts[:4]
+        posts = BLOGPG.GET_BL('all')
+        if isinstance(posts, list):
+            try:
+                posts.sort(key=lambda x: x.get('id', 0), reverse=True)
+                recent = posts[:4]
+            except (TypeError, AttributeError):
+                recent = []
+        else:
+            recent = []
         
         sessions, token, username, uid = if_session(session)
         
@@ -1127,6 +1142,10 @@ def download():
                 base_dir = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid))
                 current_dir = os.path.join(base_dir, current_folder) if current_folder else base_dir
                 
+                # Verificar que current_dir esté dentro del directorio del usuario
+                if not current_dir.startswith(base_dir):
+                    return redirect(url_for("download"))
+                
                 if not os.path.isdir(base_dir):
                     os.makedirs(base_dir, exist_ok=True)
                 
@@ -1256,11 +1275,16 @@ def thumbnail_by_filename(filename):
             return Response(status=404)
         
         # Buscar archivo en uploads de blog (static/blog)
-        blog_path = os.path.join(CONFIG.SYSTEM_PATH, "static", "blog", filename)
+        blog_base_path = os.path.join(CONFIG.SYSTEM_PATH, "static", "blog")
+        blog_path = os.path.join(blog_base_path, filename)
+        
+        # Verificar que el archivo esté dentro del directorio de blog
+        if not blog_path.startswith(blog_base_path):
+            return Response(status=403)
         
         if not os.path.isfile(blog_path):
             # Si no existe, devolver imagen por defecto
-            default_path = os.path.join(CONFIG.SYSTEM_PATH, "static", "blog", "default.png")
+            default_path = os.path.join(blog_base_path, "default.png")
             if os.path.exists(default_path):
                 return send_file(default_path, mimetype='image/png')
             return Response(status=404)
@@ -1312,7 +1336,13 @@ def upload():
             if current_folder:
                 current_folder = current_folder.replace('..', '').strip(os.sep)
             
-            DIR = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid), current_folder) if current_folder else os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid))
+            user_base_dir = os.path.join(app.config.get("UPLOAD_FOLDER"), str(uid))
+            DIR = os.path.join(user_base_dir, current_folder) if current_folder else user_base_dir
+            
+            # Verificar que DIR esté dentro del directorio del usuario
+            if not DIR.startswith(user_base_dir):
+                return jsonify({"error": "Ruta no válida"}), 400
+            
             os.makedirs(DIR, exist_ok=True)
             
             uploaded_filenames = []
@@ -1345,6 +1375,11 @@ def upload():
                         counter += 1
                     
                     file_path = os.path.join(DIR, filename)
+                    
+                    # Verificar que file_path esté dentro del directorio permitido
+                    if not file_path.startswith(DIR):
+                        continue
+                    
                     file.save(file_path)
                     uploaded_filenames.append(filename)
             
@@ -1441,7 +1476,20 @@ def delete():
                 user_token = str(verific["user"])
                 suid = USERPG.GET_USER("id", user_token)
                 uss = suid['username']
-                the_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token, archive)
+                
+                # Validate archive path to prevent path traversal
+                if '..' in archive or archive.startswith(os.sep):
+                    log.warning(f"[{ip_client}] [/delete] Path traversal attempt: {archive}")
+                    return redirect(url_for("login"), code=403)
+                
+                user_base_path = os.path.join(app.config.get("UPLOAD_FOLDER"), user_token)
+                the_path = os.path.join(user_base_path, archive)
+                
+                # Ensure the resolved path is within the user's directory
+                if not the_path.startswith(user_base_path):
+                    log.warning(f"[{ip_client}] [/delete] Path traversal attempt: {the_path}")
+                    return redirect(url_for("login"), code=403)
+                
                 os.remove(the_path)
                 log.info( f"[{ip_client}] [/delete ] Usuario [{uss}] borrón archivo [{archive}]")
                 flash(f"{archive} borrado correctamente","success")
@@ -1491,6 +1539,11 @@ def folder():
                 folder_path = os.path.join(user_dir, current_folder, folder_name)
             else:
                 folder_path = os.path.join(user_dir, folder_name)
+            
+            # Verificar que folder_path esté dentro del directorio del usuario
+            if not folder_path.startswith(user_dir):
+                return jsonify({"error": "Ruta no válida"}), 400
+            
             if os.path.exists(folder_path):
                 return jsonify({"error": "La carpeta ya existe"}), 400
             
@@ -1505,6 +1558,10 @@ def folder():
                 folder_path = os.path.join(user_dir, current_folder, folder_name)
             else:
                 folder_path = os.path.join(user_dir, folder_name)
+            
+            # Verificar que folder_path esté dentro del directorio del usuario
+            if not folder_path.startswith(user_dir):
+                return jsonify({"error": "Ruta no válida"}), 400
             
             if not os.path.exists(folder_path) or not os.path.isdir(folder_path):
                 return jsonify({"error": "Carpeta no encontrada"}), 404
@@ -1636,29 +1693,38 @@ def blog():
             posts = BLOGPG.GET_BL('tags',request.args.get('tags'))
         elif request.args.get('autor'):
             autor = USERPG.GET_USER('username', request.args.get('autor'))
-            posts = BLOGPG.GET_BL('creat_id', autor['username'])
+            if autor and not isinstance(autor, str):
+                posts = BLOGPG.GET_BL('creat_id', autor['id'])
+            else:
+                posts = []
         elif request.args.get('time'):
             posts = BLOGPG.GET_BL('time', request.args.get('time'))
         elif request.args.get('search'):
             allposts = BLOGPG.GET_BL('all')
             data_search = request.args.get('search').lower()
             posts = []
-            for post in allposts:
-                if data_search in post['title'].lower() or data_search in post['content'].lower() or data_search in post['descript'].lower():
-                    posts.append(post)
+            if allposts and not isinstance(allposts, str):
+                for post in allposts:
+                    if data_search in post['title'].lower() or data_search in post['content'].lower() or data_search in post['descript'].lower():
+                        posts.append(post)
         else:
             posts = BLOGPG.GET_BL('all')
 
         page = request.args.get('page', 1, type=int)
         per_page = 9
-        if posts == None:
+        if posts == None or isinstance(posts, str):
             posts = []
         total_posts = len(posts)
         total_pages = (total_posts + per_page - 1) // per_page  # Calcula el número total de páginas
         start = (page - 1) * per_page
         end = start + per_page
         paginated_posts = posts[start:end]
-        paginated_posts.sort(key=lambda x: x['id'], reverse=True)
+        if isinstance(paginated_posts, list) and paginated_posts:
+            try:
+                paginated_posts.sort(key=lambda x: x.get('id', 0), reverse=True)
+            except (TypeError, AttributeError):
+                # Si hay error al ordenar, usar lista vacía
+                paginated_posts = []
         
         # Crear contexto de template sin conflictos
         template_context = {
@@ -1703,17 +1769,28 @@ def blogview(name):
                 comment_name_default = user_data['username']
                 comment_email_default = user_data['email']
 
-        # Obtener el post actual por título
-        the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=True)
-        if not the_posts:
+        # Obtener el post actual por título (sin sumar vista automáticamente)
+        the_posts = BLOGPG.GET_BL("title", name, SUM_VIEW=False)
+        if not the_posts or isinstance(the_posts, str):
             return redirect(url_for("blog"))
         current_post = the_posts[0]
 
-        # Sumar la vista
-        BLOGPG.EDIT_BL('count_view', current_post['id'], current_post['count_view'] + 1)
+        # Solo sumar vista si es GET (no POST de comentarios) y current_post es válido
+        if request.method == "GET" and isinstance(current_post, dict) and 'id' in current_post and 'count_view' in current_post:
+            try:
+                BLOGPG.EDIT_BL('count_view', current_post['id'], current_post['count_view'] + 1)
+            except Exception as e:
+                log.debug(f"Error actualizando contador de vistas: {e}")
 
         # Obtener 3 posts recientes
-        recent_posts = sorted(BLOGPG.GET_BL('all') or [], key=lambda x: x['id'], reverse=True)[:3]
+        all_posts = BLOGPG.GET_BL('all')
+        if isinstance(all_posts, list):
+            try:
+                recent_posts = sorted(all_posts, key=lambda x: x.get('id', 0), reverse=True)[:3]
+            except (TypeError, AttributeError):
+                recent_posts = []
+        else:
+            recent_posts = []
 
         # --- Funciones auxiliares para comentarios ---
 
@@ -2439,7 +2516,8 @@ def status_server():
             
             try:
                 users = USERPG.GET_ALL_USERS() or []
-                posts = BLOGPG.GET_BL('all') or []
+                posts_data = BLOGPG.GET_BL('all')
+                posts = posts_data if isinstance(posts_data, list) else []
                 total_users = len(users)
                 total_posts = len(posts)
                 verified_users = len([u for u in users if u.get('email_confirm') == 'true'])
@@ -2448,7 +2526,7 @@ def status_server():
                 total_users = total_posts = verified_users = total_views = 0
             
             try:
-                analytics = ANALYTICS.get_analytics_data()
+                analytics = ANALYTICS.get_analytics_data(user_is_admin=True)
                 total_visits = analytics.get('total_visits', 0)
                 unique_visitors = analytics.get('unique_visitors', 0)
             except:
@@ -3102,8 +3180,16 @@ def admin_recent_files():
 @csrf.exempt
 def admin_popular_posts():
     try:
-        posts = BLOGPG.GET_BL('all') or []
-        posts.sort(key=lambda x: x.get('count_view', 0), reverse=True)
+        posts = BLOGPG.GET_BL('all')
+        if not isinstance(posts, list):
+            posts = []
+        
+        # Ordenar solo si tenemos posts válidos
+        if posts:
+            try:
+                posts.sort(key=lambda x: x.get('count_view', 0), reverse=True)
+            except (TypeError, AttributeError):
+                posts = []
         
         popular_posts = []
         for post in posts[:10]:
@@ -3200,6 +3286,10 @@ def admin_backup_download(filename):
         backup_dir = os.path.join(CONFIG.SYSTEM_PATH, 'backups')
         file_path = os.path.join(backup_dir, filename)
         
+        # Verificar que file_path esté dentro del directorio de backups
+        if not file_path.startswith(backup_dir):
+            return jsonify({"error": "Ruta no válida"}), 400
+        
         if not os.path.exists(file_path):
             return jsonify({"error": "Archivo no encontrado"}), 404
         
@@ -3284,7 +3374,8 @@ def admin_report():
     try:
         log.info(f"[ADMIN] Generando reporte por {uss}")
         users = USERPG.GET_ALL_USERS() or []
-        posts = BLOGPG.GET_BL('all') or []
+        posts_data = BLOGPG.GET_BL('all')
+        posts = posts_data if isinstance(posts_data, list) else []
         
         today = datetime.datetime.now().strftime("%Y-%m-%d")
         week_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
@@ -3335,10 +3426,14 @@ Uso de memoria: {CONFIG.get_memory_usage()}%
             report += f"\n- {user['username']}{admin} ({user['email']}) - {status} - Último: {last_login}"
         
         report += f"\n\n=== TOP 10 POSTS MÁS POPULARES ===\n"
-        posts.sort(key=lambda x: x.get('count_view', 0), reverse=True)
-        for i, post in enumerate(posts[:10], 1):
-            author = post.get('creat_id', 'Desconocido')
-            report += f"{i}. {post.get('title', 'Sin título')} - {post.get('count_view', 0)} vistas (por {author})\n"
+        if posts:
+            try:
+                posts.sort(key=lambda x: x.get('count_view', 0), reverse=True)
+                for i, post in enumerate(posts[:10], 1):
+                    author = post.get('creat_id', 'Desconocido')
+                    report += f"{i}. {post.get('title', 'Sin título')} - {post.get('count_view', 0)} vistas (por {author})\n"
+            except (TypeError, AttributeError):
+                report += "No se pudieron obtener los posts más populares\n"
         
         report += f"\n=== ACTIVIDAD RECIENTE ===\n"
         recent_users = [u for u in users if u.get('extra') and today in u.get('extra', '')]
@@ -3375,12 +3470,18 @@ def admin_content():
     sessions, token, uss, uid = if_session(session)
     
     try:
-        posts = BLOGPG.GET_BL('all') or []
+        posts_data = BLOGPG.GET_BL('all')
+        posts = posts_data if isinstance(posts_data, list) else []
+        
         # Los posts ya vienen con creat_id como username desde BLOGPG.GET_BL
         for post in posts:
             post['author'] = post.get('creat_id', 'Desconocido')
         
-        posts.sort(key=lambda x: x.get('id', 0), reverse=True)
+        if posts:
+            try:
+                posts.sort(key=lambda x: x.get('id', 0), reverse=True)
+            except (TypeError, AttributeError):
+                posts = []
         
         return render_template("admin/content.html",
                              posts=posts,
@@ -3466,7 +3567,8 @@ def admin_database_tables():
         })
         
         # Información de tabla blogpg
-        posts = BLOGPG.GET_BL('all') or []
+        posts_data = BLOGPG.GET_BL('all')
+        posts = posts_data if isinstance(posts_data, list) else []
         tables_info.append({
             'name': 'blogpg',
             'rows': len(posts),
@@ -3492,7 +3594,9 @@ def admin_database_tables():
 def admin_database_analyze():
     try:
         users_count = len(USERPG.GET_USER('all') or [])
-        posts_count = len(BLOGPG.GET_BL('all') or [])
+        posts_data = BLOGPG.GET_BL('all')
+        posts = posts_data if isinstance(posts_data, list) else []
+        posts_count = len(posts)
         
         return jsonify({
             'size': f'{users_count + posts_count} registros totales',
@@ -3550,7 +3654,8 @@ def admin_database_export():
             })
         
         # Exportar posts
-        posts = BLOGPG.GET_BL('all', MARKDOWN=False, UID=False) or []
+        posts_data = BLOGPG.GET_BL('all', MARKDOWN=False, UID=False)
+        posts = posts_data if isinstance(posts_data, list) else []
         for post in posts:
             export_data['posts'].append({
                 'title': post.get('title', ''),
@@ -3763,15 +3868,60 @@ def admin_monitor():
     
     try:
         # Usar la API unificada con todos los datos necesarios
-        analytics_data = ANALYTICS.get_unified_analytics_data(include_geo=True, include_system=True)
+        analytics_data = ANALYTICS.get_unified_analytics_data(include_geo=True, include_system=True, user_is_admin=True)
         
-        return render_template("admin/monitor.html",
-                             user=uss,
-                             cookie=dark_mode,
-                             version=VERSION,
-                             **analytics_data)  # Desempaquetar todos los datos
+        # Mapear nombres de variables para compatibilidad con el template
+        template_data = {
+            'user': uss,
+            'cookie': dark_mode,
+            'version': VERSION,
+            'total_visits': analytics_data.get('total_visits', 0),
+            'unique_visitors': analytics_data.get('unique_visitors', 0),
+            'realtime': analytics_data.get('realtime', {}),
+            'temporal': analytics_data.get('temporal', {}),
+            'browsers': analytics_data.get('top_browsers', {}),
+            'operating_systems': analytics_data.get('top_os', {}),
+            'devices': analytics_data.get('top_devices', {}),
+            'top_pages': analytics_data.get('top_pages', {}),
+            'top_countries': analytics_data.get('top_countries', {}),
+            'top_cities': analytics_data.get('top_cities', {}),
+            'top_isps': analytics_data.get('top_isps', {}),
+            'bounce_rate': analytics_data.get('bounce_rate', 0),
+            'bots_detected': analytics_data.get('bots_detected', 0),
+            'avg_visits_per_hour': analytics_data.get('avg_visits_per_hour', 0),
+            'avg_session_duration': analytics_data.get('avg_session_duration', 0),
+            'peak_traffic_day': analytics_data.get('peak_traffic_day', 'Sin datos'),
+            'busiest_hour_today': analytics_data.get('busiest_hour_today', '12:00 AM'),
+            'weekend_vs_weekday_ratio': analytics_data.get('weekend_vs_weekday_ratio', 0),
+            'peak_hour_visits': analytics_data.get('peak_hour_visits', 0),
+            'most_popular_page': analytics_data.get('most_popular_page', 'Sin datos'),
+            'avg_pages_per_session': analytics_data.get('avg_pages_per_session', 0),
+            'new_vs_returning': analytics_data.get('new_vs_returning', {'new': 0, 'returning': 0}),
+            'mobile_percentage': analytics_data.get('mobile_percentage', 0),
+            'top_referrer_domain': analytics_data.get('top_referrer_domain', 'Sin datos'),
+            # Add missing variables that the template expects
+            'user_metrics': analytics_data.get('user_metrics', {
+                'unique_users': analytics_data.get('unique_visitors', 0),
+                'new_users': analytics_data.get('new_vs_returning', {}).get('new', 0),
+                'returning_users': analytics_data.get('new_vs_returning', {}).get('returning', 0),
+                'user_retention_rate': analytics_data.get('user_retention_rate', 0)
+            }),
+            'engagement_metrics': analytics_data.get('engagement_metrics', {
+                'active_sessions': analytics_data.get('realtime', {}).get('active_sessions', 0),
+                'total_page_views': analytics_data.get('total_visits', 0),
+                'avg_session_pages': analytics_data.get('avg_pages_per_session', 0),
+                'bounce_sessions': analytics_data.get('bounce_sessions', 0)
+            }),
+            'traffic_analysis': analytics_data.get('traffic_analysis', {}),
+            'top_resolutions': analytics_data.get('top_resolutions', {}),
+            'top_languages': analytics_data.get('top_languages', {}),
+            'growth_rate': analytics_data.get('growth_rate', 0)
+        }
+        
+        return render_template("admin/monitor.html", **template_data)
     except Exception as e:
-        log.error(f"[/admin/monitor] Error: {e}")
+        log.error(f"[/admin/monitor] Error: {e}", exc_info=True)
+        flash("Error cargando el monitor del sistema", "error")
         return redirect(url_for("admin_dashboard"))
 
 @app.route("/admin/backup")
@@ -3803,7 +3953,8 @@ def admin_analytics_api():
         include_system = request.args.get('system', 'true').lower() == 'true'
         force_geo = request.args.get('force_geo', 'false').lower() == 'true'
         
-        return jsonify(ANALYTICS.get_unified_analytics_data(include_geo, include_system, force_geo))
+        data = ANALYTICS.get_unified_analytics_data(include_geo, include_system, force_geo, user_is_admin=True)
+        return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -3818,6 +3969,47 @@ def admin_realtime_api():
         return jsonify(ANALYTICS.get_real_time_stats())
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/analytics", methods=["POST"])
+@csrf.exempt
+def api_analytics():
+    """API para recibir datos de analytics desde cookies/JavaScript."""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Obtener datos básicos
+        ip_client = get_client_ip()
+        user_agent = request.headers.get('User-Agent', '')
+        page = data.get('page', request.path)
+        referrer = data.get('referrer', '')
+        
+        # Datos adicionales de cookies
+        session_id = data.get('session_id', '')
+        screen_resolution = data.get('screen_resolution', '')
+        language = data.get('language', '')
+        timezone = data.get('timezone', '')
+        connection_type = data.get('connection_type', '')
+        
+        # Registrar visita con datos extendidos
+        ANALYTICS.record_visit(
+            ip=ip_client,
+            user_agent=user_agent,
+            page=page,
+            referrer=referrer,
+            session_id=session_id,
+            screen_resolution=screen_resolution,
+            language=language,
+            user_timezone=timezone,
+            connection_type=connection_type
+        )
+        
+        return jsonify({"success": True})
+        
+    except Exception as e:
+        log.debug(f"Error en API analytics: {e}")
+        return jsonify({"error": "Internal error"}), 500
 
 @app.route("/admin/logger")
 def getlogger():
@@ -3860,6 +4052,11 @@ def getlogger():
         
         # Filtrar logs por nivel si se especifica
         log_level = request.args.get('level', 'all')
+        # Sanitize log_level to prevent XSS
+        allowed_levels = ['all', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        if log_level not in allowed_levels:
+            log_level = 'all'
+        
         if log_level != 'all':
             lines = logs_content.split('\n')
             filtered_lines = []
@@ -4697,6 +4894,14 @@ def initialize_app():
 def shutdown_handler(signum, frame):
     """Manejador de señales para cierre limpio."""
     log.info(f"Señal {signum} recibida. Cerrando servidor...")
+    
+    # Guardar datos de analíticas antes de cerrar
+    try:
+        ANALYTICS.save_analytics_data()
+        log.info("Datos de analíticas guardados correctamente")
+    except Exception as e:
+        log.error(f"Error guardando analíticas al cerrar: {e}")
+    
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -4706,6 +4911,13 @@ if __name__ == "__main__":
     
     # Inicializar aplicación
     initialize_app()
+    
+    # Cargar datos de analíticas al iniciar
+    try:
+        ANALYTICS.load_analytics_data()
+        log.info("Datos de analíticas cargados correctamente")
+    except Exception as e:
+        log.warning(f"Error cargando analíticas al iniciar: {e}")
     
     # Configurar modo debug
     DEBUG = os.getenv("DEBUG", "False").lower() == "true"

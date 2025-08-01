@@ -94,6 +94,65 @@
             document.cookie = name + "=" + (value || "") + expires + "; path=/";
         }
 
+        // Sistema de analytics con tracking de usuarios únicos
+        function collectAnalyticsData() {
+            try {
+                // Generar o recuperar user ID único (permanente)
+                let userId = getCookie('user_id');
+                if (!userId) {
+                    userId = 'u_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    setCookie('user_id', userId, 365); // 1 año
+                }
+
+                // Session ID (temporal)
+                let sessionId = getCookie('session_id');
+                if (!sessionId) {
+                    sessionId = 's_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                    setCookie('session_id', sessionId, 1); // 1 día
+                }
+
+                // Última visita para detectar usuarios que regresan
+                const lastVisit = getCookie('last_visit') || '0';
+                const now = Date.now();
+                const isReturning = (now - parseInt(lastVisit)) > (24 * 60 * 60 * 1000); // >24h = returning
+                setCookie('last_visit', now.toString(), 365);
+
+                // Contador de páginas vistas en esta sesión
+                let pagesViewed = parseInt(getCookie('pages_viewed') || '0') + 1;
+                setCookie('pages_viewed', pagesViewed.toString(), 1);
+
+                // Enviar datos al servidor
+                const analyticsData = {
+                    user_id: userId,
+                    session_id: sessionId,
+                    is_returning: isReturning,
+                    pages_viewed: pagesViewed,
+                    page: window.location.pathname,
+                    referrer: document.referrer || 'direct',
+                    timestamp: new Date().toISOString()
+                };
+
+                // Enviar con retry en caso de fallo
+                const sendAnalytics = (retries = 2) => {
+                    fetch('/api/analytics', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(analyticsData)
+                    }).catch((error) => {
+                        if (retries > 0) {
+                            setTimeout(() => sendAnalytics(retries - 1), 1000);
+                        }
+                    });
+                };
+                
+                sendAnalytics();
+
+            } catch (error) {}
+        }
+
+        // Ejecutar analytics después de un breve delay
+        setTimeout(collectAnalyticsData, 500);
+
         // Verificar el estado de la cookie dark-mode al cargar la página
         let themeLink = document.getElementById('theme-link');
         let darkMode = getCookie('dark-mode');
